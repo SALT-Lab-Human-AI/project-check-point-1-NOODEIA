@@ -90,11 +90,7 @@
    DATABASE_URL="postgresql://postgres:[YOUR_PASSWORD]@noodeia-db.xxxxxxxxxxxxx.us-east-1.rds.amazonaws.com:5432/noodeia_db?schema=public&sslmode=require"
    ```
 
-2. **Update `.env`** (create if doesn't exist):
-   ```bash
-   # Same connection string for Prisma CLI
-   DATABASE_URL="postgresql://postgres:[YOUR_PASSWORD]@noodeia-db.xxxxxxxxxxxxx.us-east-1.rds.amazonaws.com:5432/noodeia_db?schema=public&sslmode=require"
-   ```
+   Note: Prisma will read from `.env.local` for both runtime and CLI commands in Next.js projects.
 
 ## Step 5: Run Database Migrations
 
