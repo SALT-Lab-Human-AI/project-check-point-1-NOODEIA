@@ -317,9 +317,11 @@ For more details, see the [frontend README](./frontend/README.md).
 
 ---
 
-## Inspiration 
+## Inspiration and Disclosure
 
-The logo image is inspired by [FREEP!K](https://www.freepik.com/premium-vector/tree-with-lines-dots-vector-design-ai-generate_328598955.htm)
+The logo image is inspired by [FREEP!K](https://www.freepik.com/premium-vector/tree-with-lines-dots-vector-design-ai-generate_328598955.htm) and referenced by similar generated images. 
+
+We utilized Claude Code to temporalily log and document the set up steps during the developing phase and we will be modifying and editing them in the later phases.
 
 ## 📝 License
 
