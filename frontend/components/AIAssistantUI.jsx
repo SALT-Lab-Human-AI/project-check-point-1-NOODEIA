@@ -15,6 +15,7 @@ export default function AIAssistantUI() {
   const [currentUser, setCurrentUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authChecked, setAuthChecked] = useState(false)
 
   // Handle theme initialization after mount
   useEffect(() => {
@@ -55,6 +56,9 @@ export default function AIAssistantUI() {
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Only handle actual auth changes, not initial load
+      if (!authChecked) return
+
       if (event === 'SIGNED_IN' && session) {
         // User signed in
         const { data: userData } = await supabase
@@ -73,6 +77,7 @@ export default function AIAssistantUI() {
         setUserId(null)
         setConversations([])
         setSelectedId(null)
+        setIsLoading(false)
       }
     })
 
@@ -91,14 +96,19 @@ export default function AIAssistantUI() {
           .single()
 
         if (userData) {
-          handleAuthSuccess(userData)
+          await handleAuthSuccess(userData)
+        } else {
+          // Session exists but no user in our database yet
+          setIsLoading(false)
         }
       } else {
         setIsLoading(false)
       }
+      setAuthChecked(true)
     } catch (error) {
       console.error('Failed to check auth:', error)
       setIsLoading(false)
+      setAuthChecked(true)
     }
   }
 
@@ -106,8 +116,9 @@ export default function AIAssistantUI() {
     setCurrentUser(userData)
     setUserId(userData.id)
     setIsAuthenticated(true)
-    await loadConversations(userData.id)
     setIsLoading(false)
+    // Load conversations after setting loading to false to avoid UI blocking
+    loadConversations(userData.id)
   }
 
   async function handleLogout() {
