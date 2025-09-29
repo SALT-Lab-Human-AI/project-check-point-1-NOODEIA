@@ -206,27 +206,29 @@ Before deploying, you need to add your Supabase credentials as GitHub Secrets:
 
 **Important**: These are the same values from your `.env.local` file, but without the `NEXT_PUBLIC_` prefix. GitHub Actions will use these to build your site with the correct database connection.
 
-#### 5.3 Deploy to GitHub Pages
+#### 5.3 Deploy with GitHub Actions
+
+Your site is automatically deployed when you push to the main branch:
 
 ```bash
-# Build and deploy to GitHub Pages
-npm run deploy
+# Simply push your changes to main
+git add .
+git commit -m "Your commit message"
+git push origin main
 ```
 
-This command will:
+GitHub Actions will automatically:
 - Build the static site
-- Create/update `gh-pages` branch
-- Push to GitHub Pages
+- Deploy it to GitHub Pages
+- No manual deployment needed!
 
 #### 5.4 Enable GitHub Pages
 
 1. Go to your GitHub repository
 2. Navigate to **Settings** → **Pages**
 3. Under "Source", select:
-   - **Source**: Deploy from a branch
-   - **Branch**: `gh-pages`
-   - **Folder**: `/ (root)`
-4. Click **Save**
+   - **Source**: GitHub Actions
+4. Click **Save** (if needed)
 
 #### 5.5 Access Your Site
 
