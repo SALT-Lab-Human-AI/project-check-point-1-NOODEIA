@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  basePath: process.env.NODE_ENV === 'production' ? '/project-check-point-1-NOODEIA' : '',
+  basePath: process.env.NODE_ENV === 'production' ? '/project-check-point-1-noodiea' : '',
   eslint: {
     ignoreDuringBuilds: true,
   },
