@@ -71,12 +71,8 @@ export default function AIAssistantUI() {
           handleAuthSuccess(userData)
         }
       } else if (event === 'SIGNED_OUT') {
-        // User signed out
-        setIsAuthenticated(false)
-        setCurrentUser(null)
-        setUserId(null)
-        setConversations([])
-        setSelectedId(null)
+        // User signed out - state already cleared in handleLogout
+        // Just ensure we're not loading
         setIsLoading(false)
       }
     })
@@ -122,8 +118,15 @@ export default function AIAssistantUI() {
   }
 
   async function handleLogout() {
+    setIsLoading(true)
     await supabase.auth.signOut()
-    // The auth state listener will handle cleanup
+    // Clear all state immediately
+    setIsAuthenticated(false)
+    setCurrentUser(null)
+    setUserId(null)
+    setConversations([])
+    setSelectedId(null)
+    setIsLoading(false)
   }
 
   async function loadConversations(uid) {
