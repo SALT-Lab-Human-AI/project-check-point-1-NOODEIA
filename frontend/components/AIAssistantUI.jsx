@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react"
 import Sidebar from "./Sidebar"
 import Header from "./Header"
 import ChatPane from "./ChatPane"
+import AuthForm from "./AuthForm"
 import { supabase } from "../lib/supabase"
 
 export default function AIAssistantUI() {
@@ -11,7 +12,9 @@ export default function AIAssistantUI() {
   const [theme, setTheme] = useState("light")
   const [isClient, setIsClient] = useState(false)
   const [userId, setUserId] = useState(null)
+  const [currentUser, setCurrentUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   // Handle theme initialization after mount
   useEffect(() => {
@@ -46,56 +49,70 @@ export default function AIAssistantUI() {
   const [selectedId, setSelectedId] = useState(null)
   const [isThinking, setIsThinking] = useState(false)
 
-  // Initialize user and load conversations
+  // Check authentication status on mount
   useEffect(() => {
-    initializeUser()
-  }, [])
+    checkAuth()
 
-  async function initializeUser() {
-    try {
-      const storedEmail = localStorage.getItem('userEmail')
-      let email = storedEmail
-
-      if (!email) {
-        email = `user_${Math.random().toString(36).slice(2)}@demo.com`
-        localStorage.setItem('userEmail', email)
-      }
-
-      // Check if user exists or create new one
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .single()
-
-      let user
-      if (!existingUser) {
-        const { data: newUser, error } = await supabase
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // User signed in
+        const { data: userData } = await supabase
           .from('users')
-          .insert([{
-            email,
-            name: email.split('@')[0]
-          }])
-          .select()
+          .select('*')
+          .eq('id', session.user.id)
           .single()
 
-        if (error) {
-          console.error('Error creating user:', error)
-          setIsLoading(false)
-          return
+        if (userData) {
+          handleAuthSuccess(userData)
         }
-        user = newUser
-      } else {
-        user = existingUser
+      } else if (event === 'SIGNED_OUT') {
+        // User signed out
+        setIsAuthenticated(false)
+        setCurrentUser(null)
+        setUserId(null)
+        setConversations([])
+        setSelectedId(null)
       }
+    })
 
-      setUserId(user.id)
-      await loadConversations(user.id)
+    return () => subscription.unsubscribe()
+  }, [])
+
+  async function checkAuth() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (session) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
+
+        if (userData) {
+          handleAuthSuccess(userData)
+        }
+      } else {
+        setIsLoading(false)
+      }
     } catch (error) {
-      console.error('Failed to initialize user:', error)
-    } finally {
+      console.error('Failed to check auth:', error)
       setIsLoading(false)
     }
+  }
+
+  async function handleAuthSuccess(userData) {
+    setCurrentUser(userData)
+    setUserId(userData.id)
+    setIsAuthenticated(true)
+    await loadConversations(userData.id)
+    setIsLoading(false)
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    // The auth state listener will handle cleanup
   }
 
   async function loadConversations(uid) {
@@ -130,23 +147,16 @@ export default function AIAssistantUI() {
   }
 
   async function createNewChat() {
-    // Get userId directly from localStorage if not in state
-    let uid = userId
-    if (!uid) {
-      const storedUserId = localStorage.getItem('ai_chat_user_id')
-      if (!storedUserId) {
-        // No user exists, initialize one first
-        await initializeUser()
-        return // initializeUser will trigger a re-render with the new userId
-      }
-      uid = storedUserId
+    if (!userId || !isAuthenticated) {
+      console.error('User must be logged in to create a chat')
+      return
     }
 
     try {
       const { data, error } = await supabase
         .from('conversations')
         .insert([{
-          user_id: uid,
+          user_id: userId,
           title: 'New Chat'
         }])
         .select()
@@ -371,6 +381,11 @@ export default function AIAssistantUI() {
     )
   }
 
+  // Show login form if not authenticated
+  if (!isAuthenticated) {
+    return <AuthForm onSuccess={handleAuthSuccess} />
+  }
+
   return (
     <div className="flex h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
       <Sidebar
@@ -387,7 +402,8 @@ export default function AIAssistantUI() {
       <div className="flex flex-1 flex-col">
         <Header
           onMenuClick={() => setSidebarOpen(true)}
-          createNewChat={createNewChat}
+          currentUser={currentUser}
+          onLogout={handleLogout}
         />
         <main className="flex flex-1 flex-col">
           <ChatPane
