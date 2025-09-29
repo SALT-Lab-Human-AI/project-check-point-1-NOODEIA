@@ -148,9 +148,11 @@ export default function AIAssistantUI() {
 
   async function createNewChat() {
     if (!userId || !isAuthenticated) {
-      console.error('User must be logged in to create a chat')
+      console.error('User must be logged in to create a chat', { userId, isAuthenticated })
       return
     }
+
+    console.log('Creating new chat for user:', userId)
 
     try {
       const { data, error } = await supabase
@@ -164,9 +166,14 @@ export default function AIAssistantUI() {
 
       if (error) {
         console.error('Error creating conversation:', error)
+        // If the error is related to user not existing, try to create the user
+        if (error.code === '23503') { // Foreign key violation
+          console.error('User does not exist in database. User ID:', userId)
+        }
         return
       }
 
+      console.log('New conversation created:', data)
       const newConversation = { ...data, messages: [] }
       setConversations(prev => [newConversation, ...prev])
       setSelectedId(newConversation.id)

@@ -79,22 +79,29 @@ export default function AuthForm({ onSuccess }) {
 
         // Check if sign up requires email confirmation
         if (authData.user && !authData.session) {
-          throw new Error('Please check your email to confirm your account before signing in.')
+          setError('Account created! Please check your email to confirm your account, then sign in.')
+          setIsLogin(true) // Switch to login mode
+          return
         }
 
-        // Create user in our users table
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .insert([{
-            id: authData.user.id,
-            email: email,
-            name: name
-          }])
-          .select()
-          .single()
+        // Only create user in our table if we have a session (confirmed email)
+        if (authData.user && authData.session) {
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .insert([{
+              id: authData.user.id,
+              email: email,
+              name: name
+            }])
+            .select()
+            .single()
 
-        if (userError) throw userError
-        onSuccess(userData)
+          if (userError && userError.code !== '23505') { // Ignore duplicate key errors
+            throw userError
+          }
+
+          onSuccess(userData || { id: authData.user.id, email, name })
+        }
       }
     } catch (error) {
       console.error('Auth error:', error)
