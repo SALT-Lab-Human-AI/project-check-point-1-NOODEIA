@@ -217,21 +217,6 @@ export default function AuthForm({ onSuccess }) {
             </button>
           </div>
 
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setEmail("demo@noodeia.com")
-                setPassword("demo123456")
-                setIsLogin(true)
-                setError("")
-              }}
-              className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors underline"
-            >
-              Use demo account
-            </button>
-          </div>
-
           <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center justify-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
               <Brain className="h-4 w-4" />
