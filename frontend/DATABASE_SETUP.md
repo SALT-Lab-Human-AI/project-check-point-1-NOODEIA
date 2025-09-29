@@ -1,12 +1,17 @@
 # Database Setup Instructions
 
-## Prerequisites
+## Option 1: AWS RDS (Cloud Database) - RECOMMENDED
+See `AWS_RDS_SETUP.md` for detailed AWS setup instructions.
+
+## Option 2: Local PostgreSQL Database
+
+### Prerequisites
 1. Install PostgreSQL on your local machine
 2. Make sure PostgreSQL service is running
 
-## Setup Steps
+### Setup Steps
 
-### 1. Create Database
+#### 1. Create Database
 ```bash
 # Connect to PostgreSQL
 psql -U postgres
@@ -18,22 +23,21 @@ CREATE DATABASE noodeia_db;
 \q
 ```
 
-### 2. Update Environment Variables
-Update the `.env.local` file with your PostgreSQL credentials:
+#### 2. Update Environment Variables
+Create both `.env` and `.env.local` files with your connection string:
 ```
 DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/noodeia_db?schema=public"
 ```
 
-### 3. Run Prisma Migration
+#### 3. Set Up Database Schema
 ```bash
-# Generate Prisma client
-npx prisma generate
+# Push schema to create tables
+npx prisma db push
 
-# Create tables in database
-npx prisma migrate dev --name init
+# This creates all tables and generates Prisma Client
 ```
 
-### 4. Verify Database Setup
+#### 4. Verify Database Setup
 ```bash
 # Open Prisma Studio to view data
 npx prisma studio

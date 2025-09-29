@@ -17,9 +17,8 @@
 
    Settings:
    - DB instance identifier: noodeia-db
-   - Master username: postgres
-   - Master password: [Choose a strong password]
-   - ✅ Auto generate a password (optional)
+   - Master username: NOODEIA (or your choice - REMEMBER THIS!)
+   - Master password: [Choose a strong password - SAVE THIS!]
 
    Instance configuration:
    - DB instance class: db.t3.micro (free tier)
@@ -27,11 +26,10 @@
    Storage:
    - Storage type: General Purpose SSD (gp3)
    - Allocated storage: 20 GB
-   - ✅ Enable storage autoscaling (optional)
 
    Connectivity:
    - VPC: Default VPC
-   - Public access: Yes (required for local development)
+   - Public access: Yes (REQUIRED for local development)
    - VPC security group: Create new
      * Name: noodeia-db-sg
    - Database port: 5432
@@ -40,7 +38,7 @@
    - Password authentication
 
    Additional configuration:
-   - Initial database name: noodeia_db
+   - Initial database name: noodeia_db (IMPORTANT!)
    - ✅ Enable automated backups
    - Backup retention: 7 days
    ```
@@ -85,27 +83,36 @@
 
 ## Step 4: Update Local Environment
 
-1. **Update `.env.local`**:
+1. **Create/Update `.env` file** (for Prisma CLI):
    ```bash
-   DATABASE_URL="postgresql://postgres:[YOUR_PASSWORD]@noodeia-db.xxxxxxxxxxxxx.us-east-1.rds.amazonaws.com:5432/noodeia_db?schema=public&sslmode=require"
+   DATABASE_URL="postgresql://[USERNAME]:[PASSWORD]@[ENDPOINT]:5432/noodeia_db?schema=public"
    ```
 
-   Note: Prisma will read from `.env.local` for both runtime and CLI commands in Next.js projects.
+2. **Create/Update `.env.local` file** (for Next.js runtime):
+   ```bash
+   DATABASE_URL="postgresql://[USERNAME]:[PASSWORD]@[ENDPOINT]:5432/noodeia_db?schema=public"
+   ```
 
-## Step 5: Run Database Migrations
+   **IMPORTANT**:
+   - Replace [USERNAME] with your master username (e.g., NOODEIA)
+   - Replace [PASSWORD] with your password (no brackets!)
+   - Replace [ENDPOINT] with your RDS endpoint (no brackets!)
+   - Both files need the same connection string
+
+## Step 5: Set Up Database Schema
 
 ```bash
-# Generate Prisma Client
-npx prisma generate
-
-# Deploy migrations to AWS RDS
-npx prisma migrate deploy
-
-# If above fails, try:
+# Push schema to create tables in AWS RDS
 npx prisma db push
 
-# Verify with Prisma Studio
+# This will:
+# - Create all tables (User, Conversation, Message)
+# - Generate Prisma Client
+# - Sync your database with the schema
+
+# Verify with Prisma Studio (optional)
 npx prisma studio
+# Opens at http://localhost:5555
 ```
 
 ## Step 6: Test Connection
@@ -124,27 +131,25 @@ npx prisma studio
 ## Troubleshooting
 
 ### Connection Timeout
-- Check security group allows your IP
-- Verify "Public accessibility" is enabled
-- Confirm endpoint URL is correct
+- Check security group allows your IP (add "My IP" in inbound rules)
+- Verify "Public accessibility" is set to "Yes"
+- Confirm endpoint URL is correct (no brackets!)
 
-### SSL Connection Error
-- Add `?sslmode=require` to connection string
-- Or try `?sslmode=no-verify` for testing
+### Authentication Failed (P1000 Error)
+- **Check master username** in RDS Console → Configuration tab
+- Username might not be 'postgres' (could be custom like 'NOODEIA')
+- Password is case-sensitive
+- Remove any brackets from connection string
 
-### Authentication Failed
-- Double-check password (no special characters that need escaping)
-- Verify username is 'postgres'
-- Check database name is 'noodeia_db'
+### Database Not Found (P1003 Error)
+- This is normal for new databases!
+- Just run `npx prisma db push` to create tables
 
-### Migration Errors
-```bash
-# Reset and push schema directly (development only)
-npx prisma db push --force-reset
-
-# Or create migration files
-npx prisma migrate dev --name init
-```
+### Environment Variable Not Found
+- Make sure both `.env` and `.env.local` files exist
+- Both need the DATABASE_URL variable
+- Prisma CLI reads from `.env`
+- Next.js reads from `.env.local`
 
 ## Security Best Practices
 
