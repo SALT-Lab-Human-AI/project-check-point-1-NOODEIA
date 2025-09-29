@@ -129,8 +129,18 @@ export default function AIAssistantUI() {
     }
   }
 
-  async function createNewChat(uid = userId) {
-    if (!uid) return
+  async function createNewChat() {
+    // Get userId directly from localStorage if not in state
+    let uid = userId
+    if (!uid) {
+      const storedUserId = localStorage.getItem('ai_chat_user_id')
+      if (!storedUserId) {
+        // No user exists, initialize one first
+        await initializeUser()
+        return // initializeUser will trigger a re-render with the new userId
+      }
+      uid = storedUserId
+    }
 
     try {
       const { data, error } = await supabase
@@ -279,19 +289,53 @@ export default function AIAssistantUI() {
         .in('id', messagesToDelete)
     }
 
-    // Update local state
+    // Update local state - remove messages after the edited one
     setConversations(prev =>
       prev.map(conv => {
         if (conv.id !== selectedId) return conv
         const messages = conv.messages.slice(0, messageIndex + 1).map(msg =>
           msg.id === messageId ? { ...msg, content } : msg
         )
-        return { ...conv, messages }
+        return { ...conv, messages, updated_at: new Date().toISOString() }
       })
     )
 
-    // Regenerate AI response
-    await getAIResponse(conversation.id, content)
+    // Update conversation's updated_at
+    await supabase
+      .from('conversations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', conversation.id)
+
+    // Generate new AI response
+    setIsThinking(true)
+    setTimeout(async () => {
+      setIsThinking(false)
+      const assistantContent = "I'll help you with that. This is a demo response to show the chat interface is working."
+
+      const { data: assistantMsg, error: aiError } = await supabase
+        .from('messages')
+        .insert([{
+          conversation_id: conversation.id,
+          role: 'assistant',
+          content: assistantContent
+        }])
+        .select()
+        .single()
+
+      if (!aiError && assistantMsg) {
+        setConversations(prev =>
+          prev.map(conv => {
+            if (conv.id !== conversation.id) return conv
+            const messages = [...(conv.messages || []), assistantMsg]
+            return {
+              ...conv,
+              messages,
+              updated_at: new Date().toISOString(),
+            }
+          })
+        )
+      }
+    }, 1500)
   }
 
   function resendMessage(messageId) {
