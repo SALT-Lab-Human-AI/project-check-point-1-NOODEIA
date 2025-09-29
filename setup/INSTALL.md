@@ -185,7 +185,28 @@ git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
 git push -u origin main
 ```
 
-#### 5.2 Deploy to GitHub Pages
+#### 5.2 Configure GitHub Secrets
+
+Before deploying, you need to add your Supabase credentials as GitHub Secrets:
+
+1. Go to your GitHub repository
+2. Navigate to **Settings** → **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Add the following secrets:
+
+   **Secret 1:**
+   - Name: `SUPABASE_URL`
+   - Value: Your Supabase URL (e.g., `https://fjyxanrpjrhbigcsecbf.supabase.co`)
+
+   **Secret 2:**
+   - Name: `SUPABASE_ANON_KEY`
+   - Value: Your Supabase anon key (the long JWT token)
+
+5. Click **Add secret** for each one
+
+**Important**: These are the same values from your `.env.local` file, but without the `NEXT_PUBLIC_` prefix. GitHub Actions will use these to build your site with the correct database connection.
+
+#### 5.3 Deploy to GitHub Pages
 
 ```bash
 # Build and deploy to GitHub Pages
@@ -197,7 +218,7 @@ This command will:
 - Create/update `gh-pages` branch
 - Push to GitHub Pages
 
-#### 5.3 Enable GitHub Pages
+#### 5.4 Enable GitHub Pages
 
 1. Go to your GitHub repository
 2. Navigate to **Settings** → **Pages**
@@ -207,7 +228,7 @@ This command will:
    - **Folder**: `/ (root)`
 4. Click **Save**
 
-#### 5.4 Access Your Site
+#### 5.5 Access Your Site
 
 Your site will be available at:
 ```
