@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { Menu, Plus } from "lucide-react"
+import { Menu } from "lucide-react"
 
 export default function Header({ onMenuClick, createNewChat }) {
   return (
@@ -12,16 +12,10 @@ export default function Header({ onMenuClick, createNewChat }) {
       >
         <Menu className="h-5 w-5" />
       </button>
-      
+
       <h1 className="text-lg font-semibold">AI Assistant</h1>
-      
-      <button
-        onClick={createNewChat}
-        className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-        title="New Chat (⌘N)"
-      >
-        <Plus className="h-5 w-5" />
-      </button>
+
+      <div className="w-9" />
     </header>
   )
 }

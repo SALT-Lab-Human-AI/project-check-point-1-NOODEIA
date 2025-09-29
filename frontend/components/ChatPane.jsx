@@ -93,7 +93,7 @@ export default function ChatPane({
                       <textarea
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        className="w-full rounded-lg border bg-white p-2 text-sm focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+                        className="w-full rounded-lg border border-zinc-300 bg-white p-2 text-sm text-zinc-900 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                         rows={4}
                         autoFocus
                       />

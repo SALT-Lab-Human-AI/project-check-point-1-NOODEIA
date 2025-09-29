@@ -43,13 +43,6 @@ export default function Sidebar({
             <div className="flex items-center gap-2">
               <ThemeToggle theme={theme} setTheme={setTheme} />
               <button
-                onClick={createNewChat}
-                className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                title="New Chat (⌘N)"
-              >
-                <Plus className="h-5 w-5" />
-              </button>
-              <button
                 onClick={onClose}
                 className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 lg:hidden"
               >

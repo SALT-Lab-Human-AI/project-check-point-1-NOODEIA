@@ -250,16 +250,48 @@ export default function AIAssistantUI() {
     }
   }
 
-  function updateMessage(messageId, content) {
+  async function updateMessage(messageId, content) {
+    const conversation = conversations.find(c => c.id === selectedId)
+    if (!conversation) return
+
+    // Find the message and its index
+    const messageIndex = conversation.messages.findIndex(m => m.id === messageId)
+    if (messageIndex === -1) return
+
+    // Update the message in database
+    const { error: updateError } = await supabase
+      .from('messages')
+      .update({ content })
+      .eq('id', messageId)
+
+    if (updateError) {
+      console.error('Failed to update message:', updateError)
+      return
+    }
+
+    // Remove all messages after this one (they will be regenerated)
+    const messagesToDelete = conversation.messages.slice(messageIndex + 1).map(m => m.id)
+
+    if (messagesToDelete.length > 0) {
+      await supabase
+        .from('messages')
+        .delete()
+        .in('id', messagesToDelete)
+    }
+
+    // Update local state
     setConversations(prev =>
       prev.map(conv => {
         if (conv.id !== selectedId) return conv
-        const messages = (conv.messages || []).map(msg =>
-          msg.id === messageId ? { ...msg, content, updated_at: new Date().toISOString() } : msg
+        const messages = conv.messages.slice(0, messageIndex + 1).map(msg =>
+          msg.id === messageId ? { ...msg, content } : msg
         )
         return { ...conv, messages }
       })
     )
+
+    // Regenerate AI response
+    await getAIResponse(conversation.id, content)
   }
 
   function resendMessage(messageId) {
