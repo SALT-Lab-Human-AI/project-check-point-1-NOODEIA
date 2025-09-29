@@ -96,14 +96,13 @@ git push origin main
 ```
 
 ### 2. Deploy to GitHub Pages
-```bash
-npm run deploy
-```
+
+Deployment happens automatically when you push to the main branch via GitHub Actions.
 
 This will:
+- Trigger GitHub Actions workflow
 - Build the static site
-- Create `gh-pages` branch
-- Deploy to GitHub Pages
+- Deploy directly to GitHub Pages
 
 ### 3. Enable GitHub Pages
 1. Go to your GitHub repository

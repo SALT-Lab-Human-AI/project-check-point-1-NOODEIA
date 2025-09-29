@@ -61,10 +61,8 @@ Quick Start (5 Minutes)
 
 6. **Deploy to GitHub Pages**
 
-   .. code-block:: bash
-
-      npm run deploy
-      # Enable GitHub Pages in repository settings
+   Deployment happens automatically via GitHub Actions when you push to main.
+   Enable GitHub Pages in repository settings with "GitHub Actions" as source.
 
 Your app will be live at: ``https://[username].github.io/project-check-point-1-noodiea``
 
@@ -115,8 +113,7 @@ Common Commands
    npm run dev              # Start dev server
    npm run build            # Build for production
 
-   # Deployment
-   npm run deploy           # Deploy to GitHub Pages
+   # Deployment happens automatically via GitHub Actions on push to main
 
    # Dependencies
    npm install --legacy-peer-deps   # Install with peer deps resolution

@@ -284,8 +284,7 @@ npm run dev
 # Build for production
 npm run build
 
-# Deploy to GitHub Pages
-npm run deploy
+# Deployment happens automatically via GitHub Actions when you push to main
 ```
 
 #### Database Management
