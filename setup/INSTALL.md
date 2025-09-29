@@ -141,8 +141,19 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 
 ### Step 4: Test Locally
 
+**Important**: Make sure you're in the `frontend` directory before running commands:
+
 ```bash
+# Navigate to frontend directory first
+cd frontend
+
 # Start development server
+npm run dev
+```
+
+Or from the root directory:
+```bash
+cd project-check-point-1-noodiea/frontend
 npm run dev
 ```
 
@@ -150,6 +161,8 @@ npm run dev
 2. Send a test message
 3. Refresh the page - your message should persist
 4. Check Supabase dashboard → **Table Editor** to see your data
+
+**Note**: If port 3000 is busy, Next.js will automatically try ports 3001, 3002, etc. Check the terminal output for the actual port.
 
 ### Step 5: Deploy to GitHub Pages
 
