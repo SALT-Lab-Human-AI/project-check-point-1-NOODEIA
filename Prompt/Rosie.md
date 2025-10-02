@@ -17,15 +17,15 @@
 ## Prompts Used
 
 *   T1 Prompt:  
-    “A student asks: <problem>. Give ONLY the next step and one short hint. Do not provide the full solution.”    
+    “A student asks: [problem]. Give ONLY the next step and one short hint. Do not provide the full solution.”    
     
 *   T2 Prompt:  
-    “Learning goal: <topic>. Generate 1 multiple-choice question with 1 correct answer and 3 distractors, each tied to a common misconception. Output in JSON.”   
+    “Learning goal: [topic]. Generate 1 multiple-choice question with 1 correct answer and 3 distractors, each tied to a common misconception. Output in JSON.”   
     
 *   T3 Prompt:  
-    “Student step: <expression>. Decide if it is correct or incorrect. If incorrect, name the error and give only one correct next step.”    
+    “Student step: [expression]. Decide if it is correct or incorrect. If incorrect, name the error and give only one correct next step.”    
 
-(Replace <problem>, <topic>, <expression> with own examples.)
+(Replace [problem], [topic], [expression] with own examples.)
 
 
 ## Protocol Rules
@@ -68,4 +68,4 @@ Drafting task descriptions and example prompts for the three scenarios (homework
 
 Suggesting a standardized protocol structure to ensure consistency across tools.
 
-All AI-generated content was critically reviewed, edited, and adapted by human team members before inclusion.**
+All AI-generated content was critically reviewed, edited, and adapted by human team members before inclusion.
