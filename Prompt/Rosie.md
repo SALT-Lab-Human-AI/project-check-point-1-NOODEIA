@@ -1,4 +1,4 @@
-**# Prompting Protocol – \[Rosie Xu\]
+### Prompting Protocol – \[Rosie Xu\]
 
 ## Tool
 
@@ -8,36 +8,29 @@
 ## Scenarios & Tasks
 
 *   T1 Homework Help (typical): Present a math word problem. Ask the tool to give only the next step and a one-sentence hint.  
-      
-    
-*   T2 Item Generation (edge): Request one multiple-choice question with one correct answer and three distractors that each match a common misconception.  
-      
-    
-*   T3 Step Fix (failure): Provide a student’s incorrect solution step. Ask the tool to (a) judge if correct/incorrect, and (b) if incorrect, label the error and give one correct next step.  
-      
-    
 
+*   T2 Item Generation (edge): Request one multiple-choice question with one correct answer and three distractors that each match a common misconception.        
+
+*   T3 Step Fix (failure): Provide a student’s incorrect solution step. Ask the tool to (a) judge if correct/incorrect, and (b) if incorrect, label the error and give one correct next step. 
+      
+    
 ## Prompts Used
 
 *   T1 Prompt:  
-    “A student asks: <problem>. Give ONLY the next step and one short hint. Do not provide the full solution.”  
-      
+    “A student asks: <problem>. Give ONLY the next step and one short hint. Do not provide the full solution.”    
     
 *   T2 Prompt:  
-    “Learning goal: <topic>. Generate 1 multiple-choice question with 1 correct answer and 3 distractors, each tied to a common misconception. Output in JSON.”  
-      
+    “Learning goal: <topic>. Generate 1 multiple-choice question with 1 correct answer and 3 distractors, each tied to a common misconception. Output in JSON.”   
     
 *   T3 Prompt:  
-    “Student step: <expression>. Decide if it is correct or incorrect. If incorrect, name the error and give only one correct next step.”  
-      
-    
+    “Student step: <expression>. Decide if it is correct or incorrect. If incorrect, name the error and give only one correct next step.”    
 
 (Replace <problem>, <topic>, <expression> with own examples.)
 
+
 ## Protocol Rules
 
-*   Format: Use plain text or minimal JSON for consistency.  
-      
+*   Format: Use plain text or minimal JSON for consistency.        
     
 *   Retries: Maximum 1 retry. Keep both outputs.  
       
