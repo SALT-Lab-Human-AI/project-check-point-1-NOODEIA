@@ -98,13 +98,23 @@ Quick Start (10 Minutes)
 
    a. Go to https://vercel.com and sign up with GitHub
    b. Click "Add New Project" and import this repository
-   c. Configure project:
 
-      * Root Directory: ``frontend``
+   c. **IMPORTANT: Configure Root Directory**
+
+      * Click "Edit" next to Root Directory
+      * Enter: ``frontend``
+      * Click "Save"
+
+   d. Configure Build Settings:
+
       * Install Command: ``npm install --legacy-peer-deps``
+      * (Click "Override" to set the install command)
 
-   d. Add all 5 environment variables from ``.env.local``
-   e. Click "Deploy"
+   e. Add all 5 environment variables from ``.env.local``
+
+      * Check: Production, Preview, Development for each variable
+
+   f. Click "Deploy"
 
 Your app will be live at: ``https://your-project.vercel.app``
 

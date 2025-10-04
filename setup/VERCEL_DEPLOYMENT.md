@@ -28,14 +28,20 @@ Before deploying to Vercel, ensure you have:
 
 ### Step 3: Configure Project Settings
 
-**Framework Preset:** Next.js (should auto-detect)
+⚠️ **IMPORTANT: You must configure the Root Directory**
 
-**Root Directory:** `frontend`
+1. **Root Directory:**
+   - Click "Edit" next to Root Directory
+   - Enter: `frontend`
+   - Click "Save"
 
-**Build Settings:**
-- Build Command: `npm run build`
-- Output Directory: `.next` (leave default)
-- Install Command: `npm install --legacy-peer-deps`
+2. **Framework Preset:** Next.js (should auto-detect)
+
+3. **Build & Development Settings:**
+   - Build Command: `npm run build` (leave default)
+   - Output Directory: `.next` (leave default)
+   - Install Command: `npm install --legacy-peer-deps`
+   - Click "Override" next to Install Command to set this value
 
 ### Step 4: Add Environment Variables
 
@@ -45,13 +51,13 @@ Click "Environment Variables" and add these **5 variables**:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL
-Value: https://fjyxanrpjrhbigcsecbf.supabase.co
+Value: your-supabase-url
 
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 Value: your-supabase-anon-key
 
 NEXT_PUBLIC_NEO4J_URI
-Value: neo4j+s://b2e42ec1.databases.neo4j.io
+Value: neo4j+s://xxxxx.databases.neo4j.io
 
 NEXT_PUBLIC_NEO4J_USERNAME
 Value: neo4j
@@ -60,7 +66,10 @@ NEXT_PUBLIC_NEO4J_PASSWORD
 Value: your-neo4j-password
 ```
 
-**⚠️ Important:** All variables must start with `NEXT_PUBLIC_` to be available in the browser.
+**⚠️ Important:**
+- All variables must start with `NEXT_PUBLIC_` to be available in the browser
+- Use your actual credentials from `.env.local` file
+- Check **Production**, **Preview**, and **Development** for each variable
 
 ### Step 5: Deploy!
 
