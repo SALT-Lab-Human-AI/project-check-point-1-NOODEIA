@@ -11,19 +11,19 @@ Overview
 
 Noodeia is a personalized AI tutor chat application with:
 
-* **Frontend**: Next.js 15 (static export)
+* **Frontend**: Next.js 15
 * **Authentication**: Supabase Auth
 * **Database**: Neo4j AuraDB (Graph Database)
-* **Deployment**: GitHub Pages via GitHub Actions
+* **Deployment**: Vercel
 
 Prerequisites
 -------------
 
 * Node.js 18+ installed
 * Git installed
-* GitHub account
 * Supabase account (free tier) - for authentication
 * Neo4j AuraDB account (free tier) - for data storage
+* Vercel account (free tier) - for deployment
 
 Quick Start (10 Minutes)
 -------------------------
@@ -87,20 +87,21 @@ Quick Start (10 Minutes)
       npm run dev
       # Open http://localhost:3000
 
-7. **Deploy to GitHub Pages**
+7. **Deploy to Vercel (Recommended)**
 
-   a. Update ``frontend/next.config.mjs`` - change basePath to your repo name:
+   a. Go to https://vercel.com and sign up with GitHub
+   b. Click "Add New Project" and import this repository
+   c. Configure project:
 
-      .. code-block:: javascript
+      * Root Directory: ``frontend``
+      * Install Command: ``npm install --legacy-peer-deps``
 
-         basePath: process.env.NODE_ENV === 'production' ? '/your-repo-name' : ''
+   d. Add all 5 environment variables from ``.env.local``
+   e. Click "Deploy"
 
-   b. Push to main branch - GitHub Actions will automatically deploy
-   c. Enable GitHub Pages in repository settings:
+Your app will be live at: ``https://your-project.vercel.app``
 
-      * Settings → Pages → Source: "GitHub Actions"
-
-Your app will be live at: ``https://[username].github.io/your-repo-name``
+**Detailed Guide:** See ``setup/VERCEL_DEPLOYMENT.md`` for complete instructions
 
 Architecture
 ------------
@@ -172,7 +173,7 @@ Key Features
 * 🔐 Secure authentication (Supabase)
 * 🌓 Dark/Light theme
 * 📱 Responsive design
-* 🚀 Serverless deployment (GitHub Pages)
+* 🚀 Serverless deployment (Vercel)
 
 Common Commands
 ---------------
@@ -183,8 +184,6 @@ Common Commands
    npm run dev              # Start dev server
    npm run build            # Build for production
    npm run setup-neo4j      # Initialize Neo4j database
-
-   # Deployment happens automatically via GitHub Actions on push to main
 
    # Dependencies
    npm install --legacy-peer-deps   # Install dependencies
@@ -207,11 +206,6 @@ Troubleshooting
    - Verify Neo4j AuraDB instance is running
    - Check credentials in ``.env.local``
    - Ensure URI starts with ``neo4j+s://``
-
-**GitHub Pages 404:**
-   - Wait 2-5 minutes for initial deployment
-   - Verify GitHub Pages is enabled with "GitHub Actions" source
-   - Check ``next.config.mjs`` has correct basePath
 
 **Build failures:**
    - Use ``npm install --legacy-peer-deps``

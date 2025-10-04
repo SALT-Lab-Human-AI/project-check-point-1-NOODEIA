@@ -227,9 +227,7 @@ Upcoming tasks
 We've developed a sophisticated AI Assistant UI with a modern chat interface, built with Next.js and React.
 
 ### 🌐 Live Demo
-**Visit the live application:** [https://[your-username].github.io/project-check-point-1-aidee](https://[your-username].github.io/project-check-point-1-aidee)
-
-*Replace `[your-username]` with your GitHub username after deployment*
+**Visit the live application:** Deploy to Vercel to get your live URL
 
 ### Features
 - 💬 **Minimalistic Chat Interface** - Clean, focused messaging system
@@ -306,34 +304,29 @@ frontend/
 └── public/                # Static assets
 ```
 
-### 🚀 GitHub Pages Deployment
+### 🚀 Vercel Deployment (Recommended)
 
-The frontend is configured for automatic deployment to GitHub Pages.
+The frontend is configured for deployment to Vercel with zero configuration.
 
-#### Setup Instructions:
-1. **Enable GitHub Pages in your repository:**
-   - Go to Settings → Pages
-   - Source: GitHub Actions
+#### Quick Setup:
+1. **Import to Vercel:**
+   - Go to https://vercel.com
+   - Sign up with GitHub
+   - Import this repository
+   - Set root directory to `frontend`
 
-2. **The deployment will trigger automatically when you:**
-   - Push to the `main` branch
-   - Or manually trigger the workflow from Actions tab
+2. **Add Environment Variables:**
+   - Add all 5 `NEXT_PUBLIC_*` variables from `.env.local`
+   - Deploy!
 
-3. **Access your deployed site at:**
-   ```
-   https://[your-username].github.io/project-check-point-1-aidee
-   ```
+3. **Your app will be live at:** `https://your-project.vercel.app`
 
-#### Manual Deployment:
-```bash
-# Build the static site
-cd frontend
-NODE_ENV=production npm run build
+**📚 Detailed Guide:** See [`setup/VERCEL_DEPLOYMENT.md`](setup/VERCEL_DEPLOYMENT.md) for complete instructions.
 
-# The static files will be in frontend/out/
-```
-
-For more details, see the [frontend README](./frontend/README.md).
+#### Automatic Deployments:
+- **Every push to main** → Production deployment
+- **Every push to branches** → Preview deployment
+- **Every pull request** → Preview URL in PR comments
 
 ---
 
