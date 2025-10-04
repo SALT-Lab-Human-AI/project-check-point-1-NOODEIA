@@ -6,9 +6,9 @@ import Header from "./Header"
 import ChatPane from "./ChatPane"
 import AuthForm from "./AuthForm"
 import { supabase } from "../lib/supabase"
+import { databaseAdapter } from "../lib/database-adapter"
 
 export default function AIAssistantUI() {
-  // Initialize with light theme for consistent SSR
   const [theme, setTheme] = useState("light")
   const [isClient, setIsClient] = useState(false)
   const [userId, setUserId] = useState(null)
@@ -16,11 +16,8 @@ export default function AIAssistantUI() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
-
-  // Handle theme initialization after mount
   useEffect(() => {
     setIsClient(true)
-    // Only access localStorage and matchMedia on client
     const saved = localStorage.getItem("theme")
     if (saved) {
       setTheme(saved)
@@ -30,7 +27,6 @@ export default function AIAssistantUI() {
   }, [])
 
   useEffect(() => {
-    // Apply theme to document
     if (theme === "dark") {
       document.documentElement.classList.add("dark")
     } else {
@@ -39,7 +35,6 @@ export default function AIAssistantUI() {
     document.documentElement.setAttribute("data-theme", theme)
     document.documentElement.style.colorScheme = theme
 
-    // Only save to localStorage on client
     if (isClient) {
       localStorage.setItem("theme", theme)
     }
@@ -50,29 +45,18 @@ export default function AIAssistantUI() {
   const [selectedId, setSelectedId] = useState(null)
   const [isThinking, setIsThinking] = useState(false)
 
-  // Check authentication status on mount
   useEffect(() => {
     checkAuth()
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Only handle actual auth changes, not initial load
       if (!authChecked) return
 
       if (event === 'SIGNED_IN' && session) {
-        // User signed in
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-
+        const userData = await databaseAdapter.getUserById(session.user.id)
         if (userData) {
           handleAuthSuccess(userData)
         }
       } else if (event === 'SIGNED_OUT') {
-        // User signed out - state already cleared in handleLogout
-        // Just ensure we're not loading
         setIsLoading(false)
       }
     })
@@ -85,16 +69,10 @@ export default function AIAssistantUI() {
       const { data: { session } } = await supabase.auth.getSession()
 
       if (session) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-
+        const userData = await databaseAdapter.getUserById(session.user.id)
         if (userData) {
           await handleAuthSuccess(userData)
         } else {
-          // Session exists but no user in our database yet
           setIsLoading(false)
         }
       } else {
@@ -113,14 +91,12 @@ export default function AIAssistantUI() {
     setUserId(userData.id)
     setIsAuthenticated(true)
     setIsLoading(false)
-    // Load conversations after setting loading to false to avoid UI blocking
     loadConversations(userData.id)
   }
 
   async function handleLogout() {
     setIsLoading(true)
     await supabase.auth.signOut()
-    // Clear all state immediately
     setIsAuthenticated(false)
     setCurrentUser(null)
     setUserId(null)
@@ -131,29 +107,23 @@ export default function AIAssistantUI() {
 
   async function loadConversations(uid) {
     try {
-      const { data, error } = await supabase
-        .from('conversations')
-        .select('*, messages(*)')
-        .eq('user_id', uid)
-        .order('updated_at', { ascending: false })
+      const sessions = await databaseAdapter.getUserSessions(uid)
 
-      if (error) {
-        console.error('Error loading conversations:', error)
-        return
-      }
-
-      if (!data || data.length === 0) {
-        createNewChat(uid)
+      if (!sessions || sessions.length === 0) {
+        createNewChat()
       } else {
-        // Sort messages by created_at for each conversation
-        const conversationsWithSortedMessages = data.map(conv => ({
-          ...conv,
-          messages: conv.messages.sort((a, b) =>
-            new Date(a.created_at) - new Date(b.created_at)
-          )
-        }))
-        setConversations(conversationsWithSortedMessages)
-        setSelectedId(conversationsWithSortedMessages[0].id)
+        const conversationsWithChats = await Promise.all(
+          sessions.map(async (session) => {
+            const chats = await databaseAdapter.getSessionChats(session.id)
+            return {
+              ...session,
+              messages: chats || []
+            }
+          })
+        )
+
+        setConversations(conversationsWithChats)
+        setSelectedId(conversationsWithChats[0].id)
       }
     } catch (error) {
       console.error('Failed to load conversations:', error)
@@ -161,34 +131,11 @@ export default function AIAssistantUI() {
   }
 
   async function createNewChat() {
-    if (!userId || !isAuthenticated) {
-      console.error('User must be logged in to create a chat', { userId, isAuthenticated })
-      return
-    }
-
-    console.log('Creating new chat for user:', userId)
+    if (!userId || !isAuthenticated) return
 
     try {
-      const { data, error } = await supabase
-        .from('conversations')
-        .insert([{
-          user_id: userId,
-          title: 'New Chat'
-        }])
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error creating conversation:', error)
-        // If the error is related to user not existing, try to create the user
-        if (error.code === '23503') { // Foreign key violation
-          console.error('User does not exist in database. User ID:', userId)
-        }
-        return
-      }
-
-      console.log('New conversation created:', data)
-      const newConversation = { ...data, messages: [] }
+      const newSession = await databaseAdapter.createSession(userId, 'New Chat')
+      const newConversation = { ...newSession, messages: [] }
       setConversations(prev => [newConversation, ...prev])
       setSelectedId(newConversation.id)
       setSidebarOpen(false)
@@ -223,21 +170,8 @@ export default function AIAssistantUI() {
     )
 
     try {
-      // Save user message to Supabase
-      const { data: savedMsg, error } = await supabase
-        .from('messages')
-        .insert([{
-          conversation_id: convId,
-          role: 'user',
-          content
-        }])
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error saving message:', error)
-        return
-      }
+      // Save user message to Neo4j
+      const savedMsg = await databaseAdapter.createChat(convId, 'user', content)
 
       // Replace temp message with saved one
       setConversations(prev =>
@@ -246,15 +180,11 @@ export default function AIAssistantUI() {
           const messages = conv.messages.map(m =>
             m.id === tempUserMsg.id ? savedMsg : m
           )
-          return { ...conv, messages }
+          // Update title if first message
+          const title = conv.messages.length === 0 ? content.slice(0, 30) + "..." : conv.title
+          return { ...conv, messages, title }
         })
       )
-
-      // Update conversation's updated_at
-      await supabase
-        .from('conversations')
-        .update({ updated_at: now })
-        .eq('id', convId)
 
       // Simulate AI response
       setIsThinking(true)
@@ -262,17 +192,9 @@ export default function AIAssistantUI() {
         setIsThinking(false)
         const assistantContent = "I'll help you with that. This is a demo response to show the chat interface is working."
 
-        const { data: assistantMsg, error: aiError } = await supabase
-          .from('messages')
-          .insert([{
-            conversation_id: convId,
-            role: 'assistant',
-            content: assistantContent
-          }])
-          .select()
-          .single()
+        const assistantMsg = await databaseAdapter.createChat(convId, 'assistant', assistantContent)
 
-        if (!aiError && assistantMsg) {
+        if (assistantMsg) {
           setConversations(prev =>
             prev.map(conv => {
               if (conv.id !== convId) return conv
@@ -295,78 +217,53 @@ export default function AIAssistantUI() {
     const conversation = conversations.find(c => c.id === selectedId)
     if (!conversation) return
 
-    // Find the message and its index
     const messageIndex = conversation.messages.findIndex(m => m.id === messageId)
     if (messageIndex === -1) return
 
-    // Update the message in database
-    const { error: updateError } = await supabase
-      .from('messages')
-      .update({ content })
-      .eq('id', messageId)
+    try {
+      await databaseAdapter.updateChat(messageId, content)
 
-    if (updateError) {
-      console.error('Failed to update message:', updateError)
-      return
-    }
-
-    // Remove all messages after this one (they will be regenerated)
-    const messagesToDelete = conversation.messages.slice(messageIndex + 1).map(m => m.id)
-
-    if (messagesToDelete.length > 0) {
-      await supabase
-        .from('messages')
-        .delete()
-        .in('id', messagesToDelete)
-    }
-
-    // Update local state - remove messages after the edited one
-    setConversations(prev =>
-      prev.map(conv => {
-        if (conv.id !== selectedId) return conv
-        const messages = conv.messages.slice(0, messageIndex + 1).map(msg =>
-          msg.id === messageId ? { ...msg, content } : msg
-        )
-        return { ...conv, messages, updated_at: new Date().toISOString() }
-      })
-    )
-
-    // Update conversation's updated_at
-    await supabase
-      .from('conversations')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', conversation.id)
-
-    // Generate new AI response
-    setIsThinking(true)
-    setTimeout(async () => {
-      setIsThinking(false)
-      const assistantContent = "I'll help you with that. This is a demo response to show the chat interface is working."
-
-      const { data: assistantMsg, error: aiError } = await supabase
-        .from('messages')
-        .insert([{
-          conversation_id: conversation.id,
-          role: 'assistant',
-          content: assistantContent
-        }])
-        .select()
-        .single()
-
-      if (!aiError && assistantMsg) {
-        setConversations(prev =>
-          prev.map(conv => {
-            if (conv.id !== conversation.id) return conv
-            const messages = [...(conv.messages || []), assistantMsg]
-            return {
-              ...conv,
-              messages,
-              updated_at: new Date().toISOString(),
-            }
-          })
-        )
+      const messagesToDelete = conversation.messages.slice(messageIndex + 1)
+      if (messagesToDelete.length > 0) {
+        for (const msg of messagesToDelete) {
+          await databaseAdapter.deleteChat(msg.id)
+        }
       }
-    }, 1500)
+
+      setConversations(prev =>
+        prev.map(conv => {
+          if (conv.id !== selectedId) return conv
+          const messages = conv.messages.slice(0, messageIndex + 1).map(msg =>
+            msg.id === messageId ? { ...msg, content } : msg
+          )
+          return { ...conv, messages, updated_at: new Date().toISOString() }
+        })
+      )
+
+      setIsThinking(true)
+      setTimeout(async () => {
+        setIsThinking(false)
+        const assistantContent = "I'll help you with that. This is a demo response to show the chat interface is working."
+
+        const assistantMsg = await databaseAdapter.createChat(conversation.id, 'assistant', assistantContent)
+
+        if (assistantMsg) {
+          setConversations(prev =>
+            prev.map(conv => {
+              if (conv.id !== conversation.id) return conv
+              const messages = [...(conv.messages || []), assistantMsg]
+              return {
+                ...conv,
+                messages,
+                updated_at: new Date().toISOString(),
+              }
+            })
+          )
+        }
+      }, 1500)
+    } catch (error) {
+      console.error('Failed to update message:', error)
+    }
   }
 
   function resendMessage(messageId) {
@@ -377,7 +274,6 @@ export default function AIAssistantUI() {
     sendMessage(conversation.id, message.content)
   }
 
-  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (event) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "n") {
@@ -402,7 +298,6 @@ export default function AIAssistantUI() {
     )
   }
 
-  // Show login form if not authenticated
   if (!isAuthenticated) {
     return <AuthForm onSuccess={handleAuthSuccess} />
   }

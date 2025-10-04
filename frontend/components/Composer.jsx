@@ -12,12 +12,10 @@ export default function Composer({ onSend, busy }) {
     if (inputRef.current) {
       const textarea = inputRef.current
       const minHeight = 40
-      
-      // Reset height to calculate scroll height
+
       textarea.style.height = "auto"
       const scrollHeight = textarea.scrollHeight
-      
-      // Auto-expand up to 200px, then scroll
+
       if (scrollHeight <= 200) {
         textarea.style.height = `${Math.max(minHeight, scrollHeight)}px`
         textarea.style.overflowY = "hidden"

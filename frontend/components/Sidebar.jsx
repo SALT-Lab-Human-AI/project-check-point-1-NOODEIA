@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { Plus, Moon, Sun, X } from "lucide-react"
+import { Plus, X } from "lucide-react"
 import ConversationRow from "./ConversationRow"
 import ThemeToggle from "./ThemeToggle"
 
@@ -15,14 +15,12 @@ export default function Sidebar({
   onSelect,
   createNewChat,
 }) {
-  // Simple list of all conversations sorted by most recent
-  const sortedConversations = [...conversations].sort((a, b) => 
+  const sortedConversations = [...conversations].sort((a, b) =>
     new Date(b.updatedAt) - new Date(a.updatedAt)
   )
 
   return (
     <>
-      {/* Mobile overlay */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
@@ -30,14 +28,12 @@ export default function Sidebar({
         />
       )}
 
-      {/* Sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-50 w-80 transform bg-white transition-transform duration-300 ease-in-out dark:bg-zinc-950 lg:relative lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-full flex-col">
-          {/* Header */}
           <div className="flex items-center justify-between border-b px-4 py-3 dark:border-zinc-800">
             <h2 className="text-lg font-semibold">Chats</h2>
             <div className="flex items-center gap-2">
@@ -51,7 +47,6 @@ export default function Sidebar({
             </div>
           </div>
 
-          {/* Conversations List */}
           <div className="flex-1 overflow-y-auto p-2">
             {sortedConversations.length > 0 ? (
               <div className="space-y-1">
@@ -74,7 +69,6 @@ export default function Sidebar({
             )}
           </div>
 
-          {/* Footer */}
           <div className="border-t p-4 dark:border-zinc-800">
             <button
               onClick={createNewChat}

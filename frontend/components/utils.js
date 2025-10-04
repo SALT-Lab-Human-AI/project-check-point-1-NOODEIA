@@ -24,7 +24,7 @@ export function timeAgo(date) {
       break;
     }
   }
-  return rtf.format(value, /** @type {Intl.RelativeTimeFormatUnit} */ (unit));
+  return rtf.format(value, unit);
 }
 
 export const makeId = (p) => `${p}${Math.random().toString(36).slice(2, 10)}`;

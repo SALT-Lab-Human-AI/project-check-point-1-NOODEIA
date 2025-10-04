@@ -7,6 +7,7 @@ import { Input } from "./ui/input"
 import { Button } from "./ui/button"
 import { User, Mail, Lock, Sparkles, Brain, GraduationCap } from "lucide-react"
 import { supabase } from "../lib/supabase"
+import { databaseAdapter } from "../lib/database-adapter"
 
 export default function AuthForm({ onSuccess }) {
   const [isLogin, setIsLogin] = useState(true)
@@ -23,7 +24,6 @@ export default function AuthForm({ onSuccess }) {
 
     try {
       if (isLogin) {
-        // Sign in existing user
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -36,32 +36,18 @@ export default function AuthForm({ onSuccess }) {
           throw authError
         }
 
-        // Get user data from our users table
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('email', email)
-          .single()
+        let userData = await databaseAdapter.getUserById(authData.user.id)
 
-        if (userError && userError.code === 'PGRST116') {
-          // User doesn't exist in our table, create them
-          const { data: newUser, error: createError } = await supabase
-            .from('users')
-            .insert([{
-              id: authData.user.id,
-              email: email,
-              name: authData.user.user_metadata?.name || email.split('@')[0]
-            }])
-            .select()
-            .single()
-
-          if (createError) throw createError
-          onSuccess(newUser)
-        } else if (userData) {
-          onSuccess(userData)
+        if (!userData) {
+          userData = await databaseAdapter.createUser(
+            authData.user.id,
+            email,
+            authData.user.user_metadata?.name || email.split('@')[0]
+          )
         }
+
+        onSuccess(userData)
       } else {
-        // Sign up new user
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
           password,
@@ -77,30 +63,20 @@ export default function AuthForm({ onSuccess }) {
           throw authError
         }
 
-        // Check if sign up requires email confirmation
         if (authData.user && !authData.session) {
           setError('Account created! Please check your email to confirm your account, then sign in.')
-          setIsLogin(true) // Switch to login mode
+          setIsLogin(true)
           return
         }
 
-        // Only create user in our table if we have a session (confirmed email)
         if (authData.user && authData.session) {
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .insert([{
-              id: authData.user.id,
-              email: email,
-              name: name
-            }])
-            .select()
-            .single()
+          let userData = await databaseAdapter.getUserById(authData.user.id)
 
-          if (userError && userError.code !== '23505') { // Ignore duplicate key errors
-            throw userError
+          if (!userData) {
+            userData = await databaseAdapter.createUser(authData.user.id, email, name)
           }
 
-          onSuccess(userData || { id: authData.user.id, email, name })
+          onSuccess(userData)
         }
       }
     } catch (error) {
