@@ -1,1 +1,1 @@
-// Placeholder file to ensure public directory is tracked by git
+//  Placeholder file to ensure public directory is tracked by git
