@@ -222,21 +222,6 @@ Upcoming tasks
 
 ---
 
-## 🖥️ Frontend Application
-
-We've developed a sophisticated AI Assistant UI with a modern chat interface, built with Next.js and React.
-
-### 🌐 Live Demo
-**Visit the live application:** Deploy to Vercel to get your live URL
-
-### Features
-- 💬 **Minimalistic Chat Interface** - Clean, focused messaging system
-- 🎨 **Modern UI Components** - Built with Radix UI and shadcn/ui components
-- 🌓 **Dark Mode Support** - Seamless theme switching between light and dark modes
-- 💾 **Conversation History** - Manage multiple chat sessions
-- ⚡ **Real-time Updates** - Responsive UI with thinking indicators
-- 📱 **Fully Responsive** - Optimized for desktop and mobile devices
-
 ### Quick Start
 
 **📚 For detailed setup instructions, see [`setup/README.rst`](setup/README.rst)**

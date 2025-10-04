@@ -125,7 +125,7 @@ For comprehensive instructions, refer to:
    ``setup/NEO4J_SETUP.md`` - Complete Neo4j configuration and graph model
 
 **Project Configuration**
-   ``CLAUDE.md`` - Architecture notes and configuration details
+   ``README.md`` - Architecture notes and configuration details
 
 Project Structure
 -----------------
@@ -239,7 +239,7 @@ Need Help?
 ----------
 
 1. Check ``setup/NEO4J_SETUP.md`` for database setup details
-2. Review ``CLAUDE.md`` for architecture and configuration notes
+2. Review ``README.md`` for architecture and configuration notes
 3. Check browser console for detailed error messages
 4. Open an issue on GitHub for bugs
 
