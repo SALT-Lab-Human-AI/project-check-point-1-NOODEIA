@@ -144,8 +144,24 @@ export default function AIAssistantUI() {
     }
   }
 
+  async function renameConversation(convId, newTitle) {
+    try {
+      await databaseAdapter.updateSessionTitle(convId, newTitle)
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === convId ? { ...conv, title: newTitle } : conv
+        )
+      )
+    } catch (error) {
+      console.error('Failed to rename conversation:', error)
+    }
+  }
+
   async function sendMessage(convId, content) {
     if (!content.trim()) return
+
+    const conversation = conversations.find(c => c.id === convId)
+    const isFirstMessage = !conversation?.messages || conversation.messages.length === 0
 
     const now = new Date().toISOString()
     const tempUserMsg = {
@@ -153,6 +169,12 @@ export default function AIAssistantUI() {
       role: "user",
       content,
       created_at: now
+    }
+
+    // If this is the first message, auto-rename the conversation
+    if (isFirstMessage) {
+      const autoTitle = content.slice(0, 50) + (content.length > 50 ? '...' : '')
+      await renameConversation(convId, autoTitle)
     }
 
     // Optimistically update UI
@@ -313,6 +335,7 @@ export default function AIAssistantUI() {
         selectedId={selectedId}
         onSelect={setSelectedId}
         createNewChat={createNewChat}
+        onRenameConversation={renameConversation}
       />
 
       <div className="flex flex-1 flex-col">

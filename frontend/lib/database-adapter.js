@@ -76,6 +76,10 @@ class DatabaseAdapter {
     return await neo4jDataService.updateSession(sessionId, title)
   }
 
+  async updateSessionTitle(sessionId, title) {
+    return this.updateSession(sessionId, title)
+  }
+
   async deleteSession(sessionId) {
     if (!this.useNeo4j) {
       throw new Error('Supabase deletes no longer supported. Use Neo4j.')
