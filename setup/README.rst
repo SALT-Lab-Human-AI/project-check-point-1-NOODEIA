@@ -59,7 +59,14 @@ Quick Start (10 Minutes)
 
 4. **Configure Environment**
 
-   Create ``frontend/.env.local``:
+   Copy the example file and add your credentials:
+
+   .. code-block:: bash
+
+      cd frontend
+      cp .env.local.example .env.local
+
+   Then edit ``frontend/.env.local`` with your actual credentials:
 
    .. code-block:: text
 

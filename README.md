@@ -236,7 +236,12 @@ cd frontend
 npm install --legacy-peer-deps
 ```
 
-3. Create `.env.local` with your credentials:
+3. Copy the example environment file and add your credentials:
+```bash
+cp .env.local.example .env.local
+```
+
+Then edit `.env.local` with your actual credentials:
 ```bash
 # Supabase (Authentication)
 NEXT_PUBLIC_SUPABASE_URL=your-url
