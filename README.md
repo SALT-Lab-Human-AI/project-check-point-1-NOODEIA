@@ -241,22 +241,41 @@ We've developed a sophisticated AI Assistant UI with a modern chat interface, bu
 
 ### Quick Start
 
+**📚 For detailed setup instructions, see [`setup/README.rst`](setup/README.rst)**
+
 1. Navigate to the frontend directory:
 ```bash
 cd frontend
 ```
 
-2. Install dependencies (use legacy peer deps for React 19 compatibility):
+2. Install dependencies:
 ```bash
 npm install --legacy-peer-deps
 ```
 
-3. Start the development server:
+3. Create `.env.local` with your credentials:
+```bash
+# Supabase (Authentication)
+NEXT_PUBLIC_SUPABASE_URL=your-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-key
+
+# Neo4j AuraDB (Database)
+NEXT_PUBLIC_NEO4J_URI=neo4j+s://xxxxx.databases.neo4j.io
+NEXT_PUBLIC_NEO4J_USERNAME=neo4j
+NEXT_PUBLIC_NEO4J_PASSWORD=your-password
+```
+
+4. Initialize Neo4j database:
+```bash
+npm run setup-neo4j
+```
+
+5. Start the development server:
 ```bash
 npm run dev
 ```
 
-4. Open your browser to `http://localhost:3000`
+6. Open your browser to `http://localhost:3000`
 
 ### Tech Stack
 - **Next.js 15.2.4** - React framework with App Router
@@ -264,7 +283,8 @@ npm run dev
 - **TypeScript** - Type-safe development
 - **Tailwind CSS** - Utility-first CSS framework
 - **Radix UI** - Unstyled, accessible UI components
-- **shadcn/ui** - Beautifully designed component library
+- **Neo4j AuraDB** - Graph database for data storage
+- **Supabase** - Authentication service
 - **Lucide Icons** - Beautiful & consistent icons
 
 ### Troubleshooting

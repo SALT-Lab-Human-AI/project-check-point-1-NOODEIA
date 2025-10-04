@@ -16,7 +16,11 @@ class Neo4jService {
     const password = process.env.NEXT_PUBLIC_NEO4J_PASSWORD
 
     if (!uri || !username || !password) {
-      console.error('Neo4j credentials not configured')
+      console.error('Neo4j credentials not configured. Missing:', {
+        uri: !uri ? 'NEXT_PUBLIC_NEO4J_URI' : 'ok',
+        username: !username ? 'NEXT_PUBLIC_NEO4J_USERNAME' : 'ok',
+        password: !password ? 'NEXT_PUBLIC_NEO4J_PASSWORD' : 'ok'
+      })
       return
     }
 
@@ -43,6 +47,9 @@ class Neo4jService {
   getSession() {
     if (!this.driver) {
       this.initialize()
+    }
+    if (!this.driver) {
+      throw new Error('Neo4j driver not initialized. Check your environment variables.')
     }
     return this.driver.session({ database: 'neo4j' })
   }
