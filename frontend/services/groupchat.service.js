@@ -255,6 +255,40 @@ class GroupChatService {
     }
   }
 
+  async getMessage(messageId, userId) {
+    const session = neo4jClient.getSession()
+    try {
+      const result = await session.run(
+        `
+        MATCH (m:Message {id: $messageId})
+        OPTIONAL MATCH (author:User)-[:POSTED]->(m)
+        RETURN m,
+               author.name as userName,
+               author.email as userEmail
+        `,
+        { messageId }
+      )
+
+      if (result.records.length === 0) {
+        return null
+      }
+
+      const record = result.records[0]
+      const message = record.get('m').properties
+      return {
+        ...message,
+        createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : new Date().toISOString(),
+        userName: record.get('userName'),
+        userEmail: record.get('userEmail')
+      }
+    } catch (error) {
+      console.error('❌ Error fetching message:', error)
+      throw error
+    } finally {
+      await session.close()
+    }
+  }
+
   async getMessages(groupId, userId, limit = 50, skip = 0) {
     const session = neo4jClient.getSession()
     try {

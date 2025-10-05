@@ -31,18 +31,16 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Parent message ID required' }, { status: 400 })
     }
 
-    // Get thread messages to build context
-    const threadMessages = await groupChatService.getThreadMessages(parentMessageId, user.id)
-
-    // Get parent message
-    const messages = await groupChatService.getMessages(groupId, user.id, 50, 0)
-    const parentMessage = messages.find(m => m.id === parentMessageId)
+    // Get parent message directly (much faster than fetching all 50 messages)
+    const parentMessage = await groupChatService.getMessage(parentMessageId, user.id)
 
     if (!parentMessage) {
+      console.error('🤖 Parent message not found:', parentMessageId)
       return NextResponse.json({ error: 'Parent message not found' }, { status: 404 })
     }
 
-    console.log('🤖 Reading context:', threadMessages.length, 'previous messages')
+    // Get thread messages to build context
+    const threadMessages = await groupChatService.getThreadMessages(parentMessageId, user.id)
 
     // Build prompt with thread context
     let prompt = `You are a Socratic AI tutor in a group chat. Your role is to guide students to discover answers themselves through:
@@ -97,8 +95,6 @@ ${parentMessage.userName || parentMessage.userEmail}: ${parentMessage.content}
 
     // Broadcast AI message via Pusher for real-time updates
     await pusherService.sendMessage(groupId, aiMessage)
-
-    console.log('🤖 Response sent to group chat')
 
     return NextResponse.json(aiMessage)
   } catch (error) {
