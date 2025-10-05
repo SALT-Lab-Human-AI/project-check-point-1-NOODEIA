@@ -54,7 +54,6 @@ class GroupChatService {
         }
       )
 
-      console.log(`Created group ${groupId} with admin ${createdBy}`)
       return result.records[0]?.get('g').properties
     } catch (error) {
       console.error('Error creating group chat:', error)
@@ -94,17 +93,12 @@ class GroupChatService {
         )
 
         if (checkResult.records.length > 0) {
-          console.log(`User ${userId} already a member of group with key ${accessKey}`)
-          // Return the group data even if already a member
           return checkResult.records[0]?.get('g').properties
         }
-        console.log(`Invalid access key: ${accessKey}`)
         return { error: 'Invalid access key' }
       }
 
-      const groupData = result.records[0]?.get('g').properties
-      console.log(`User ${userId} joined group ${groupData.id}`)
-      return groupData
+      return result.records[0]?.get('g').properties
     } catch (error) {
       console.error('Error joining group chat:', error)
       throw error
@@ -262,11 +256,9 @@ class GroupChatService {
       )
 
       if (memberCheck.records.length === 0) {
-        console.log(`User ${userId} is not a member of group ${groupId}`)
         return []
       }
 
-      // If user is a member, get messages with parent info
       // Ensure skip and limit are integers using neo4j.int()
       const skipInt = neo4j.int(skip)
       const limitInt = neo4j.int(limit)

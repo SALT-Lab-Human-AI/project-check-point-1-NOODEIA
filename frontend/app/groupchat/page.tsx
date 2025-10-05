@@ -62,10 +62,8 @@ export default function GroupChatPage() {
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
         }
       })
-      console.log('Fetch groups response status:', response.status)
       if (response.ok) {
         const data = await response.json()
-        console.log('Fetched groups:', data)
         setGroups(data)
       } else {
         const error = await response.json()
@@ -96,10 +94,9 @@ export default function GroupChatPage() {
 
       if (response.ok) {
         const data = await response.json()
-        console.log('Join response:', data)
-        setSelectedGroupId(data.id) // Changed from data.groupId to data.id
+        setSelectedGroupId(data.id)
         setShowAccessModal(false)
-        await fetchGroups() // Added await
+        await fetchGroups()
       } else {
         const error = await response.json()
         console.error('Join error:', error)
@@ -122,10 +119,9 @@ export default function GroupChatPage() {
 
       if (response.ok) {
         const data = await response.json()
-        console.log('Create response:', data)
         setSelectedGroupId(data.id)
         setShowAccessModal(false)
-        await fetchGroups() // Added await
+        await fetchGroups()
       } else {
         const error = await response.json()
         console.error('Create error:', error)
@@ -149,7 +145,7 @@ export default function GroupChatPage() {
         fetchGroups()
       }
     } catch (error) {
-      // Error leaving group
+      console.error('Error leaving group:', error)
     }
   }
 
@@ -163,10 +159,8 @@ export default function GroupChatPage() {
 
   return (
     <div className="flex h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      {/* Sidebar */}
       <div className="w-80 border-r bg-white dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex h-full flex-col">
-          {/* Header */}
           <div className="flex h-14 items-center justify-between border-b px-4 dark:border-zinc-800">
             <h2 className="text-lg font-semibold">Group Chats</h2>
             <button
@@ -178,7 +172,6 @@ export default function GroupChatPage() {
             </button>
           </div>
 
-          {/* Group List */}
           <div className="flex-1 overflow-y-auto p-2">
             <GroupChatList
               groups={groups}
@@ -187,7 +180,6 @@ export default function GroupChatPage() {
             />
           </div>
 
-          {/* Bottom Actions */}
           <div className="border-t dark:border-zinc-800">
             <div className="px-4 py-2">
               <button
@@ -211,7 +203,6 @@ export default function GroupChatPage() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex flex-1 flex-col">
         {selectedGroupId && selectedGroupData ? (
           <GroupChat
@@ -231,7 +222,6 @@ export default function GroupChatPage() {
         )}
       </div>
 
-      {/* Modal */}
       {showAccessModal && (
         <GroupChatAccessModal
           isOpen={showAccessModal}

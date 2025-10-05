@@ -82,27 +82,21 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
         }
       })
 
-      console.log('Load messages response status:', response.status)
-
       if (!response.ok) {
         const errorData = await response.json()
         console.error('Messages API error:', errorData)
-        // Don't throw, just set empty messages
         setMessages([])
         return
       }
 
       const data = await response.json()
-      console.log('Loaded messages:', data)
-      // Ensure data is an array before reversing
       const messagesArray = Array.isArray(data) ? data : []
-      // Filter out thread replies - only show top-level messages in main channel
       const topLevelMessages = messagesArray.filter(msg => !msg.parentId)
       setMessages(topLevelMessages.reverse())
       scrollToBottom()
     } catch (error) {
       console.error('Failed to load messages:', error)
-      setMessages([]) // Set empty messages on error
+      setMessages([])
     } finally {
       setLoading(false)
     }
@@ -134,7 +128,6 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       setMessages(prev => [...prev, newMsg])
       scrollToBottom()
 
-      // If @ai was mentioned, trigger AI response
       if (hasAiMention) {
         try {
           const aiResponse = await fetch(`/api/groupchat/${groupId}/ai`, {
@@ -147,8 +140,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
           })
 
           if (aiResponse.ok) {
-            await aiResponse.json()
-            // Update message with AI reply count
+            const aiData = await aiResponse.json()
             setMessages(prev =>
               prev.map(msg =>
                 msg.id === newMsg.id
@@ -156,6 +148,8 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
                   : msg
               )
             )
+          } else {
+            console.error('AI response failed:', aiResponse.status, await aiResponse.text())
           }
         } catch (aiError) {
           console.error('AI response error:', aiError)
@@ -163,7 +157,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       }
     } catch (error) {
       console.error('Failed to send message:', error)
-      setNewMessage(messageContent) // Restore message on error
+      setNewMessage(messageContent)
     } finally {
       setSending(false)
     }

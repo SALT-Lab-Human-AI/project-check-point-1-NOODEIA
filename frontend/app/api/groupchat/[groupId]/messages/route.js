@@ -37,9 +37,7 @@ export async function GET(request, { params }) {
       skip
     )
 
-    // If messages is undefined or null, return empty array
     if (!messages) {
-      console.log('No messages returned from service for group:', groupId)
       return NextResponse.json([])
     }
 
@@ -93,6 +91,44 @@ export async function POST(request, { params }) {
     }
 
     await pusherService.sendMessage(groupId, message)
+
+    // Check if message contains @ai mention and trigger AI response
+    // Works for both main channel messages and replies
+    if (content.includes('@ai')) {
+      console.log('🤖 AI mention detected in message:', content)
+      console.log('🤖 Message type:', parentMessageId ? 'Thread reply' : 'Main channel')
+      console.log('🤖 Triggering AI response for message ID:', message.id)
+
+      try {
+        // Import AI response logic
+        const { POST: handleAI } = await import('../ai/route')
+
+        // For thread replies, pass the original parent ID to keep AI response in same thread
+        const aiParentId = parentMessageId || message.id
+        const aiRequestBody = JSON.stringify({ parentMessageId: aiParentId })
+
+        console.log('🤖 AI will reply to message ID:', aiParentId)
+
+        // Create the request with the correct parent
+        const aiRequest = new Request('http://localhost/api/groupchat/' + groupId + '/ai', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader
+          },
+          body: aiRequestBody
+        })
+
+        // Trigger AI response
+        const aiResponse = await handleAI(aiRequest, { params: { groupId } })
+        const aiData = await aiResponse.json()
+
+        console.log('🤖 AI response created:', aiData)
+      } catch (aiError) {
+        console.error('�� AI response error:', aiError)
+        // Don't fail the original message, just log the error
+      }
+    }
 
     return NextResponse.json(message, { status: 201 })
   } catch (error) {

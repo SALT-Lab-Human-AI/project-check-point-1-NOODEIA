@@ -11,9 +11,11 @@ Overview
 
 Noodeia is a personalized AI tutor chat application with:
 
-* **Frontend**: Next.js 15
-* **Authentication**: Supabase Auth
+* **Frontend**: Next.js 15.2.4 with App Router
+* **Authentication**: Supabase Auth (JWT tokens)
 * **Database**: Neo4j AuraDB (Graph Database)
+* **AI Model**: Google Gemini 2.5 Pro
+* **Real-time**: Pusher (optional)
 * **Deployment**: Vercel
 
 Prerequisites
@@ -132,7 +134,8 @@ Architecture
 
 * **Supabase**: Handles user authentication (signup/login)
 * **Neo4j AuraDB**: Stores all application data in graph format
-* **Google Gemini 2.0 Flash**: Powers AI tutor responses
+* **Google Gemini 2.5 Pro**: Powers AI tutor responses (upgraded from 2.0 Flash)
+* **Pusher**: Real-time messaging (optional, configured but can be disabled)
 
 **AI Tutor Graph Structure:**
   ``(:User)-[:HAS]->(:Session)-[:OCCURRED]->(:Chat)-[:NEXT]->(:Chat)``
@@ -208,15 +211,17 @@ Project Structure
 Key Features
 ------------
 
-* 💬 Real-time chat interface with AI tutor (Gemini 2.0 Flash)
+* 💬 Real-time chat interface with AI tutor (Gemini 2.5 Pro)
 * 👥 Group chat with Slack-style threading
-* 🤖 AI assistant with @ai mentions in group chat
+* 🤖 AI assistant with @ai mentions (works in main channel and thread replies)
 * 🗂️ Multiple conversation management
 * 💾 Graph database storage (Neo4j)
 * 🔐 Secure authentication (Supabase)
 * 🌓 Dark/Light theme
 * 📱 Responsive design
 * 🚀 Serverless deployment (Vercel)
+* ✏️ Edit and delete messages with cascade delete for threads
+* 🔄 Server-side @ai detection for reliable AI responses
 
 Using the Application
 ---------------------
@@ -224,9 +229,10 @@ Using the Application
 **AI Tutor:**
 
 1. Create account or login via Supabase Auth
-2. Start chatting - AI responds to every message using Gemini 2.0 Flash
-3. Create multiple conversations from the sidebar
-4. Delete conversations by clicking the delete button in sidebar
+2. Start chatting - AI responds to every message using Gemini 2.5 Pro
+3. AI uses Socratic teaching method (guides with questions rather than direct answers)
+4. Create multiple conversations from the sidebar
+5. Delete conversations by clicking the delete button in sidebar
 
 **Group Chat:**
 
@@ -235,8 +241,17 @@ Using the Application
 3. Send messages in the main channel
 4. **Reply to messages**: Click "Reply" or the reply count to open thread panel
 5. **Threading**: Slack-style side panel shows parent message and all replies
-6. **Invoke AI**: Type ``@ai`` in any message to get AI response in the thread
+6. **Invoke AI**: Type ``@ai`` in any message (main channel or thread reply) to get AI response
+
+   - AI responds in a thread when mentioned in main channel
+   - AI responds in the same thread when mentioned in a reply
+   - AI reads full thread context before responding
+
 7. **Edit/Delete**: Click the three-dot menu on your own messages
+
+   - Deleting a parent message cascades to all replies
+   - Edited messages show "(edited)" indicator
+
 8. **Leave group**: Click the logout icon in the header
 
 Common Commands
@@ -297,6 +312,24 @@ Troubleshooting
    - Ensure message has ``replyCount`` property in Neo4j
    - Check for JavaScript errors in browser console
    - Verify ThreadPanel component is imported in GroupChat.jsx
+
+**Pusher errors (400 status code):**
+   - Verify Pusher credentials in ``.env.local`` are correct
+   - Check that ``PUSHER_SECRET`` and ``NEXT_PUBLIC_PUSHER_KEY`` are not swapped
+   - Format should be:
+
+     - ``PUSHER_SECRET=`` (the secret value)
+     - ``NEXT_PUBLIC_PUSHER_KEY=`` (the key value)
+     - ``NEXT_PUBLIC_PUSHER_CLUSTER=`` (e.g., us2)
+
+   - Restart dev server after changing Pusher credentials
+   - Pusher is optional and can be disabled by commenting out variables
+
+**@ai not responding in group chat:**
+   - Ensure ``GEMINI_API_KEY`` is set in ``.env.local``
+   - Check server terminal for AI-related errors (look for 🤖 emoji logs)
+   - Verify AI detection is working: should see "AI mention detected" in terminal
+   - Server-side detection means browser cache won't affect @ai functionality
 
 Environment Variables Reference
 --------------------------------
