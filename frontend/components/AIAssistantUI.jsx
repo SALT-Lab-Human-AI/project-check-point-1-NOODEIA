@@ -220,12 +220,26 @@ export default function AIAssistantUI() {
         })
       )
 
-      // Simulate AI response
+      // Get AI response
       setIsThinking(true)
-      setTimeout(async () => {
-        setIsThinking(false)
-        const assistantContent = "I'll help you with that. This is a demo response to show the chat interface is working."
+      try {
+        const response = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: content,
+            conversationHistory: conversation?.messages || []
+          })
+        })
 
+        if (!response.ok) {
+          throw new Error('Failed to get AI response')
+        }
+
+        const data = await response.json()
+        const assistantContent = data.response
+
+        setIsThinking(false)
         const assistantMsg = await databaseAdapter.createChat(convId, 'assistant', assistantContent)
 
         if (assistantMsg) {
@@ -241,7 +255,21 @@ export default function AIAssistantUI() {
             })
           )
         }
-      }, 1500)
+      } catch (aiError) {
+        console.error('AI response error:', aiError)
+        setIsThinking(false)
+        // Show error message to user
+        const errorMsg = await databaseAdapter.createChat(convId, 'assistant', 'Sorry, I encountered an error. Please try again.')
+        if (errorMsg) {
+          setConversations(prev =>
+            prev.map(conv => {
+              if (conv.id !== convId) return conv
+              const messages = [...(conv.messages || []), errorMsg]
+              return { ...conv, messages, updated_at: new Date().toISOString() }
+            })
+          )
+        }
+      }
     } catch (error) {
       console.error('Failed to send message:', error)
     }

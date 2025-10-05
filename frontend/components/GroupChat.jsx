@@ -112,6 +112,8 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     if (!newMessage.trim() || sending) return
 
     const messageContent = newMessage.trim()
+    const hasAiMention = messageContent.includes('@ai')
+
     setNewMessage('')
     setSending(true)
     stopTyping()
@@ -131,6 +133,34 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       const newMsg = await response.json()
       setMessages(prev => [...prev, newMsg])
       scrollToBottom()
+
+      // If @ai was mentioned, trigger AI response
+      if (hasAiMention) {
+        try {
+          const aiResponse = await fetch(`/api/groupchat/${groupId}/ai`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ parentMessageId: newMsg.id })
+          })
+
+          if (aiResponse.ok) {
+            await aiResponse.json()
+            // Update message with AI reply count
+            setMessages(prev =>
+              prev.map(msg =>
+                msg.id === newMsg.id
+                  ? { ...msg, replyCount: (msg.replyCount || 0) + 1 }
+                  : msg
+              )
+            )
+          }
+        } catch (aiError) {
+          console.error('AI response error:', aiError)
+        }
+      }
     } catch (error) {
       console.error('Failed to send message:', error)
       setNewMessage(messageContent) // Restore message on error

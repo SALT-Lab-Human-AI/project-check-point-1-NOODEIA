@@ -175,19 +175,43 @@ class GroupChatService {
     const session = neo4jClient.getSession()
     try {
       const messageId = uuidv4()
-      let query = `
-        MATCH (u:User {id: $userId})-[:MEMBER_OF]->(g:GroupChat {id: $groupId})
-        CREATE (m:Message {
-          id: $messageId,
-          content: $content,
-          createdAt: datetime(),
-          createdBy: $userId,
-          groupId: $groupId,
-          edited: false
-        })
-        CREATE (g)-[:CONTAINS]->(m)
-        CREATE (u)-[:POSTED]->(m)
-      `
+      const isAI = userId === 'ai_assistant'
+
+      let query = ''
+      if (isAI) {
+        // AI doesn't need membership check
+        query = `
+          MATCH (g:GroupChat {id: $groupId})
+          MERGE (u:User {id: $userId})
+          ON CREATE SET u.name = 'AI Assistant', u.email = 'ai@assistant', u.createdAt = datetime()
+          CREATE (m:Message {
+            id: $messageId,
+            content: $content,
+            createdAt: datetime(),
+            createdBy: $userId,
+            groupId: $groupId,
+            edited: false,
+            isAI: true
+          })
+          CREATE (g)-[:CONTAINS]->(m)
+          CREATE (u)-[:POSTED]->(m)
+        `
+      } else {
+        // Regular users need membership
+        query = `
+          MATCH (u:User {id: $userId})-[:MEMBER_OF]->(g:GroupChat {id: $groupId})
+          CREATE (m:Message {
+            id: $messageId,
+            content: $content,
+            createdAt: datetime(),
+            createdBy: $userId,
+            groupId: $groupId,
+            edited: false
+          })
+          CREATE (g)-[:CONTAINS]->(m)
+          CREATE (u)-[:POSTED]->(m)
+        `
+      }
 
       const params = {
         messageId,
