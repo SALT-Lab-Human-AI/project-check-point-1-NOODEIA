@@ -251,7 +251,18 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-key
 NEXT_PUBLIC_NEO4J_URI=neo4j+s://xxxxx.databases.neo4j.io
 NEXT_PUBLIC_NEO4J_USERNAME=neo4j
 NEXT_PUBLIC_NEO4J_PASSWORD=your-password
+
+# Google Gemini AI (Required for AI features)
+GEMINI_API_KEY=your-gemini-api-key
+
+# Pusher (Optional - for real-time features)
+PUSHER_APP_ID=your-app-id
+PUSHER_SECRET=your-secret
+NEXT_PUBLIC_PUSHER_KEY=your-key
+NEXT_PUBLIC_PUSHER_CLUSTER=us2
 ```
+
+Get your Gemini API key from: https://aistudio.google.com/app/apikey
 
 4. Initialize Neo4j database:
 ```bash

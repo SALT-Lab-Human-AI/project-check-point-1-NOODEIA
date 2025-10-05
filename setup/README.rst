@@ -79,6 +79,10 @@ Quick Start (10 Minutes)
       NEXT_PUBLIC_NEO4J_USERNAME=neo4j
       NEXT_PUBLIC_NEO4J_PASSWORD=your-password
 
+      # Google Gemini AI - Required for AI features
+      GEMINI_API_KEY=your-gemini-api-key
+      # Get your key from: https://aistudio.google.com/app/apikey
+
 5. **Initialize Neo4j Database**
 
    .. code-block:: bash
@@ -128,12 +132,22 @@ Architecture
 
 * **Supabase**: Handles user authentication (signup/login)
 * **Neo4j AuraDB**: Stores all application data in graph format
+* **Google Gemini 2.0 Flash**: Powers AI tutor responses
 
-  * Graph Structure: ``(:User)-[:HAS]->(:Session)-[:OCCURRED]->(:Chat)-[:NEXT]->(:Chat)``
+**AI Tutor Graph Structure:**
+  ``(:User)-[:HAS]->(:Session)-[:OCCURRED]->(:Chat)-[:NEXT]->(:Chat)``
+
   * Users own Sessions (conversations)
   * Sessions contain Chats (messages)
   * Chats link to next Chat via NEXT relationship
-  * Group Chat: ``(:User)-[:MEMBER_OF]->(:GroupChat)-[:CONTAINS]->(:Message)-[:REPLY_TO]->(:Message)``
+
+**Group Chat Graph Structure:**
+  ``(:User)-[:MEMBER_OF]->(:GroupChat)-[:CONTAINS]->(:Message)-[:REPLY_TO]->(:Message)``
+
+  * Users join GroupChats with access keys
+  * GroupChats contain Messages
+  * Messages can reply to other Messages (Slack-style threading)
+  * AI Assistant can be invoked with ``@ai`` mentions
 
 Detailed Setup Guides
 ---------------------
@@ -163,6 +177,7 @@ Project Structure
    │   │   ├── GroupChatList.jsx
    │   │   ├── GroupChatAccessModal.jsx
    │   │   ├── ThreadedMessage.jsx
+   │   │   ├── ThreadPanel.jsx
    │   │   ├── Composer.jsx
    │   │   ├── ConversationRow.jsx
    │   │   ├── Header.jsx
@@ -174,9 +189,12 @@ Project Structure
    │   │   ├── neo4j.js          # Neo4j driver service
    │   │   ├── database-adapter.js # Database abstraction
    │   │   ├── supabase.js       # Supabase auth client
+   │   │   ├── pusher.js         # Pusher real-time client
    │   │   └── utils.ts          # Helper functions
    │   ├── services/
-   │   │   └── neo4j.service.js  # Neo4j CRUD operations
+   │   │   ├── neo4j.service.js  # Neo4j CRUD operations
+   │   │   ├── groupchat.service.js # Group chat operations
+   │   │   └── gemini.service.js # Google Gemini AI client
    │   ├── scripts/
    │   │   └── setup-neo4j.js    # Database initialization
    │   ├── hooks/                # React hooks
@@ -190,13 +208,36 @@ Project Structure
 Key Features
 ------------
 
-* 💬 Real-time chat interface
+* 💬 Real-time chat interface with AI tutor (Gemini 2.0 Flash)
+* 👥 Group chat with Slack-style threading
+* 🤖 AI assistant with @ai mentions in group chat
 * 🗂️ Multiple conversation management
 * 💾 Graph database storage (Neo4j)
 * 🔐 Secure authentication (Supabase)
 * 🌓 Dark/Light theme
 * 📱 Responsive design
 * 🚀 Serverless deployment (Vercel)
+
+Using the Application
+---------------------
+
+**AI Tutor:**
+
+1. Create account or login via Supabase Auth
+2. Start chatting - AI responds to every message using Gemini 2.0 Flash
+3. Create multiple conversations from the sidebar
+4. Delete conversations by clicking the delete button in sidebar
+
+**Group Chat:**
+
+1. Click "New Group Chat" in the sidebar
+2. **Create** a new group with a name and access key, or **Join** existing group with access key
+3. Send messages in the main channel
+4. **Reply to messages**: Click "Reply" or the reply count to open thread panel
+5. **Threading**: Slack-style side panel shows parent message and all replies
+6. **Invoke AI**: Type ``@ai`` in any message to get AI response in the thread
+7. **Edit/Delete**: Click the three-dot menu on your own messages
+8. **Leave group**: Click the logout icon in the header
 
 Common Commands
 ---------------
@@ -241,6 +282,22 @@ Troubleshooting
    - Most likely Neo4j connection issue
    - Verify all environment variables are set correctly
 
+**AI not responding:**
+   - Verify ``GEMINI_API_KEY`` is set in ``.env.local``
+   - Get API key from https://aistudio.google.com/app/apikey
+   - Check server console for Gemini API errors
+   - Ensure API key has no extra spaces or quotes
+
+**Group chat messages not showing:**
+   - Run ``npm run setup-groupchat`` to initialize group chat schema
+   - Verify Neo4j connection is working
+   - Check browser console for API errors
+
+**Thread panel not opening:**
+   - Ensure message has ``replyCount`` property in Neo4j
+   - Check for JavaScript errors in browser console
+   - Verify ThreadPanel component is imported in GroupChat.jsx
+
 Environment Variables Reference
 --------------------------------
 
@@ -257,13 +314,17 @@ Required variables in ``frontend/.env.local``:
    NEXT_PUBLIC_NEO4J_USERNAME=      # Usually "neo4j"
    NEXT_PUBLIC_NEO4J_PASSWORD=      # Password created during Neo4j setup
 
+   # Google Gemini AI (Required for AI features)
+   GEMINI_API_KEY=                  # From Google AI Studio (https://aistudio.google.com/app/apikey)
+
    # Pusher (Optional - for real-time group chat)
    PUSHER_APP_ID=                   # From Pusher dashboard
    PUSHER_SECRET=                   # From Pusher dashboard
    NEXT_PUBLIC_PUSHER_KEY=          # From Pusher dashboard
    NEXT_PUBLIC_PUSHER_CLUSTER=      # From Pusher dashboard (e.g., us2)
 
-All variables must start with ``NEXT_PUBLIC_`` to be available in the browser.
+**Note**: Variables starting with ``NEXT_PUBLIC_`` are available in the browser.
+``GEMINI_API_KEY`` and ``PUSHER_SECRET`` are server-only (no ``NEXT_PUBLIC_`` prefix).
 
 Need Help?
 ----------

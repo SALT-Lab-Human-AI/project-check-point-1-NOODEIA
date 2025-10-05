@@ -1,7 +1,7 @@
 class GeminiService {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY
-    this.apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent'
+    this.apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-latest:generateContent'
   }
 
   async chat(prompt) {
