@@ -206,7 +206,7 @@ class GroupChatService {
       }
 
       query += `
-        RETURN m, u.email as userEmail
+        RETURN m, u.name as userName, u.email as userEmail
       `
 
       const result = await session.run(query, params)
@@ -219,6 +219,7 @@ class GroupChatService {
       return {
         ...message,
         createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : new Date().toISOString(),
+        userName: result.records[0].get('userName'),
         userEmail: result.records[0].get('userEmail')
       }
     } finally {
@@ -257,9 +258,11 @@ class GroupChatService {
         WHERE m IS NOT NULL
         WITH m, author, parent, parentAuthor, count(DISTINCT reply) as replyCount
         RETURN m,
+               author.name as userName,
                author.email as userEmail,
                parent.id as parentId,
                parent.content as parentContent,
+               parentAuthor.name as parentAuthorName,
                parentAuthor.email as parentAuthorEmail,
                replyCount
         ORDER BY m.createdAt DESC
@@ -278,9 +281,11 @@ class GroupChatService {
             ...message,
             createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : new Date().toISOString(),
             editedAt: message.editedAt ? new Date(message.editedAt).toISOString() : null,
+            userName: record.get('userName'),
             userEmail: record.get('userEmail'),
             parentId: record.get('parentId'),
             parentContent: record.get('parentContent'),
+            parentAuthorName: record.get('parentAuthorName'),
             parentAuthorEmail: record.get('parentAuthorEmail'),
             replyCount: this.toNumber(record.get('replyCount'))
           }
@@ -306,8 +311,10 @@ class GroupChatService {
         OPTIONAL MATCH (m)<-[:REPLY_TO]-(reply:Message)
         WITH m, author, parent, parentAuthor, count(DISTINCT reply) as replyCount
         RETURN m,
+               author.name as userName,
                author.email as userEmail,
                parent.id as parentId,
+               parentAuthor.name as parentAuthorName,
                parentAuthor.email as parentAuthorEmail,
                replyCount
         ORDER BY m.createdAt ASC
@@ -321,8 +328,10 @@ class GroupChatService {
           ...message,
           createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : new Date().toISOString(),
           editedAt: message.editedAt ? new Date(message.editedAt).toISOString() : null,
+          userName: record.get('userName'),
           userEmail: record.get('userEmail'),
           parentId: record.get('parentId'),
+          parentAuthorName: record.get('parentAuthorName'),
           parentAuthorEmail: record.get('parentAuthorEmail'),
           replyCount: this.toNumber(record.get('replyCount'))
         }
@@ -373,22 +382,14 @@ class GroupChatService {
       }
 
       // Delete the message and cascade delete all replies
-      const result = await session.run(
+      await session.run(
         `
         MATCH (m:Message {id: $messageId})
         OPTIONAL MATCH (m)<-[:REPLY_TO*]-(reply:Message)
-        WITH m, collect(DISTINCT reply) as replies
-        FOREACH (r IN replies | DETACH DELETE r)
-        DETACH DELETE m
-        RETURN count(m) + size(replies) as deleted
+        DETACH DELETE reply, m
         `,
         { messageId }
       )
-
-      const deleted = this.toNumber(result.records[0]?.get('deleted'))
-      if (deleted === 0) {
-        return { error: 'Failed to delete message' }
-      }
 
       return { success: true }
     } finally {
