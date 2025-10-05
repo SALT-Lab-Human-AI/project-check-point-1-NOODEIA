@@ -1,6 +1,5 @@
 "use client"
 
-import React from "react"
 import { Menu, LogOut, User } from "lucide-react"
 
 export default function Header({ onMenuClick, currentUser, onLogout }) {

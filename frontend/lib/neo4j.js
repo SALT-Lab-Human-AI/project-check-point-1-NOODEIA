@@ -37,9 +37,8 @@ class Neo4jService {
       )
 
       this.isInitialized = true
-      console.log('✅ Neo4j driver initialized')
     } catch (error) {
-      console.error('❌ Failed to initialize Neo4j driver:', error)
+      console.error('Failed to initialize Neo4j driver:', error)
       throw error
     }
   }
@@ -57,12 +56,10 @@ class Neo4jService {
   async verifyConnectivity() {
     const session = this.getSession()
     try {
-      const result = await session.run('RETURN 1 as test')
-      const value = result.records[0].get('test')
-      console.log('✅ Neo4j AuraDB connection successful, test value:', value)
+      await session.run('RETURN 1 as test')
       return true
     } catch (error) {
-      console.error('❌ Neo4j connection failed:', error)
+      console.error('Neo4j connection failed:', error)
       throw error
     } finally {
       await session.close()
@@ -73,7 +70,6 @@ class Neo4jService {
     if (this.driver) {
       await this.driver.close()
       this.isInitialized = false
-      console.log('Neo4j driver closed')
     }
   }
 

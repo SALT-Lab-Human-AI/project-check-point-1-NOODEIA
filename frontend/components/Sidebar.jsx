@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import { useState } from "react"
 import { Plus, X, PanelLeftClose, PanelLeftOpen, Edit2, Check, MessageSquare } from "lucide-react"
 import ConversationRow from "./ConversationRow"
 import ThemeToggle from "./ThemeToggle"

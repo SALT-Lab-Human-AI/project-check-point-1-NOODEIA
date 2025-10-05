@@ -84,6 +84,7 @@ Quick Start (10 Minutes)
    .. code-block:: bash
 
       npm run setup-neo4j
+      npm run setup-groupchat  # (Optional) Setup group chat feature
 
    This creates the required constraints and indexes in your Neo4j database.
 
@@ -132,6 +133,7 @@ Architecture
   * Users own Sessions (conversations)
   * Sessions contain Chats (messages)
   * Chats link to next Chat via NEXT relationship
+  * Group Chat: ``(:User)-[:MEMBER_OF]->(:GroupChat)-[:CONTAINS]->(:Message)-[:REPLY_TO]->(:Message)``
 
 Detailed Setup Guides
 ---------------------
@@ -157,6 +159,10 @@ Project Structure
    │   │   ├── AIAssistantUI.jsx
    │   │   ├── AuthForm.jsx
    │   │   ├── ChatPane.jsx
+   │   │   ├── GroupChat.jsx
+   │   │   ├── GroupChatList.jsx
+   │   │   ├── GroupChatAccessModal.jsx
+   │   │   ├── ThreadedMessage.jsx
    │   │   ├── Composer.jsx
    │   │   ├── ConversationRow.jsx
    │   │   ├── Header.jsx
@@ -201,6 +207,7 @@ Common Commands
    npm run dev              # Start dev server
    npm run build            # Build for production
    npm run setup-neo4j      # Initialize Neo4j database
+   npm run setup-groupchat  # Setup group chat schema (optional)
 
    # Dependencies
    npm install --legacy-peer-deps   # Install dependencies
@@ -249,6 +256,12 @@ Required variables in ``frontend/.env.local``:
    NEXT_PUBLIC_NEO4J_URI=           # From Neo4j console (format: neo4j+s://xxxxx.databases.neo4j.io)
    NEXT_PUBLIC_NEO4J_USERNAME=      # Usually "neo4j"
    NEXT_PUBLIC_NEO4J_PASSWORD=      # Password created during Neo4j setup
+
+   # Pusher (Optional - for real-time group chat)
+   PUSHER_APP_ID=                   # From Pusher dashboard
+   PUSHER_SECRET=                   # From Pusher dashboard
+   NEXT_PUBLIC_PUSHER_KEY=          # From Pusher dashboard
+   NEXT_PUBLIC_PUSHER_CLUSTER=      # From Pusher dashboard (e.g., us2)
 
 All variables must start with ``NEXT_PUBLIC_`` to be available in the browser.
 
