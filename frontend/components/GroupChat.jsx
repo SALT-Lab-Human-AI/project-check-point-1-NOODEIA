@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
-import { Send, Users, Settings, Bot, LogOut } from 'lucide-react'
+import { Send, Users, LogOut } from 'lucide-react'
 import ThreadedMessage from './ThreadedMessage'
+import ThreadPanel from './ThreadPanel'
 import { getPusherClient, PUSHER_EVENTS } from '../lib/pusher'
 
 export default function GroupChat({ groupId, groupData, currentUser, authToken, onLeaveGroup }) {
@@ -11,6 +12,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [typingUsers, setTypingUsers] = useState([])
+  const [selectedThread, setSelectedThread] = useState(null)
   const messagesEndRef = useRef(null)
   const pusherRef = useRef(null)
   const typingTimeoutRef = useRef(null)
@@ -134,44 +136,6 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     }
   }
 
-  const handleReply = async (parentMessageId, content) => {
-    try {
-      const response = await fetch(`/api/groupchat/${groupId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ content, parentMessageId })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('Reply API error:', errorData)
-        throw new Error(`Failed to send reply: ${errorData.error || response.status}`)
-      }
-
-      const newReply = await response.json()
-      console.log('Reply sent:', newReply)
-
-      // Recursively update reply counts for nested messages
-      const updateReplyCount = (msgs) => {
-        return msgs.map(msg => {
-          if (msg.id === parentMessageId) {
-            return { ...msg, replyCount: (msg.replyCount || 0) + 1 }
-          } else if (msg.replies && msg.replies.length > 0) {
-            return { ...msg, replies: updateReplyCount(msg.replies) }
-          }
-          return msg
-        })
-      }
-
-      setMessages(prev => updateReplyCount(prev))
-    } catch (error) {
-      console.error('Failed to send reply:', error)
-      alert('Failed to send reply. Please try again.')
-    }
-  }
 
   const handleEdit = async (messageId, newContent) => {
     try {
@@ -190,20 +154,11 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
         throw new Error(`Failed to edit message: ${errorData.error || response.status}`)
       }
 
-      // Recursively update edited message
-      const updateEditedMessage = (msgs) => {
-        return msgs.map(msg => {
-          if (msg.id === messageId) {
-            return { ...msg, content: newContent, edited: true }
-          } else if (msg.replies && msg.replies.length > 0) {
-            return { ...msg, replies: updateEditedMessage(msg.replies) }
-          }
-          return msg
-        })
-      }
-
-      setMessages(prev => updateEditedMessage(prev))
-      alert('Message edited successfully')
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === messageId ? { ...msg, content: newContent, edited: true } : msg
+        )
+      )
     } catch (error) {
       console.error('Failed to edit message:', error)
       alert('Failed to edit message. Please try again.')
@@ -214,7 +169,6 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     if (!confirm('Are you sure you want to delete this message?')) return
 
     try {
-      console.log('Deleting message:', messageId, 'from group:', groupId)
       const response = await fetch(`/api/groupchat/${groupId}/messages/${messageId}`, {
         method: 'DELETE',
         headers: {
@@ -222,65 +176,20 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
         }
       })
 
-      console.log('Delete response:', response.status)
-
       if (!response.ok) {
         const errorData = await response.json()
-        console.error('Delete error:', errorData)
         throw new Error(`Failed to delete message: ${errorData.error || response.status}`)
       }
 
-      // Recursively delete message from nested structure
-      const deleteMessage = (msgs) => {
-        return msgs.filter(msg => {
-          if (msg.id === messageId) {
-            return false
-          }
-          if (msg.replies && msg.replies.length > 0) {
-            msg.replies = deleteMessage(msg.replies)
-          }
-          return true
-        })
-      }
+      setMessages(prev => prev.filter(msg => msg.id !== messageId))
 
-      setMessages(prev => deleteMessage(prev))
-      alert('Message deleted successfully')
+      // Close thread panel if the deleted message is currently open
+      if (selectedThread && selectedThread.id === messageId) {
+        setSelectedThread(null)
+      }
     } catch (error) {
       console.error('Failed to delete message:', error)
       alert('Failed to delete message. Please try again.')
-    }
-  }
-
-  const loadThreadReplies = async (messageId) => {
-    try {
-      const response = await fetch(`/api/groupchat/${groupId}/messages/${messageId}/thread`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`
-        }
-      })
-
-      if (!response.ok) throw new Error('Failed to load thread')
-
-      const replies = await response.json()
-
-      // Recursively update messages to add replies at any depth
-      const updateMessagesWithReplies = (msgs) => {
-        return msgs.map(msg => {
-          if (msg.id === messageId) {
-            return { ...msg, replies }
-          } else if (msg.replies && msg.replies.length > 0) {
-            return { ...msg, replies: updateMessagesWithReplies(msg.replies) }
-          }
-          return msg
-        })
-      }
-
-      setMessages(prev => updateMessagesWithReplies(prev))
-
-      return replies
-    } catch (error) {
-      console.error('Failed to load thread:', error)
-      return []
     }
   }
 
@@ -319,30 +228,6 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     })
   }
 
-  const generateAIResponse = async () => {
-    setSending(true)
-    try {
-      const response = await fetch(`/api/groupchat/${groupId}/ai`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ context: 'Generate helpful response based on conversation' })
-      })
-
-      if (!response.ok) throw new Error('Failed to generate AI response')
-
-      const aiMessage = await response.json()
-      setMessages(prev => [...prev, aiMessage])
-      scrollToBottom()
-    } catch (error) {
-      console.error('Failed to generate AI response:', error)
-    } finally {
-      setSending(false)
-    }
-  }
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -359,20 +244,6 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={generateAIResponse}
-            disabled={sending}
-            className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            title="Generate AI Response"
-          >
-            <Bot className="h-5 w-5" />
-          </button>
-          <button
-            className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            title="Group Settings"
-          >
-            <Settings className="h-5 w-5" />
-          </button>
           <button
             onClick={() => {
               if (confirm('Are you sure you want to leave this group chat?')) {
@@ -398,25 +269,23 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
             No messages yet. Start the conversation!
           </div>
         ) : (
-          <div className="space-y-4">
+          <>
             {messages.map(message => (
               <ThreadedMessage
                 key={message.id}
                 message={message}
-                replies={message.replies || []}
                 currentUserId={currentUser.id}
-                onReply={handleReply}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
-                onLoadReplies={loadThreadReplies}
+                onOpenThread={setSelectedThread}
               />
             ))}
             <div ref={messagesEndRef} />
-          </div>
+          </>
         )}
 
         {typingUsers.length > 0 && (
-          <div className="text-sm italic text-zinc-500 dark:text-zinc-400">
+          <div className="mt-4 text-sm italic text-zinc-500 dark:text-zinc-400">
             {typingUsers.map(u => u.userEmail).join(', ')}{' '}
             {typingUsers.length === 1 ? 'is' : 'are'} typing...
           </div>
@@ -452,6 +321,19 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
           </button>
         </div>
       </div>
+
+      {/* Thread Panel */}
+      {selectedThread && (
+        <ThreadPanel
+          parentMessage={selectedThread}
+          groupId={groupId}
+          authToken={authToken}
+          currentUser={currentUser}
+          onClose={() => setSelectedThread(null)}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
     </div>
   )
 }

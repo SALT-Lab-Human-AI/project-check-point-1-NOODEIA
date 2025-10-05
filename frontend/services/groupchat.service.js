@@ -8,6 +8,14 @@ const supabase = createClient(
 )
 
 class GroupChatService {
+  // Helper to convert Neo4j integers to JS numbers
+  toNumber(value) {
+    if (value === null || value === undefined) return 0
+    if (typeof value === 'number') return value
+    if (value.toNumber) return value.toNumber()
+    return 0
+  }
+
   // Group Chat Management
   async createGroupChat(name, description, accessKey, createdBy) {
     const session = neo4jClient.getSession()
@@ -123,7 +131,7 @@ class GroupChatService {
         ...record.get('g').properties,
         role: record.get('role'),
         joinedAt: record.get('joinedAt'),
-        members: Array(record.get('memberCount').toNumber()).fill(null) // Create array with correct length for display
+        members: Array(this.toNumber(record.get('memberCount'))).fill(null)
       }))
     } finally {
       await session.close()
@@ -274,7 +282,7 @@ class GroupChatService {
             parentId: record.get('parentId'),
             parentContent: record.get('parentContent'),
             parentAuthorEmail: record.get('parentAuthorEmail'),
-            replyCount: record.get('replyCount') ? record.get('replyCount').toNumber() : 0
+            replyCount: this.toNumber(record.get('replyCount'))
           }
         })
     } catch (error) {
@@ -316,7 +324,7 @@ class GroupChatService {
           userEmail: record.get('userEmail'),
           parentId: record.get('parentId'),
           parentAuthorEmail: record.get('parentAuthorEmail'),
-          replyCount: record.get('replyCount') ? record.get('replyCount').toNumber() : 0
+          replyCount: this.toNumber(record.get('replyCount'))
         }
       })
     } finally {
@@ -351,21 +359,35 @@ class GroupChatService {
   async deleteMessage(messageId, userId) {
     const session = neo4jClient.getSession()
     try {
-      const result = await session.run(
+      // First check if user owns this message
+      const ownerCheck = await session.run(
         `
         MATCH (u:User {id: $userId})-[:POSTED]->(m:Message {id: $messageId})
-        OPTIONAL MATCH (m)<-[:REPLY_TO]-(reply:Message)
-        WITH m, count(reply) as replyCount
-        WHERE replyCount = 0
-        DETACH DELETE m
-        RETURN count(m) as deleted
+        RETURN m
         `,
         { messageId, userId }
       )
 
-      const deleted = result.records[0]?.get('deleted').toNumber()
+      if (ownerCheck.records.length === 0) {
+        return { error: 'Not authorized to delete this message' }
+      }
+
+      // Delete the message and cascade delete all replies
+      const result = await session.run(
+        `
+        MATCH (m:Message {id: $messageId})
+        OPTIONAL MATCH (m)<-[:REPLY_TO*]-(reply:Message)
+        WITH m, collect(DISTINCT reply) as replies
+        FOREACH (r IN replies | DETACH DELETE r)
+        DETACH DELETE m
+        RETURN count(m) + size(replies) as deleted
+        `,
+        { messageId }
+      )
+
+      const deleted = this.toNumber(result.records[0]?.get('deleted'))
       if (deleted === 0) {
-        return { error: 'Cannot delete message with replies or not authorized' }
+        return { error: 'Failed to delete message' }
       }
 
       return { success: true }
@@ -479,7 +501,7 @@ class GroupChatService {
         { groupId, adminId, targetUserId }
       )
 
-      const removed = result.records[0]?.get('removed').toNumber()
+      const removed = this.toNumber(result.records[0]?.get('removed'))
       if (removed === 0) {
         return { error: 'Not authorized or user not found' }
       }
@@ -503,7 +525,7 @@ class GroupChatService {
         { groupId, userId }
       )
 
-      const left = result.records[0]?.get('left').toNumber()
+      const left = this.toNumber(result.records[0]?.get('left'))
       if (left === 0) {
         return { error: 'Cannot leave: you are the only admin' }
       }
