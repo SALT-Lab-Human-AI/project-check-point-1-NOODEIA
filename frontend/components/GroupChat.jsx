@@ -41,7 +41,8 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     const channel = pusher.subscribe(`group-${groupId}`)
 
     channel.bind(PUSHER_EVENTS.MESSAGE_SENT, (data) => {
-      if (data.createdBy !== currentUser.id) {
+      // Only add to main channel if it's not a thread reply
+      if (data.createdBy !== currentUser.id && !data.parentId) {
         setMessages(prev => [...prev, data])
         scrollToBottom()
       }
@@ -95,7 +96,9 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       console.log('Loaded messages:', data)
       // Ensure data is an array before reversing
       const messagesArray = Array.isArray(data) ? data : []
-      setMessages(messagesArray.reverse())
+      // Filter out thread replies - only show top-level messages in main channel
+      const topLevelMessages = messagesArray.filter(msg => !msg.parentId)
+      setMessages(topLevelMessages.reverse())
       scrollToBottom()
     } catch (error) {
       console.error('Failed to load messages:', error)
