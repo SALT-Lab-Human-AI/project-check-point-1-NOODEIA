@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, X, PanelLeftClose, PanelLeftOpen, Edit2, Check, MessageSquare } from "lucide-react"
+import { Plus, X, PanelLeftClose, PanelLeftOpen, Edit2, Check, MessageSquare, Users, Trash2 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import ConversationRow from "./ConversationRow"
 import ThemeToggle from "./ThemeToggle"
 
@@ -15,7 +16,9 @@ export default function Sidebar({
   onSelect,
   createNewChat,
   onRenameConversation,
+  onDeleteConversation,
 }) {
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [editTitle, setEditTitle] = useState("")
@@ -127,13 +130,26 @@ export default function Sidebar({
                             onClose()
                           }}
                         />
-                        <button
-                          onClick={() => handleStartEdit(conversation)}
-                          className="absolute right-2 rounded p-1 opacity-0 hover:bg-zinc-100 group-hover:opacity-100 dark:hover:bg-zinc-800"
-                          title="Rename conversation"
-                        >
-                          <Edit2 className="h-3 w-3" />
-                        </button>
+                        <div className="absolute right-2 flex gap-1 opacity-0 group-hover:opacity-100">
+                          <button
+                            onClick={() => handleStartEdit(conversation)}
+                            className="rounded p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            title="Rename conversation"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm('Are you sure you want to delete this conversation?')) {
+                                onDeleteConversation(conversation.id)
+                              }
+                            }}
+                            className="rounded p-1 hover:bg-red-100 dark:hover:bg-red-900/20"
+                            title="Delete conversation"
+                          >
+                            <Trash2 className="h-3 w-3 text-red-500" />
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -148,17 +164,31 @@ export default function Sidebar({
             )}
           </div>
 
-          <div className="h-14 border-t px-4 py-2 dark:border-zinc-800">
-            <button
-              onClick={createNewChat}
-              className={`flex h-full w-full items-center gap-2 rounded-lg bg-zinc-900 px-4 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 ${
-                collapsed ? "justify-center" : "justify-center"
-              }`}
-              title={collapsed ? "New Chat" : undefined}
-            >
-              <Plus className="h-4 w-4" />
-              {!collapsed && "New Chat"}
-            </button>
+          <div className="border-t dark:border-zinc-800">
+            <div className="px-4 py-2">
+              <button
+                onClick={createNewChat}
+                className={`flex h-10 w-full items-center gap-2 rounded-lg bg-zinc-900 px-4 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 ${
+                  collapsed ? "justify-center" : "justify-center"
+                }`}
+                title={collapsed ? "New Chat" : undefined}
+              >
+                <Plus className="h-4 w-4" />
+                {!collapsed && "New Chat"}
+              </button>
+            </div>
+            <div className="px-4 pb-2">
+              <button
+                onClick={() => router.push('/groupchat')}
+                className={`flex h-10 w-full items-center gap-2 rounded-lg bg-indigo-600 px-4 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 ${
+                  collapsed ? "justify-center" : "justify-center"
+                }`}
+                title={collapsed ? "New Group Chat" : undefined}
+              >
+                <Users className="h-4 w-4" />
+                {!collapsed && "New Group Chat"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -10,6 +10,9 @@ const supabase = createClient(
 
 export async function GET(request, { params }) {
   try {
+    // Await params as required in Next.js 15
+    const { groupId } = await params
+
     const authHeader = request.headers.get('authorization')
     if (!authHeader) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -23,21 +26,29 @@ export async function GET(request, { params }) {
     }
 
     const { searchParams } = new URL(request.url)
-    const limit = searchParams.get('limit') || 50
-    const skip = searchParams.get('skip') || 0
+    // Convert to integers to avoid Neo4j float error
+    const limit = parseInt(searchParams.get('limit') || '50', 10)
+    const skip = parseInt(searchParams.get('skip') || '0', 10)
 
     const messages = await groupChatService.getMessages(
-      params.groupId,
+      groupId,
       user.id,
       limit,
       skip
     )
 
+    // If messages is undefined or null, return empty array
+    if (!messages) {
+      console.log('No messages returned from service for group:', groupId)
+      return NextResponse.json([])
+    }
+
     return NextResponse.json(messages)
   } catch (error) {
     console.error('Error fetching messages:', error)
+    console.error('Error details:', error.message, error.stack)
     return NextResponse.json(
-      { error: 'Failed to fetch messages' },
+      { error: error.message || 'Failed to fetch messages' },
       { status: 500 }
     )
   }
@@ -45,6 +56,9 @@ export async function GET(request, { params }) {
 
 export async function POST(request, { params }) {
   try {
+    // Await params as required in Next.js 15
+    const { groupId } = await params
+
     const authHeader = request.headers.get('authorization')
     if (!authHeader) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -68,7 +82,7 @@ export async function POST(request, { params }) {
     }
 
     const message = await groupChatService.createMessage(
-      params.groupId,
+      groupId,
       user.id,
       content,
       parentMessageId
@@ -78,7 +92,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: message.error }, { status: 400 })
     }
 
-    await pusherService.sendMessage(params.groupId, message)
+    await pusherService.sendMessage(groupId, message)
 
     return NextResponse.json(message, { status: 201 })
   } catch (error) {

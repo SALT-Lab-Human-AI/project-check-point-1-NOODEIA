@@ -1,17 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import groupChatService from '../../../../../../../services/groupchat.service'
+import pusherService from '../../../../services/pusher.service'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-export async function GET(request, { params }) {
+export async function POST(request) {
   try {
-    // Await params as required in Next.js 15
-    const { messageId } = await params
-
     const authHeader = request.headers.get('authorization')
     if (!authHeader) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -24,16 +21,27 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const threadMessages = await groupChatService.getThreadMessages(
-      messageId,
-      user.id
-    )
+    const body = await request.json()
+    const { groupId } = body
 
-    return NextResponse.json(threadMessages)
+    if (!groupId) {
+      return NextResponse.json(
+        { error: 'Group ID is required' },
+        { status: 400 }
+      )
+    }
+
+    // Notify typing via Pusher
+    await pusherService.notifyTyping(groupId, {
+      userId: user.id,
+      userEmail: user.email
+    })
+
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error fetching thread:', error)
+    console.error('Error notifying typing:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch thread' },
+      { error: 'Failed to notify typing' },
       { status: 500 }
     )
   }

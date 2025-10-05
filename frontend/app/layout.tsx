@@ -25,7 +25,7 @@ html {
 }
         `}</style>
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
       </body>
     </html>

@@ -157,6 +157,18 @@ export default function AIAssistantUI() {
     }
   }
 
+  async function deleteConversation(convId) {
+    try {
+      await databaseAdapter.deleteSession(convId)
+      setConversations(prev => prev.filter(conv => conv.id !== convId))
+      if (selectedId === convId) {
+        setSelectedId(null)
+      }
+    } catch (error) {
+      console.error('Failed to delete conversation:', error)
+    }
+  }
+
   async function sendMessage(convId, content) {
     if (!content.trim()) return
 
@@ -336,6 +348,7 @@ export default function AIAssistantUI() {
         onSelect={setSelectedId}
         createNewChat={createNewChat}
         onRenameConversation={renameConversation}
+        onDeleteConversation={deleteConversation}
       />
 
       <div className="flex flex-1 flex-col">

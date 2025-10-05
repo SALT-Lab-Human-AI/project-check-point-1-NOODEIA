@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import neo4jClient from '../lib/neo4j'
+import { neo4jService as neo4jClient, neo4j } from '../lib/neo4j'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -13,6 +13,15 @@ class GroupChatService {
     const session = neo4jClient.getSession()
     try {
       const groupId = uuidv4()
+
+      // First ensure the user exists
+      await session.run(
+        `MERGE (u:User {id: $userId})
+         ON CREATE SET u.createdAt = datetime()`,
+        { userId: createdBy }
+      )
+
+      // Then create the group and add user as admin
       const result = await session.run(
         `
         MATCH (u:User {id: $userId})
@@ -36,7 +45,12 @@ class GroupChatService {
           userId: createdBy
         }
       )
+
+      console.log(`Created group ${groupId} with admin ${createdBy}`)
       return result.records[0]?.get('g').properties
+    } catch (error) {
+      console.error('Error creating group chat:', error)
+      throw error
     } finally {
       await session.close()
     }
@@ -45,6 +59,12 @@ class GroupChatService {
   async joinGroupChat(userId, accessKey) {
     const session = neo4jClient.getSession()
     try {
+      // First ensure the user exists
+      await session.run(
+        `MERGE (u:User {id: $userId})
+         ON CREATE SET u.createdAt = datetime()`,
+        { userId }
+      )
       const result = await session.run(
         `
         MATCH (u:User {id: $userId})
@@ -66,12 +86,20 @@ class GroupChatService {
         )
 
         if (checkResult.records.length > 0) {
-          return { error: 'Already a member of this group' }
+          console.log(`User ${userId} already a member of group with key ${accessKey}`)
+          // Return the group data even if already a member
+          return checkResult.records[0]?.get('g').properties
         }
+        console.log(`Invalid access key: ${accessKey}`)
         return { error: 'Invalid access key' }
       }
 
-      return result.records[0]?.get('g').properties
+      const groupData = result.records[0]?.get('g').properties
+      console.log(`User ${userId} joined group ${groupData.id}`)
+      return groupData
+    } catch (error) {
+      console.error('Error joining group chat:', error)
+      throw error
     } finally {
       await session.close()
     }
@@ -159,7 +187,7 @@ class GroupChatService {
 
       if (parentMessageId) {
         query += `
-          WITH m
+          WITH m, u
           MATCH (parent:Message {id: $parentMessageId})
           CREATE (m)-[:REPLY_TO]->(parent)
         `
@@ -176,8 +204,10 @@ class GroupChatService {
         return { error: 'Not authorized or group not found' }
       }
 
+      const message = result.records[0].get('m').properties
       return {
-        ...result.records[0].get('m').properties,
+        ...message,
+        createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : new Date().toISOString(),
         userEmail: result.records[0].get('userEmail')
       }
     } finally {
@@ -188,25 +218,54 @@ class GroupChatService {
   async getMessages(groupId, userId, limit = 50, skip = 0) {
     const session = neo4jClient.getSession()
     try {
+      // First check if user is a member
+      const memberCheck = await session.run(
+        `MATCH (u:User {id: $userId})-[:MEMBER_OF]->(g:GroupChat {id: $groupId})
+         RETURN g`,
+        { groupId, userId }
+      )
+
+      if (memberCheck.records.length === 0) {
+        console.log(`User ${userId} is not a member of group ${groupId}`)
+        return []
+      }
+
+      // If user is a member, get messages
+      // Ensure skip and limit are integers using neo4j.int()
+      const skipInt = neo4j.int(skip)
+      const limitInt = neo4j.int(limit)
+
       const result = await session.run(
         `
-        MATCH (u:User {id: $userId})-[:MEMBER_OF]->(g:GroupChat {id: $groupId})
-        MATCH (g)-[:CONTAINS]->(m:Message)
-        MATCH (author:User)-[:POSTED]->(m)
+        MATCH (g:GroupChat {id: $groupId})
+        OPTIONAL MATCH (g)-[:CONTAINS]->(m:Message)
+        OPTIONAL MATCH (author:User)-[:POSTED]->(m)
         OPTIONAL MATCH (m)-[:REPLY_TO]->(parent:Message)
+        WHERE m IS NOT NULL
         RETURN m, author.email as userEmail, parent.id as parentId
         ORDER BY m.createdAt DESC
         SKIP $skip
         LIMIT $limit
         `,
-        { groupId, userId, skip: parseInt(skip), limit: parseInt(limit) }
+        { groupId, skip: skipInt, limit: limitInt }
       )
 
-      return result.records.map(record => ({
-        ...record.get('m').properties,
-        userEmail: record.get('userEmail'),
-        parentId: record.get('parentId')
-      }))
+      // Filter out null messages and return with formatted dates
+      return result.records
+        .filter(record => record.get('m'))
+        .map(record => {
+          const message = record.get('m').properties
+          return {
+            ...message,
+            createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : new Date().toISOString(),
+            editedAt: message.editedAt ? new Date(message.editedAt).toISOString() : null,
+            userEmail: record.get('userEmail'),
+            parentId: record.get('parentId')
+          }
+        })
+    } catch (error) {
+      console.error('Error in getMessages:', error)
+      return []
     } finally {
       await session.close()
     }

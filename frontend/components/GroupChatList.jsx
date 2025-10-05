@@ -27,7 +27,7 @@ export default function GroupChatList({ groups, selectedGroupId, onSelectGroup }
   return (
     <div className="space-y-2">
       {groups.length === 0 ? (
-        <div className="p-4 text-center text-sm text-zinc-500">
+        <div className="p-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
           No group chats yet
         </div>
       ) : (
@@ -59,7 +59,7 @@ export default function GroupChatList({ groups, selectedGroupId, onSelectGroup }
                 </p>
               )}
 
-              <div className="mt-1 flex items-center gap-3 text-xs text-zinc-500">
+              <div className="mt-1 flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
                 <span className="flex items-center gap-1">
                   <Users className="h-3 w-3" />
                   {group.members?.length || 0}

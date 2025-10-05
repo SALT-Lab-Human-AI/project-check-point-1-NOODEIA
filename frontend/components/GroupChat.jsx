@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
-import { Send, Users, Settings, Bot } from 'lucide-react'
+import { Send, Users, Settings, Bot, LogOut } from 'lucide-react'
 import ThreadedMessage from './ThreadedMessage'
 import { getPusherClient, PUSHER_EVENTS } from '../lib/pusher'
 
-export default function GroupChat({ groupId, groupData, currentUser, authToken }) {
+export default function GroupChat({ groupId, groupData, currentUser, authToken, onLeaveGroup }) {
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
@@ -79,13 +79,25 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken }
         }
       })
 
-      if (!response.ok) throw new Error('Failed to load messages')
+      console.log('Load messages response status:', response.status)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Messages API error:', errorData)
+        // Don't throw, just set empty messages
+        setMessages([])
+        return
+      }
 
       const data = await response.json()
-      setMessages(data.reverse())
+      console.log('Loaded messages:', data)
+      // Ensure data is an array before reversing
+      const messagesArray = Array.isArray(data) ? data : []
+      setMessages(messagesArray.reverse())
       scrollToBottom()
     } catch (error) {
       console.error('Failed to load messages:', error)
+      setMessages([]) // Set empty messages on error
     } finally {
       setLoading(false)
     }
@@ -133,9 +145,14 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken }
         body: JSON.stringify({ content, parentMessageId })
       })
 
-      if (!response.ok) throw new Error('Failed to send reply')
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Reply API error:', errorData)
+        throw new Error(`Failed to send reply: ${errorData.error || response.status}`)
+      }
 
-      await response.json()
+      const newReply = await response.json()
+      console.log('Reply sent:', newReply)
 
       setMessages(prev =>
         prev.map(msg =>
@@ -146,6 +163,8 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken }
       )
     } catch (error) {
       console.error('Failed to send reply:', error)
+      // Don't crash the component
+      alert('Failed to send reply. Please try again.')
     }
   }
 
@@ -160,15 +179,21 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken }
         body: JSON.stringify({ content: newContent })
       })
 
-      if (!response.ok) throw new Error('Failed to edit message')
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Edit API error:', errorData)
+        throw new Error(`Failed to edit message: ${errorData.error || response.status}`)
+      }
 
       setMessages(prev =>
         prev.map(msg =>
           msg.id === messageId ? { ...msg, content: newContent, edited: true } : msg
         )
       )
+      alert('Message edited successfully')
     } catch (error) {
       console.error('Failed to edit message:', error)
+      alert('Failed to edit message. Please try again.')
     }
   }
 
@@ -176,6 +201,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken }
     if (!confirm('Are you sure you want to delete this message?')) return
 
     try {
+      console.log('Deleting message:', messageId, 'from group:', groupId)
       const response = await fetch(`/api/groupchat/${groupId}/messages/${messageId}`, {
         method: 'DELETE',
         headers: {
@@ -183,11 +209,19 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken }
         }
       })
 
-      if (!response.ok) throw new Error('Failed to delete message')
+      console.log('Delete response:', response.status)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Delete error:', errorData)
+        throw new Error(`Failed to delete message: ${errorData.error || response.status}`)
+      }
 
       setMessages(prev => prev.filter(msg => msg.id !== messageId))
+      alert('Message deleted successfully')
     } catch (error) {
       console.error('Failed to delete message:', error)
+      alert('Failed to delete message. Please try again.')
     }
   }
 
@@ -280,12 +314,12 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken }
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-white dark:bg-zinc-950">
       {/* Header */}
-      <div className="flex h-14 items-center justify-between border-b px-6">
+      <div className="flex h-14 items-center justify-between border-b px-6 dark:border-zinc-800">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold">{groupData.name}</h2>
-          <span className="text-sm text-zinc-500">
+          <span className="text-sm text-zinc-500 dark:text-zinc-400">
             <Users className="mr-1 inline h-4 w-4" />
             {groupData.members?.length || 0} members
           </span>
@@ -305,17 +339,28 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken }
           >
             <Settings className="h-5 w-5" />
           </button>
+          <button
+            onClick={() => {
+              if (confirm('Are you sure you want to leave this group chat?')) {
+                onLeaveGroup(groupId)
+              }
+            }}
+            className="rounded-lg p-2 hover:bg-red-100 dark:hover:bg-red-900/20"
+            title="Leave Group"
+          >
+            <LogOut className="h-5 w-5 text-red-500" />
+          </button>
         </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6">
         {loading ? (
-          <div className="flex items-center justify-center text-zinc-500">
+          <div className="flex items-center justify-center text-zinc-500 dark:text-zinc-400">
             Loading messages...
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex items-center justify-center text-zinc-500">
+          <div className="flex items-center justify-center text-zinc-500 dark:text-zinc-400">
             No messages yet. Start the conversation!
           </div>
         ) : (
@@ -337,7 +382,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken }
         )}
 
         {typingUsers.length > 0 && (
-          <div className="text-sm italic text-zinc-500">
+          <div className="text-sm italic text-zinc-500 dark:text-zinc-400">
             {typingUsers.map(u => u.userEmail).join(', ')}{' '}
             {typingUsers.length === 1 ? 'is' : 'are'} typing...
           </div>
@@ -345,7 +390,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken }
       </div>
 
       {/* Input */}
-      <div className="border-t p-4">
+      <div className="border-t p-4 dark:border-zinc-800">
         <div className="flex gap-2">
           <input
             type="text"
@@ -362,12 +407,12 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken }
             }}
             placeholder="Type a message..."
             disabled={sending}
-            className="flex-1 rounded-lg border border-zinc-200 px-4 py-2 dark:border-zinc-700 dark:bg-zinc-800"
+            className="flex-1 rounded-lg border border-zinc-200 px-4 py-2 dark:border-zinc-700 dark:bg-zinc-900"
           />
           <button
             onClick={sendMessage}
             disabled={!newMessage.trim() || sending}
-            className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
+            className="rounded-lg bg-indigo-500 px-4 py-2 text-white hover:bg-indigo-600 disabled:opacity-50 dark:bg-indigo-600 dark:hover:bg-indigo-700"
           >
             <Send className="h-5 w-5" />
           </button>

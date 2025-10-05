@@ -94,3 +94,4 @@ class Neo4jService {
 }
 
 export const neo4jService = new Neo4jService()
+export { neo4j }

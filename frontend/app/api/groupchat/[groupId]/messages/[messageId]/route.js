@@ -10,6 +10,9 @@ const supabase = createClient(
 
 export async function PUT(request, { params }) {
   try {
+    // Await params as required in Next.js 15
+    const { groupId, messageId } = await params
+
     const authHeader = request.headers.get('authorization')
     if (!authHeader) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -33,7 +36,7 @@ export async function PUT(request, { params }) {
     }
 
     const result = await groupChatService.editMessage(
-      params.messageId,
+      messageId,
       user.id,
       content
     )
@@ -42,7 +45,7 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: result.error }, { status: 400 })
     }
 
-    await pusherService.editMessage(params.groupId, params.messageId, content)
+    await pusherService.editMessage(groupId, messageId, content)
 
     return NextResponse.json(result)
   } catch (error) {
@@ -56,6 +59,9 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
+    // Await params as required in Next.js 15
+    const { groupId, messageId } = await params
+
     const authHeader = request.headers.get('authorization')
     if (!authHeader) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -68,13 +74,13 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const result = await groupChatService.deleteMessage(params.messageId, user.id)
+    const result = await groupChatService.deleteMessage(messageId, user.id)
 
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 400 })
     }
 
-    await pusherService.deleteMessage(params.groupId, params.messageId)
+    await pusherService.deleteMessage(groupId, messageId)
 
     return NextResponse.json({ message: 'Message deleted successfully' })
   } catch (error) {
