@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import geminiService from '../../../../../services/gemini.service'
 import groupChatService from '../../../../../services/groupchat.service'
+import pusherService from '../../../../../services/pusher.service'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -41,24 +42,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Parent message not found' }, { status: 404 })
     }
 
-    console.log('=== AI Context Debug ===')
-    console.log('Parent Message:', {
-      id: parentMessage.id,
-      content: parentMessage.content,
-      userName: parentMessage.userName,
-      userEmail: parentMessage.userEmail,
-      createdAt: parentMessage.createdAt
-    })
-    console.log('Thread Messages Count:', threadMessages.length)
-    console.log('Thread Messages:', threadMessages.map(msg => ({
-      id: msg.id,
-      content: msg.content,
-      userName: msg.userName,
-      userEmail: msg.userEmail,
-      createdAt: msg.createdAt,
-      isAI: msg.isAI
-    })))
-    console.log('======================')
+    console.log('🤖 Reading context:', threadMessages.length, 'previous messages')
 
     // Build prompt with thread context
     let prompt = `You are a Socratic AI tutor in a group chat. Your role is to guide students to discover answers themselves through:
@@ -88,23 +72,33 @@ ${parentMessage.userName || parentMessage.userEmail}: ${parentMessage.content}
 
     prompt += `Respond with guiding questions and hints, not direct answers:`
 
-    console.log('=== Full Prompt Sent to AI ===')
-    console.log(prompt)
-    console.log('==============================')
-
     const aiResponse = await geminiService.chat(prompt)
 
-    console.log('=== AI Response ===')
-    console.log(aiResponse)
-    console.log('===================')
+    // Build response with visible thread context
+    let responseWithContext = ''
+
+    if (threadMessages.length > 0) {
+      responseWithContext += `**Thread context (previous messages in this conversation):**\n`
+      threadMessages.forEach(msg => {
+        responseWithContext += `${msg.userName || msg.userEmail}: ${msg.content}\n`
+      })
+      responseWithContext += '\n'
+    }
+
+    responseWithContext += aiResponse
 
     // Create AI reply in the thread
     const aiMessage = await groupChatService.createMessage(
       groupId,
       'ai_assistant',
-      aiResponse,
+      responseWithContext,
       parentMessageId
     )
+
+    // Broadcast AI message via Pusher for real-time updates
+    await pusherService.sendMessage(groupId, aiMessage)
+
+    console.log('🤖 Response sent to group chat')
 
     return NextResponse.json(aiMessage)
   } catch (error) {

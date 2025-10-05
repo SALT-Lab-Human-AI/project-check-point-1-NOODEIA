@@ -232,21 +232,26 @@ class Neo4jDataService {
     try {
       const chatId = uuidv4()
 
-      const lastChatResult = await session.run(
-        `
-        MATCH (s:Session {id: $sessionId})-[:OCCURRED]->(c:Chat)
-        RETURN c.id as id
-        ORDER BY c.created_at DESC
-        LIMIT 1
-        `,
-        { sessionId }
-      )
+      console.log('💬 Creating Chat:', {
+        sessionId: sessionId.substring(0, 8) + '...',
+        chatId: chatId.substring(0, 8) + '...',
+        role,
+        contentPreview: content.substring(0, 50) + '...'
+      })
 
-      const lastChatId = lastChatResult.records[0]?.get('id')
-
+      // Create the chat and NEXT relationship in a single transaction
       const result = await session.run(
         `
         MATCH (s:Session {id: $sessionId})
+
+        // Find the last chat in this session
+        OPTIONAL MATCH (s)-[:OCCURRED]->(lastChat:Chat)
+        WITH s, lastChat
+        ORDER BY lastChat.created_at DESC
+        LIMIT 1
+        WITH s, lastChat
+
+        // Create new chat
         CREATE (c:Chat {
           id: $chatId,
           role: $role,
@@ -254,29 +259,41 @@ class Neo4jDataService {
           created_at: datetime()
         })
         CREATE (s)-[:OCCURRED]->(c)
-        RETURN c
+
+        // Create NEXT relationship if there was a previous chat
+        FOREACH (prev IN CASE WHEN lastChat IS NOT NULL THEN [lastChat] ELSE [] END |
+          CREATE (prev)-[:NEXT]->(c)
+        )
+
+        RETURN c, s.id as verifySessionId, lastChat.id as prevChatId
         `,
         { sessionId, chatId, role, content }
       )
 
-      const newChat = neo4jService.nodeToObject(result.records[0].get('c'))
+      if (result.records.length === 0) {
+        console.error('❌ Failed to create chat: Session not found')
+        throw new Error('Session not found')
+      }
 
-      if (lastChatId) {
-        await session.run(
-          `
-          MATCH (c1:Chat {id: $prevId})
-          MATCH (c2:Chat {id: $currId})
-          CREATE (c1)-[:NEXT]->(c2)
-          `,
-          { prevId: lastChatId, currId: chatId }
-        )
+      const record = result.records[0]
+      const newChat = neo4jService.nodeToObject(record.get('c'))
+      const verifySessionId = record.get('verifySessionId')
+      const prevChatId = record.get('prevChatId')
+
+      console.log('✅ Chat created successfully')
+      console.log('✅ OCCURRED relationship: Session', verifySessionId.substring(0, 8) + '... -> Chat', chatId.substring(0, 8) + '...')
+
+      if (prevChatId) {
+        console.log('✅ NEXT relationship: Chat', prevChatId.substring(0, 8) + '... -> Chat', chatId.substring(0, 8) + '...')
+      } else {
+        console.log('📎 No previous chat - this is the first message in session')
       }
 
       await this.touchSession(sessionId)
 
       return newChat
     } catch (error) {
-      console.error('Error creating chat:', error)
+      console.error('❌ Error creating chat:', error)
       throw error
     } finally {
       await session.close()

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Send } from 'lucide-react'
 import ThreadedMessage from './ThreadedMessage'
+import { getPusherClient, PUSHER_EVENTS } from '../lib/pusher'
 
 export default function ThreadPanel({
   parentMessage,
@@ -18,10 +19,49 @@ export default function ThreadPanel({
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const repliesEndRef = useRef(null)
+  const pusherRef = useRef(null)
 
   useEffect(() => {
     loadReplies()
+    setupPusher()
+
+    return () => {
+      if (pusherRef.current) {
+        pusherRef.current.unsubscribe(`group-${groupId}`)
+      }
+    }
   }, [parentMessage.id])
+
+  const setupPusher = () => {
+    const pusher = getPusherClient()
+    if (!pusher) return
+
+    pusherRef.current = pusher
+    const channel = pusher.subscribe(`group-${groupId}`)
+
+    // Listen for new messages in this thread
+    channel.bind(PUSHER_EVENTS.MESSAGE_SENT, (data) => {
+      // Only add if it's a reply to our parent message
+      if (data.parentId === parentMessage.id && data.createdBy !== currentUser.id) {
+        setReplies(prev => [...prev, data])
+        scrollToBottom()
+      }
+    })
+
+    // Listen for edited messages in this thread
+    channel.bind(PUSHER_EVENTS.MESSAGE_EDITED, (data) => {
+      setReplies(prev =>
+        prev.map(msg =>
+          msg.id === data.messageId ? { ...msg, content: data.newContent, edited: true } : msg
+        )
+      )
+    })
+
+    // Listen for deleted messages in this thread
+    channel.bind(PUSHER_EVENTS.MESSAGE_DELETED, (data) => {
+      setReplies(prev => prev.filter(msg => msg.id !== data.messageId))
+    })
+  }
 
   const loadReplies = async () => {
     try {

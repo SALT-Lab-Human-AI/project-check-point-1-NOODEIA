@@ -171,6 +171,7 @@ class GroupChatService {
       const messageId = uuidv4()
       const isAI = userId === 'ai_assistant'
 
+
       let query = ''
       if (isAI) {
         // AI doesn't need membership check
@@ -185,7 +186,8 @@ class GroupChatService {
             createdBy: $userId,
             groupId: $groupId,
             edited: false,
-            isAI: true
+            isAI: true,
+            parentId: $parentMessageId
           })
           CREATE (g)-[:CONTAINS]->(m)
           CREATE (u)-[:POSTED]->(m)
@@ -200,7 +202,8 @@ class GroupChatService {
             createdAt: datetime(),
             createdBy: $userId,
             groupId: $groupId,
-            edited: false
+            edited: false,
+            parentId: $parentMessageId
           })
           CREATE (g)-[:CONTAINS]->(m)
           CREATE (u)-[:POSTED]->(m)
@@ -211,35 +214,42 @@ class GroupChatService {
         messageId,
         groupId,
         userId,
-        content
+        content,
+        parentMessageId: parentMessageId || null
       }
 
       if (parentMessageId) {
         query += `
-          WITH m, u
+          WITH m, u, g
           MATCH (parent:Message {id: $parentMessageId})
           CREATE (m)-[:REPLY_TO]->(parent)
+          RETURN m, u.name as userName, u.email as userEmail, g.id as verifyGroupId, parent.id as verifyParentId
         `
         params.parentMessageId = parentMessageId
+      } else {
+        query += `
+          RETURN m, u.name as userName, u.email as userEmail, g.id as verifyGroupId
+        `
       }
-
-      query += `
-        RETURN m, u.name as userName, u.email as userEmail
-      `
 
       const result = await session.run(query, params)
 
       if (result.records.length === 0) {
+        console.error('❌ Failed to create message: Group not found or user not authorized')
         return { error: 'Not authorized or group not found' }
       }
 
       const message = result.records[0].get('m').properties
+
       return {
         ...message,
         createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : new Date().toISOString(),
         userName: result.records[0].get('userName'),
         userEmail: result.records[0].get('userEmail')
       }
+    } catch (error) {
+      console.error('❌ Error creating message:', error)
+      throw error
     } finally {
       await session.close()
     }

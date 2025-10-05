@@ -330,6 +330,13 @@ Troubleshooting
    - Check server terminal for AI-related errors (look for 🤖 emoji logs)
    - Verify AI detection is working: should see "AI mention detected" in terminal
    - Server-side detection means browser cache won't affect @ai functionality
+   - AI responses are now asynchronous (fire-and-forget) for better performance
+
+**AI responses not showing up without refresh:**
+   - Fixed in latest version with real-time Pusher broadcasting
+   - AI responses now appear instantly via Pusher in both main channel and thread panel
+   - ThreadPanel now subscribes to Pusher for real-time thread updates
+   - Message nodes include ``parentId`` property for proper filtering
 
 Environment Variables Reference
 --------------------------------

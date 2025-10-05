@@ -8,6 +8,27 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+// Helper function to trigger AI response asynchronously
+async function triggerAIResponse(groupId, parentMessageId, authHeader) {
+  try {
+    const { POST: handleAI } = await import('../ai/route')
+
+    const aiRequest = new Request('http://localhost/api/groupchat/' + groupId + '/ai', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader
+      },
+      body: JSON.stringify({ parentMessageId })
+    })
+
+    await handleAI(aiRequest, { params: Promise.resolve({ groupId }) })
+  } catch (error) {
+    console.error('🤖 AI response error:', error)
+    throw error
+  }
+}
+
 export async function GET(request, { params }) {
   try {
     // Await params as required in Next.js 15
@@ -92,42 +113,13 @@ export async function POST(request, { params }) {
 
     await pusherService.sendMessage(groupId, message)
 
-    // Check if message contains @ai mention and trigger AI response
+    // Check if message contains @ai mention and trigger AI response asynchronously
     // Works for both main channel messages and replies
     if (content.includes('@ai')) {
-      console.log('🤖 AI mention detected in message:', content)
-      console.log('🤖 Message type:', parentMessageId ? 'Thread reply' : 'Main channel')
-      console.log('🤖 Triggering AI response for message ID:', message.id)
-
-      try {
-        // Import AI response logic
-        const { POST: handleAI } = await import('../ai/route')
-
-        // For thread replies, pass the original parent ID to keep AI response in same thread
-        const aiParentId = parentMessageId || message.id
-        const aiRequestBody = JSON.stringify({ parentMessageId: aiParentId })
-
-        console.log('🤖 AI will reply to message ID:', aiParentId)
-
-        // Create the request with the correct parent
-        const aiRequest = new Request('http://localhost/api/groupchat/' + groupId + '/ai', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authHeader
-          },
-          body: aiRequestBody
-        })
-
-        // Trigger AI response
-        const aiResponse = await handleAI(aiRequest, { params: { groupId } })
-        const aiData = await aiResponse.json()
-
-        console.log('🤖 AI response created:', aiData)
-      } catch (aiError) {
-        console.error('�� AI response error:', aiError)
-        // Don't fail the original message, just log the error
-      }
+      // Fire-and-forget: Process AI response without blocking
+      triggerAIResponse(groupId, parentMessageId || message.id, authHeader).catch(err => {
+        console.error('🤖 Background AI error:', err)
+      })
     }
 
     return NextResponse.json(message, { status: 201 })

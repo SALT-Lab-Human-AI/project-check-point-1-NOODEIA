@@ -32,10 +32,7 @@ export async function POST(request) {
     }
 
     // Notify typing via Pusher
-    await pusherService.notifyTyping(groupId, {
-      userId: user.id,
-      userEmail: user.email
-    })
+    await pusherService.notifyTyping(groupId, user.id, user.email)
 
     return NextResponse.json({ success: true })
   } catch (error) {

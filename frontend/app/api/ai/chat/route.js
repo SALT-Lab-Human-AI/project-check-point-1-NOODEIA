@@ -24,20 +24,36 @@ IMPORTANT: Never give away the complete answer immediately. Guide step-by-step w
 
 `
 
+    // Build context summary
+    const contextSummary = []
     if (conversationHistory && conversationHistory.length > 0) {
       prompt += 'Conversation history:\n'
       conversationHistory.forEach(msg => {
         const role = msg.role === 'user' ? 'Student' : 'Tutor'
         prompt += `${role}: ${msg.content}\n`
+        contextSummary.push({
+          role: msg.role,
+          preview: msg.content.substring(0, 100) + (msg.content.length > 100 ? '...' : '')
+        })
       })
       prompt += '\n'
     }
 
     prompt += `Student: ${message}\nTutor:`
 
-    const response = await geminiService.chat(prompt)
+    const aiResponse = await geminiService.chat(prompt)
 
-    return NextResponse.json({ response })
+    // Prepend context awareness to response
+    let responseWithContext = ''
+    if (contextSummary.length > 0) {
+      responseWithContext += `*[I've reviewed our previous ${contextSummary.length} message${contextSummary.length > 1 ? 's' : ''} in this conversation]*\n\n`
+    }
+    responseWithContext += aiResponse
+
+    return NextResponse.json({
+      response: responseWithContext,
+      contextCount: contextSummary.length
+    })
   } catch (error) {
     console.error('AI chat error:', error)
     return NextResponse.json(

@@ -239,14 +239,38 @@ export default function AIAssistantUI() {
         const data = await response.json()
         const assistantContent = data.response
 
+        // Create temporary AI message for immediate display
+        const tempAiMsg = {
+          id: 'temp_ai_' + Math.random().toString(36).slice(2),
+          role: "assistant",
+          content: assistantContent,
+          created_at: new Date().toISOString()
+        }
+
+        // Show AI response immediately
         setIsThinking(false)
+        setConversations(prev =>
+          prev.map(conv => {
+            if (conv.id !== convId) return conv
+            const messages = [...(conv.messages || []), tempAiMsg]
+            return {
+              ...conv,
+              messages,
+              updated_at: new Date().toISOString(),
+            }
+          })
+        )
+
+        // Save to database in background and replace temp message
         const assistantMsg = await databaseAdapter.createChat(convId, 'assistant', assistantContent)
 
         if (assistantMsg) {
           setConversations(prev =>
             prev.map(conv => {
               if (conv.id !== convId) return conv
-              const messages = [...(conv.messages || []), assistantMsg]
+              const messages = conv.messages.map(m =>
+                m.id === tempAiMsg.id ? assistantMsg : m
+              )
               return {
                 ...conv,
                 messages,
