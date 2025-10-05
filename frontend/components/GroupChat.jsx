@@ -154,16 +154,21 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       const newReply = await response.json()
       console.log('Reply sent:', newReply)
 
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id === parentMessageId
-            ? { ...msg, replyCount: (msg.replyCount || 0) + 1 }
-            : msg
-        )
-      )
+      // Recursively update reply counts for nested messages
+      const updateReplyCount = (msgs) => {
+        return msgs.map(msg => {
+          if (msg.id === parentMessageId) {
+            return { ...msg, replyCount: (msg.replyCount || 0) + 1 }
+          } else if (msg.replies && msg.replies.length > 0) {
+            return { ...msg, replies: updateReplyCount(msg.replies) }
+          }
+          return msg
+        })
+      }
+
+      setMessages(prev => updateReplyCount(prev))
     } catch (error) {
       console.error('Failed to send reply:', error)
-      // Don't crash the component
       alert('Failed to send reply. Please try again.')
     }
   }
@@ -185,11 +190,19 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
         throw new Error(`Failed to edit message: ${errorData.error || response.status}`)
       }
 
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id === messageId ? { ...msg, content: newContent, edited: true } : msg
-        )
-      )
+      // Recursively update edited message
+      const updateEditedMessage = (msgs) => {
+        return msgs.map(msg => {
+          if (msg.id === messageId) {
+            return { ...msg, content: newContent, edited: true }
+          } else if (msg.replies && msg.replies.length > 0) {
+            return { ...msg, replies: updateEditedMessage(msg.replies) }
+          }
+          return msg
+        })
+      }
+
+      setMessages(prev => updateEditedMessage(prev))
       alert('Message edited successfully')
     } catch (error) {
       console.error('Failed to edit message:', error)
@@ -217,7 +230,20 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
         throw new Error(`Failed to delete message: ${errorData.error || response.status}`)
       }
 
-      setMessages(prev => prev.filter(msg => msg.id !== messageId))
+      // Recursively delete message from nested structure
+      const deleteMessage = (msgs) => {
+        return msgs.filter(msg => {
+          if (msg.id === messageId) {
+            return false
+          }
+          if (msg.replies && msg.replies.length > 0) {
+            msg.replies = deleteMessage(msg.replies)
+          }
+          return true
+        })
+      }
+
+      setMessages(prev => deleteMessage(prev))
       alert('Message deleted successfully')
     } catch (error) {
       console.error('Failed to delete message:', error)
@@ -237,11 +263,19 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
 
       const replies = await response.json()
 
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id === messageId ? { ...msg, replies } : msg
-        )
-      )
+      // Recursively update messages to add replies at any depth
+      const updateMessagesWithReplies = (msgs) => {
+        return msgs.map(msg => {
+          if (msg.id === messageId) {
+            return { ...msg, replies }
+          } else if (msg.replies && msg.replies.length > 0) {
+            return { ...msg, replies: updateMessagesWithReplies(msg.replies) }
+          }
+          return msg
+        })
+      }
+
+      setMessages(prev => updateMessagesWithReplies(prev))
 
       return replies
     } catch (error) {

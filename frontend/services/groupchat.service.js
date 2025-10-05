@@ -111,7 +111,9 @@ class GroupChatService {
       const result = await session.run(
         `
         MATCH (u:User {id: $userId})-[r:MEMBER_OF]->(g:GroupChat)
-        RETURN g, r.role as role, r.joinedAt as joinedAt
+        OPTIONAL MATCH (g)<-[:MEMBER_OF]-(member:User)
+        WITH g, r, collect(member) as members
+        RETURN g, r.role as role, r.joinedAt as joinedAt, size(members) as memberCount
         ORDER BY r.joinedAt DESC
         `,
         { userId }
@@ -120,7 +122,8 @@ class GroupChatService {
       return result.records.map(record => ({
         ...record.get('g').properties,
         role: record.get('role'),
-        joinedAt: record.get('joinedAt')
+        joinedAt: record.get('joinedAt'),
+        members: Array(record.get('memberCount').toNumber()).fill(null) // Create array with correct length for display
       }))
     } finally {
       await session.close()
@@ -230,7 +233,7 @@ class GroupChatService {
         return []
       }
 
-      // If user is a member, get messages
+      // If user is a member, get messages with parent info
       // Ensure skip and limit are integers using neo4j.int()
       const skipInt = neo4j.int(skip)
       const limitInt = neo4j.int(limit)
@@ -241,8 +244,16 @@ class GroupChatService {
         OPTIONAL MATCH (g)-[:CONTAINS]->(m:Message)
         OPTIONAL MATCH (author:User)-[:POSTED]->(m)
         OPTIONAL MATCH (m)-[:REPLY_TO]->(parent:Message)
+        OPTIONAL MATCH (parentAuthor:User)-[:POSTED]->(parent)
+        OPTIONAL MATCH (m)<-[:REPLY_TO]-(reply:Message)
         WHERE m IS NOT NULL
-        RETURN m, author.email as userEmail, parent.id as parentId
+        WITH m, author, parent, parentAuthor, count(DISTINCT reply) as replyCount
+        RETURN m,
+               author.email as userEmail,
+               parent.id as parentId,
+               parent.content as parentContent,
+               parentAuthor.email as parentAuthorEmail,
+               replyCount
         ORDER BY m.createdAt DESC
         SKIP $skip
         LIMIT $limit
@@ -260,7 +271,10 @@ class GroupChatService {
             createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : new Date().toISOString(),
             editedAt: message.editedAt ? new Date(message.editedAt).toISOString() : null,
             userEmail: record.get('userEmail'),
-            parentId: record.get('parentId')
+            parentId: record.get('parentId'),
+            parentContent: record.get('parentContent'),
+            parentAuthorEmail: record.get('parentAuthorEmail'),
+            replyCount: record.get('replyCount') ? record.get('replyCount').toNumber() : 0
           }
         })
     } catch (error) {
@@ -280,16 +294,31 @@ class GroupChatService {
         MATCH (u:User {id: $userId})-[:MEMBER_OF]->(g)
         MATCH (m:Message)-[:REPLY_TO]->(parent)
         MATCH (author:User)-[:POSTED]->(m)
-        RETURN m, author.email as userEmail
+        OPTIONAL MATCH (parentAuthor:User)-[:POSTED]->(parent)
+        OPTIONAL MATCH (m)<-[:REPLY_TO]-(reply:Message)
+        WITH m, author, parent, parentAuthor, count(DISTINCT reply) as replyCount
+        RETURN m,
+               author.email as userEmail,
+               parent.id as parentId,
+               parentAuthor.email as parentAuthorEmail,
+               replyCount
         ORDER BY m.createdAt ASC
         `,
         { parentMessageId, userId }
       )
 
-      return result.records.map(record => ({
-        ...record.get('m').properties,
-        userEmail: record.get('userEmail')
-      }))
+      return result.records.map(record => {
+        const message = record.get('m').properties
+        return {
+          ...message,
+          createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : new Date().toISOString(),
+          editedAt: message.editedAt ? new Date(message.editedAt).toISOString() : null,
+          userEmail: record.get('userEmail'),
+          parentId: record.get('parentId'),
+          parentAuthorEmail: record.get('parentAuthorEmail'),
+          replyCount: record.get('replyCount') ? record.get('replyCount').toNumber() : 0
+        }
+      })
     } finally {
       await session.close()
     }

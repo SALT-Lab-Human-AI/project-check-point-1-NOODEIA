@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { MessageCircle, Edit2, Trash2, MoreVertical } from 'lucide-react'
+import { MessageCircle, Edit2, Trash2, MoreVertical, CornerDownRight } from 'lucide-react'
 
 export default function ThreadedMessage({
   message,
@@ -93,6 +93,13 @@ export default function ThreadedMessage({
               <span>{formatTime(message.createdAt)}</span>
               {message.edited && <span>(edited)</span>}
             </div>
+
+            {message.parentAuthorEmail && (
+              <div className="mb-1 flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
+                <CornerDownRight className="h-3 w-3" />
+                <span>Replying to {message.parentAuthorEmail}</span>
+              </div>
+            )}
 
             {isEditing ? (
               <div className="w-full">
