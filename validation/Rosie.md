@@ -2,7 +2,7 @@
 
 ## Tool
 
-*   ChatGPT (GPT-5), Copilot / Perplexity, Khanmigo
+*   ChatGPT (GPT-5)
     
 
 ## Scenarios & Tasks
