@@ -76,7 +76,7 @@ ${parentMessage.userName || parentMessage.userEmail}: ${parentMessage.content}
     let responseWithContext = ''
 
     if (threadMessages.length > 0) {
-      responseWithContext += `**Thread context (previous messages in this conversation):**\n`
+      responseWithContext += `Thread context (previous messages in this conversation):\n`
       threadMessages.forEach(msg => {
         responseWithContext += `${msg.userName || msg.userEmail}: ${msg.content}\n`
       })

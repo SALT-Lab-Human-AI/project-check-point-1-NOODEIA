@@ -43,15 +43,8 @@ IMPORTANT: Never give away the complete answer immediately. Guide step-by-step w
 
     const aiResponse = await geminiService.chat(prompt)
 
-    // Prepend context awareness to response
-    let responseWithContext = ''
-    if (contextSummary.length > 0) {
-      responseWithContext += `*[I've reviewed our previous ${contextSummary.length} message${contextSummary.length > 1 ? 's' : ''} in this conversation]*\n\n`
-    }
-    responseWithContext += aiResponse
-
     return NextResponse.json({
-      response: responseWithContext,
+      response: aiResponse,
       contextCount: contextSummary.length
     })
   } catch (error) {
