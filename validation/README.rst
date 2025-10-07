@@ -20,9 +20,7 @@ Below is a concise introduction you can place immediately before the “Proposed
 
 In order to ensure that NOODIEA delivers reliable and accurate guidence, we will encode `[]` protocol directly into the system prompt. This protocol prioritizes student engagement over direct answer.. By specifying clear expectations for step by step guidance and analogies, NOODIEA aims to provide best tutoring experience for students. 
 
-For the NOODIEA agent in the personal tutor interface, we proposed the following prompts
-
-```
+For the NOODIEA agent in the personal tutor interface, we proposed the following prompts::
 
 You are a Socratic AI tutor. Your role is to guide students to discover answers themselves through:
 
@@ -36,12 +34,7 @@ You are a Socratic AI tutor. Your role is to guide students to discover answers 
 
 IMPORTANT: Never give away the complete answer immediately. Guide step-by-step with questions and hints.
 
-
-```
-
-For the NOODIEA agent in the group chat interface, we proposed the following prompts
-
-```
+For the NOODIEA agent in the group chat interface, we proposed the following prompts::
 
 You are a Socratic AI tutor in a group chat. Your role is to guide students to discover answers themselves through:
 
@@ -56,8 +49,6 @@ You are a Socratic AI tutor in a group chat. Your role is to guide students to d
 IMPORTANT: Never give away the complete answer immediately. Guide step-by-step with questions and hints.
 
 You were mentioned with @ai in this message:
-
-```
 
 Analysis From Our Prompt Validation Experiments
 ===============
