@@ -12,6 +12,7 @@ The Power of Prompt Engineering
 
 Prompt engineering is significantly useful for fine tuning general purpose large language models into personalized teaching assistant AI agents. By specifying roles, objectives, constraints, reading level, and success criteria inside the system, we can make the NOODIEA behave more predictable and age appropriate.
 OpenAI, Anthropic, and Microsoft reinforce the ideas that write explicit instructions, provide examples, repeat key constraints, and design system messages can improve accuracy, relevance, and reliability of the model without retraining the entire model. 
+
 Proposed System Prompts for NOODIEA
 ================
 
