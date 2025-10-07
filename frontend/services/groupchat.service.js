@@ -576,22 +576,47 @@ class GroupChatService {
   async leaveGroup(groupId, userId) {
     const session = neo4jClient.getSession()
     try {
-      const result = await session.run(
-        `
-        MATCH (u:User {id: $userId})-[r:MEMBER_OF]->(g:GroupChat {id: $groupId})
-        WHERE r.role <> 'admin' OR EXISTS((other:User)-[:MEMBER_OF {role: 'admin'}]->(g)) AND other.id <> u.id
-        DELETE r
-        RETURN count(r) as left
-        `,
+      // First check if user is a member
+      const memberCheck = await session.run(
+        `MATCH (u:User {id: $userId})-[r:MEMBER_OF]->(g:GroupChat {id: $groupId})
+         RETURN r, r.role as role`,
         { groupId, userId }
       )
 
-      const left = this.toNumber(result.records[0]?.get('left'))
-      if (left === 0) {
-        return { error: 'Cannot leave: you are the only admin' }
+      if (memberCheck.records.length === 0) {
+        return { error: 'User is not a member of this group' }
       }
 
+      const userRole = memberCheck.records[0].get('role')
+
+      // If user is admin, check if there are other admins
+      if (userRole === 'admin') {
+        const adminCountResult = await session.run(
+          `MATCH (:User)-[r:MEMBER_OF {role: 'admin'}]->(g:GroupChat {id: $groupId})
+           RETURN count(r) as adminCount`,
+          { groupId }
+        )
+
+        const adminCount = this.toNumber(adminCountResult.records[0]?.get('adminCount'))
+
+        if (adminCount <= 1) {
+          return { error: 'Cannot leave: you are the only admin' }
+        }
+      }
+
+      // Delete the membership relationship
+      await session.run(
+        `MATCH (u:User {id: $userId})-[r:MEMBER_OF]->(g:GroupChat {id: $groupId})
+         DELETE r`,
+        { groupId, userId }
+      )
+
+      console.log('✅ User left group:', userId.substring(0, 8) + '...', 'from', groupId.substring(0, 8) + '...')
+
       return { success: true }
+    } catch (error) {
+      console.error('Error leaving group:', error)
+      throw error
     } finally {
       await session.close()
     }
