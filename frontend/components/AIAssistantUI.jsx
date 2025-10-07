@@ -326,18 +326,61 @@ export default function AIAssistantUI() {
         })
       )
 
+      // Get AI response using real API
       setIsThinking(true)
-      setTimeout(async () => {
-        setIsThinking(false)
-        const assistantContent = "I'll help you with that. This is a demo response to show the chat interface is working."
+      try {
+        // Get updated conversation history up to the edited message
+        const updatedConversation = conversations.find(c => c.id === selectedId)
+        const historyUpToEdit = updatedConversation.messages.slice(0, messageIndex + 1)
 
+        const response = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: content,
+            conversationHistory: historyUpToEdit.slice(0, -1) // Exclude the current message from history
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to get AI response')
+        }
+
+        const data = await response.json()
+        const assistantContent = data.response
+
+        // Create temporary AI message for immediate display
+        const tempAiMsg = {
+          id: 'temp_ai_' + Math.random().toString(36).slice(2),
+          role: "assistant",
+          content: assistantContent,
+          created_at: new Date().toISOString()
+        }
+
+        // Show AI response immediately
+        setIsThinking(false)
+        setConversations(prev =>
+          prev.map(conv => {
+            if (conv.id !== conversation.id) return conv
+            const messages = [...(conv.messages || []), tempAiMsg]
+            return {
+              ...conv,
+              messages,
+              updated_at: new Date().toISOString(),
+            }
+          })
+        )
+
+        // Save to database in background and replace temp message
         const assistantMsg = await databaseAdapter.createChat(conversation.id, 'assistant', assistantContent)
 
         if (assistantMsg) {
           setConversations(prev =>
             prev.map(conv => {
               if (conv.id !== conversation.id) return conv
-              const messages = [...(conv.messages || []), assistantMsg]
+              const messages = conv.messages.map(m =>
+                m.id === tempAiMsg.id ? assistantMsg : m
+              )
               return {
                 ...conv,
                 messages,
@@ -346,17 +389,53 @@ export default function AIAssistantUI() {
             })
           )
         }
-      }, 1500)
+      } catch (aiError) {
+        console.error('AI response error:', aiError)
+        setIsThinking(false)
+        // Show error message
+        const errorMsg = await databaseAdapter.createChat(conversation.id, 'assistant', 'Sorry, I encountered an error. Please try again.')
+        if (errorMsg) {
+          setConversations(prev =>
+            prev.map(conv => {
+              if (conv.id !== conversation.id) return conv
+              const messages = [...(conv.messages || []), errorMsg]
+              return { ...conv, messages, updated_at: new Date().toISOString() }
+            })
+          )
+        }
+      }
     } catch (error) {
       console.error('Failed to update message:', error)
     }
   }
 
-  function resendMessage(messageId) {
+  async function resendMessage(messageId) {
     const conversation = conversations.find(c => c.id === selectedId)
     if (!conversation) return
     const message = (conversation.messages || []).find(m => m.id === messageId)
     if (!message) return
+
+    // Find the index of the message being resent
+    const messageIndex = conversation.messages.findIndex(m => m.id === messageId)
+
+    // Delete all messages after this one (including old AI responses)
+    const messagesToDelete = conversation.messages.slice(messageIndex + 1)
+    if (messagesToDelete.length > 0) {
+      for (const msg of messagesToDelete) {
+        await databaseAdapter.deleteChat(msg.id)
+      }
+
+      // Update UI to remove deleted messages
+      setConversations(prev =>
+        prev.map(conv => {
+          if (conv.id !== conversation.id) return conv
+          const messages = conv.messages.slice(0, messageIndex + 1)
+          return { ...conv, messages, updated_at: new Date().toISOString() }
+        })
+      )
+    }
+
+    // Resend the message (which will trigger a new AI response)
     sendMessage(conversation.id, message.content)
   }
 
