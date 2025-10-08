@@ -5,8 +5,7 @@ Prompt Based Validation and Analysis
 Current AI Limitations and Their Negative Impacts on Students
 ================
 
-Our evaluation of current popular AI tools unveils their architectural limitations that undermine the learning process and cognitive growth of students. Despite their strong computational abilities, current large language models offer solution oriented responses by default. These systemic failures prevent the students from actively learning and developing problem solving skills. Instead, students internalize the idea that learning is about receiving answers rather than `[]`
-
+Our evaluation of current popular AI tools unveils their architectural limitations that undermine the learning process and cognitive growth of students. Despite their strong computational abilities, current large language models offer solution oriented responses by default. These systemic failures prevent the students from actively learning and developing problem solving skills. Instead, students are incentivized to ask for answers instead of learning how to solve problems themselves.
 The Power of Prompt Engineering
 ================
 
@@ -18,7 +17,7 @@ Proposed System Prompts for NOODIEA
 
 Below is a concise introduction you can place immediately before the “Proposed System Prompt” block.
 
-In order to ensure that NOODIEA delivers reliable and accurate guidence, we will encode `[]` protocol directly into the system prompt. This protocol prioritizes student engagement over direct answer.. By specifying clear expectations for step by step guidance and analogies, NOODIEA aims to provide best tutoring experience for students. 
+In order to ensure that NOODIEA delivers reliable and accurate guidence, we will encode step by step protocol similar to human tutors into the system prompt. This protocol prioritizes student engagement over direct answer.. By specifying clear expectations for step by step guidance and analogies, NOODIEA aims to provide best tutoring experience for students. 
 
 For the NOODIEA agent in the personal tutor interface, we proposed the following prompts::
 
