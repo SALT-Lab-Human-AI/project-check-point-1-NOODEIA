@@ -6,6 +6,7 @@ Current AI Limitations and Their Negative Impacts on Students
 ================
 
 Our evaluation of current popular AI tools unveils their architectural limitations that undermine the learning process and cognitive growth of students. Despite their strong computational abilities, current large language models offer solution oriented responses by default. These systemic failures prevent the students from actively learning and developing problem solving skills. Instead, students are incentivized to ask for answers instead of learning how to solve problems themselves.
+
 The Power of Prompt Engineering
 ================
 
