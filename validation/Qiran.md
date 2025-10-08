@@ -1,4 +1,4 @@
-# Prompting Protocol – \[Qiran Hu\]
+# Prompting Protocol – [Qiran Hu]
 
 ## Tool
 
