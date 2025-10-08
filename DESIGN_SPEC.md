@@ -22,7 +22,7 @@
 ![NOODIEA AI Tutor In Group Chat](./additional%20items/demo7.gif)
 
 ## Scratch Paper Extension Demonstration
-![AI Tutor Scratch Paper](./additional%20items/demo8.gif)
+![AI Tutor Scratch Paper](./additional%20items/demo8.png)
 
 ## Build Personalized Teaching Assistant Demonstration
 ![Build Personalized Teaching Assistant](./additional%20items/demo9.gif)

@@ -43,6 +43,8 @@ export async function POST(request, { params }) {
     const threadMessages = await groupChatService.getThreadMessages(parentMessageId, user.id)
 
     // Build prompt with thread context
+    const userName = parentMessage.userName || parentMessage.userEmail.split('@')[0]
+
     let prompt = `You are a Socratic AI tutor in a group chat. Your role is to guide students to discover answers themselves through:
 
 1. Ask clarifying questions to understand what the student already knows
@@ -53,7 +55,10 @@ export async function POST(request, { params }) {
 6. Praise progress and correct thinking
 7. Only provide the full solution if the student is truly stuck after multiple attempts
 
-IMPORTANT: Never give away the complete answer immediately. Guide step-by-step with questions and hints.
+IMPORTANT:
+- Never give away the complete answer immediately. Guide step-by-step with questions and hints.
+- Always start your response by greeting the user with "@${userName}, Hi!" or a similar friendly greeting
+- Use @${userName} when addressing the user directly in your response
 
 You were mentioned with @ai in this message:
 ${parentMessage.userName || parentMessage.userEmail}: ${parentMessage.content}
@@ -68,21 +73,27 @@ ${parentMessage.userName || parentMessage.userEmail}: ${parentMessage.content}
       prompt += '\n'
     }
 
-    prompt += `Respond with guiding questions and hints, not direct answers:`
+    prompt += `Remember to start with a greeting like "@${userName}, Hi!" and then respond with guiding questions and hints, not direct answers:`
 
     const aiResponse = await geminiService.chat(prompt)
 
     // Build response with visible thread context
     let responseWithContext = ''
 
+    // Always show the parent message and any replies as context
+    responseWithContext += `Thread context (previous messages in this conversation):\n`
+
+    // Include the parent message first
+    responseWithContext += `${parentMessage.userName || parentMessage.userEmail}: ${parentMessage.content}\n`
+
+    // Then include any thread replies
     if (threadMessages.length > 0) {
-      responseWithContext += `Thread context (previous messages in this conversation):\n`
       threadMessages.forEach(msg => {
         responseWithContext += `${msg.userName || msg.userEmail}: ${msg.content}\n`
       })
-      responseWithContext += '\n'
     }
 
+    responseWithContext += '\n'
     responseWithContext += aiResponse
 
     // Create AI reply in the thread

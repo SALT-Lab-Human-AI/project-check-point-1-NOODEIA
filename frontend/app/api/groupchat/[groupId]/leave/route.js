@@ -31,7 +31,12 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await groupChatService.leaveGroup(groupId, user.id)
+    const result = await groupChatService.leaveGroup(groupId, user.id)
+
+    // Check if there was an error (e.g., user is the only admin)
+    if (result?.error) {
+      return NextResponse.json({ error: result.error }, { status: 400 })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
