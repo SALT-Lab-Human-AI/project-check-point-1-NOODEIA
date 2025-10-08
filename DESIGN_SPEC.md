@@ -25,7 +25,7 @@
 ![AI Tutor Scratch Paper](./additional%20items/demo8.png)
 
 ## Build Personalized Teaching Assistant Demonstration
-![Build Personalized Teaching Assistant](./additional%20items/demo9.gif)
+![Build Personalized Teaching Assistant](./additional%20items/demo9.png)
 
 ## Personalized Teaching Assistant With Voice Assistance Demonstration
 ![Personalized Teaching Assistant With Voice Assistance](./additional%20items/demo10.gif)
