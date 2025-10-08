@@ -43,3 +43,5 @@
 
 ## Minimize Chat Bar
 ![Minimize Chat Bar](./additional%20items/demo14.gif)
+
+## Mobile and Tablet
