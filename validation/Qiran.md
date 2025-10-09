@@ -1,4 +1,4 @@
-# Prompting Protocol – \[Qiran Hu\]
+# Prompting Protocol – [Qiran Hu]
 
 ## Tool
 
@@ -408,27 +408,36 @@ Would you like more riddles like this?
 
 * The systems demonstrate inadequate conceptual progression management as evidenced in case 8 where the tool introduced abstract concepts of negative numbers without first assessing whether students had achieved mastery of prerequisite mathematical foundations. 
 
-### Latency 
+## Latency 
 
 * The system constantly takes longer time to generate response as the conversation gets longer and longer
 
 
-### User Experience Friction
+## User Experience Friction
 
 * The interface design presents significant barriers to students as shown in cases 2, 4, 5, 6, 7, and 8 where each response contains 3 to 10 reference links. The overwhelming links create cognitive overload and they are inappropriate for the target demographic. 
 
 * The systems also lack fundamental engagement tracking mechanisms because they just deliver content without engaging and interacting with the students .
 
 
-### Safety 
+## Safety 
 
 * The system includes external citations to YouTube and various websites introduces uncontrolled factors as these platforms lack age appropriate filtering. 
 
-### Cost 
+## Cost 
 
 * Despite the increased cost, the responses from Sonar Pro indicate no significant improvement in teaching methodology since it still offers direct answers.  
 
 # Opportunity Framing
 
-*   
+* With the scratch paper interface that transforms the traditional problem solving experience into an interactive learning journey,  NOODIEA's digital workspace enables students to visualize their mathematical thinking and demonstrate their problem solving processes in real time. After successfully completing a problem, the system celebrates achievement through engaging visual rewards such as confetti animations, which fosters positive learning associations and intrinsic motivation. 
+
+* NOODIEA's group chat feature represents a significant shift from isolated AI tutoring to collaborative peer learning with AI assistants. Multiple students can simultaneously engage in real time discussions about mathematical concepts. The students can create virtual study group environments that mirror classroom collaboration dynamics as the threaded conversation architecture allows students to reply directly to specific messages. 
+
+* The @ai feature  provides personalized assistance by analyzing entire conversation threads to understand the context before responding. With its context awareness, NOODIEA can respond directly to the student who requested help, which provides personalized guidance in the collaborative learning environment. Students can switch between different chat rooms in order to engage in solving different mathematical problems based on their needs. 
+
+* NOODIEA's teaching assistant integration allows teaching assistants to upload detailed instructional notes and teaching strategies from professional educators so that NOODIEA can follow the current established classroom methodologies and individual teaching styles. This feature enables the NOODIEA to deliver feedback that mirrors the exact instructional approach students would receive from their regular teachers.
+
+* The NOODIEA’s advanced voice synthesis technology clones teaching assistants' voices to provide audio narration of questions and responses, which creates an inclusive learning environment that enhances comprehension and reduces cognitive distance between AI and human instruction. By preserving the teaching assistant's style within the AI system, NOODIEA ensures that it amplifies rather than replaces human educational expertise.
+  
 

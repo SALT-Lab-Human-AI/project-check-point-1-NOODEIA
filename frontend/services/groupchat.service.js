@@ -589,8 +589,9 @@ class GroupChatService {
 
       const userRole = memberCheck.records[0].get('role')
 
-      // If user is admin, check if there are other admins
+      // If user is admin, check if there are other members who need an admin
       if (userRole === 'admin') {
+        // Check if there are other admins
         const adminCountResult = await session.run(
           `MATCH (:User)-[r:MEMBER_OF {role: 'admin'}]->(g:GroupChat {id: $groupId})
            RETURN count(r) as adminCount`,
@@ -599,8 +600,22 @@ class GroupChatService {
 
         const adminCount = this.toNumber(adminCountResult.records[0]?.get('adminCount'))
 
+        // Only prevent leaving if you're the only admin AND there are other non-admin members
         if (adminCount <= 1) {
-          return { error: 'Cannot leave: you are the only admin' }
+          // Check if there are other members
+          const memberCountResult = await session.run(
+            `MATCH (:User)-[r:MEMBER_OF]->(g:GroupChat {id: $groupId})
+             RETURN count(r) as memberCount`,
+            { groupId }
+          )
+
+          const memberCount = this.toNumber(memberCountResult.records[0]?.get('memberCount'))
+
+          // If there are other members besides the admin, prevent leaving
+          if (memberCount > 1) {
+            return { error: 'Cannot leave: you are the only admin and there are other members. Please promote another member to admin first.' }
+          }
+          // If you're the only member (memberCount == 1), allow leaving (group becomes empty)
         }
       }
 

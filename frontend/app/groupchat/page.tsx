@@ -59,7 +59,8 @@ export default function GroupChatPage() {
     try {
       const response = await fetch('/api/groupchat', {
         headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Cache-Control': 'no-cache' // Force fresh fetch
         }
       })
       if (response.ok) {
@@ -141,11 +142,20 @@ export default function GroupChatPage() {
       })
 
       if (response.ok) {
+        // Clear selection first
         setSelectedGroupId(null)
-        fetchGroups()
+        // Wait a bit to ensure the leave operation completes in the database
+        await new Promise(resolve => setTimeout(resolve, 100))
+        // Then refresh the groups list
+        await fetchGroups()
+      } else {
+        const error = await response.json()
+        // Show the error message to the user
+        alert(error.error || 'Failed to leave group')
       }
     } catch (error) {
       console.error('Error leaving group:', error)
+      alert('Failed to leave group. Please try again.')
     }
   }
 

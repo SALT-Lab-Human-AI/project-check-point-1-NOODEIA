@@ -71,8 +71,8 @@ export default function ChatPane({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
-        <div className="mx-auto max-w-3xl space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 sm:p-4">
+        <div className="mx-auto max-w-3xl space-y-3 sm:space-y-4">
           {messages.length === 0 ? (
             <div className="flex h-full items-center justify-center py-12">
               <div className="text-center">

@@ -221,6 +221,7 @@ Key Features
 * 📱 Responsive design
 * 🚀 Serverless deployment (Vercel)
 * ✏️ Edit and delete messages with cascade delete for threads
+* 🔄 Edit and resend messages with real AI responses (not mock)
 * 🔄 Server-side @ai detection for reliable AI responses
 
 Using the Application
@@ -233,6 +234,8 @@ Using the Application
 3. AI uses Socratic teaching method (guides with questions rather than direct answers)
 4. Create multiple conversations from the sidebar
 5. Delete conversations by clicking the delete button in sidebar
+6. **Edit messages**: Click the three-dot menu to edit your message and get a new AI response
+7. **Resend messages**: Click resend to regenerate the AI response without editing your message
 
 **Group Chat:**
 

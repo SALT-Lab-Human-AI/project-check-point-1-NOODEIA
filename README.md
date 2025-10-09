@@ -337,6 +337,8 @@ The logo image is inspired by [FREEP!K](https://www.freepik.com/premium-vector/t
 
 We utilized Claude Code to temporalily log and document the set up steps during the developing phase and we will be modifying and editing them in the later phases.
 
+We also incorporated AI generated images for demonstration purpose for our proposed features.
+
 ## 📝 License
 
 Distributed under the **Apache 2.0** License. 
