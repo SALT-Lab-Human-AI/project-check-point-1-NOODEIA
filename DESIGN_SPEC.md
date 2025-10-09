@@ -98,3 +98,8 @@ We implement the [current SOTA model Gemini 2.5 Pro based on Vellum](https://www
 
 ![Model Showcase](./additional%20items/model.png)
 
+# Safety 
+
+We incorporate JWT in our authentication system. When a request arrives, the server can quickly verify the signature of the token and read the claims to authorize the user instead of querying in the database for authorization information on every request.
+
+Since we deploy our database in graph database Neo4j, we are immune to various cyber attacks like SQL injection.
