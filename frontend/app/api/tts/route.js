@@ -28,7 +28,7 @@ export async function POST(req) {
     })
 
     const audio = await fs.readFile(outPath)
-    // delete temperary file
+    // delete temporary file
     await fs.unlink(outPath)
 
     return new Response(audio, {

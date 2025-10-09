@@ -1,51 +1,51 @@
 # Get Familiar With NOODIEA AI 
 
 ## Sign Up Demonstration
-![Sign Up Demonstration](./additional%20items/demo1.gif)
+![Sign Up Demonstration](./InProgress/demo1.gif)
 
 ## Log In Demonstration
-![Log In Demonstration](./additional%20items/demo2.gif)
+![Log In Demonstration](./InProgress/demo2.gif)
 
 ## Log Out Demonstration
-![Log Out Demonstration](./additional%20items/demo3.gif)
+![Log Out Demonstration](./InProgress/demo3.gif)
 
 ## NOODIEA AI Tutor Demonstration
-![NOODIEA AI Tutor](./additional%20items/demo4.gif)
+![NOODIEA AI Tutor](./InProgress/demo4.gif)
 
 ## Create Group Chat Demonstration
-![Create Group Chat](./additional%20items/demo5.gif)
+![Create Group Chat](./InProgress/demo5.gif)
 
 ## Join And Leave Group Chat Demonstration
-![Create Group Chat](./additional%20items/demo6.gif)
+![Create Group Chat](./InProgress/demo6.gif)
 
 ## NOODIEA AI Tutor In Group Chat Demonstration
-![NOODIEA AI Tutor In Group Chat](./additional%20items/demo7.gif)
+![NOODIEA AI Tutor In Group Chat](./InProgress/demo7.gif)
 
 ## Scratch Paper Extension Demonstration
-![AI Tutor Scratch Paper](./additional%20items/demo8.png)
+![AI Tutor Scratch Paper](./InProgress/demo8.png)
 
 ## Build Personalized Teaching Assistant Demonstration
-![Build Personalized Teaching Assistant](./additional%20items/demo9.png)
+![Build Personalized Teaching Assistant](./InProgress/demo9.png)
 
 ## Personalized Teaching Assistant With Voice Assistance Demonstration
-![Personalized Teaching Assistant With Voice Assistance](./additional%20items/demo10.gif)
+![Personalized Teaching Assistant With Voice Assistance](./InProgress/demo10.gif)
 
 # Explore NOODIEA Interface
 
 ## Rename And Delete Chat
-![Rename And Delete Chat](./additional%20items/demo11.gif)
+![Rename And Delete Chat](./InProgress/demo11.gif)
 
 ## Switch Theme 
-![Switch Theme](./additional%20items/demo12.gif)
+![Switch Theme](./InProgress/demo12.gif)
 
 ## Resend And Edit
-![Resend And Edit](./additional%20items/demo13.gif)
+![Resend And Edit](./InProgress/demo13.gif)
 
 ## Minimize Chat Bar
-![Minimize Chat Bar](./additional%20items/demo14.gif)
+![Minimize Chat Bar](./InProgress/demo14.gif)
 
 ## Mobile And Tablet
-![Mobile And Tablet](./additional%20items/demo15.gif)
+![Mobile And Tablet](./InProgress/demo15.gif)
 
 # Low Latency
 
@@ -84,19 +84,19 @@ return Distinct Recipe
 
 ```
 
-![SQL vs Neo4j](./additional%20items/SQLvsNEO4j.png)
+![SQL vs Neo4j](./InProgress/SQLvsNEO4j.png)
 
 ### Query Speed Comparison
 
 Consider 1000000 people each with 50 friends, find the friends of a friend network and their information
 
-![SQL vs Neo4j1](./additional%20items/SQLvsNEO4j1.png)
+![SQL vs Neo4j1](./InProgress/SQLvsNEO4j1.png)
 
 # High Accuracy
 
 We implement the [current SOTA model Gemini 2.5 Pro based on Vellum](https://www.vellum.ai/llm-leaderboard?utm_source=google&utm_medium=organic) that excels in math and reasoning compared to the most commonly used ChatGPT-4o 
 
-![Model Showcase](./additional%20items/model.png)
+![Model Showcase](./InProgress/model.png)
 
 # Safety 
 

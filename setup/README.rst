@@ -94,14 +94,24 @@ Quick Start (10 Minutes)
 
    This creates the required constraints and indexes in your Neo4j database.
 
-6. **Test Locally**
+6. **Install Python Dependencies (Optional - for TTS feature)**
+
+   .. code-block:: bash
+
+      cd frontend
+      pip3 install -r requirements.txt
+      # This installs gtts==2.5.0 for Text-to-Speech functionality
+
+   Note: Python3 must be installed on your system for TTS to work.
+
+7. **Test Locally**
 
    .. code-block:: bash
 
       npm run dev
       # Open http://localhost:3000
 
-7. **Deploy to Vercel (Recommended)**
+8. **Deploy to Vercel (Recommended)**
 
    a. Go to https://vercel.com and sign up with GitHub
    b. Click "Add New Project" and import this repository
@@ -199,9 +209,11 @@ Project Structure
    │   │   ├── groupchat.service.js # Group chat operations
    │   │   └── gemini.service.js # Google Gemini AI client
    │   ├── scripts/
-   │   │   └── setup-neo4j.js    # Database initialization
+   │   │   ├── setup-neo4j.js    # Database initialization
+   │   │   └── text2audio.py     # Python TTS script
    │   ├── hooks/                # React hooks
    │   ├── .env.local            # Environment variables (create this)
+   │   ├── requirements.txt      # Python dependencies (gtts==2.5.0)
    │   └── package.json
    ├── setup/                     # Setup documentation
    │   ├── README.rst            # This file
@@ -249,6 +261,8 @@ Using the Application
    - AI responds in a thread when mentioned in main channel
    - AI responds in the same thread when mentioned in a reply
    - AI reads full thread context before responding
+   - AI greets users with @mention (e.g., "@John, Hi!")
+   - AI shows complete thread context including parent message
 
 7. **Edit/Delete**: Click the three-dot menu on your own messages
 
@@ -269,7 +283,12 @@ Common Commands
    npm run setup-groupchat  # Setup group chat schema (optional)
 
    # Dependencies
-   npm install --legacy-peer-deps   # Install dependencies
+   npm install --legacy-peer-deps   # Install Node.js dependencies
+
+   # Python Dependencies (for Text-to-Speech feature)
+   pip3 install -r requirements.txt     # Install Python dependencies (gtts)
+   # OR manually install:
+   pip3 install gtts                    # Google Text-to-Speech library
 
 Troubleshooting
 ---------------
@@ -340,6 +359,22 @@ Troubleshooting
    - AI responses now appear instantly via Pusher in both main channel and thread panel
    - ThreadPanel now subscribes to Pusher for real-time thread updates
    - Message nodes include ``parentId`` property for proper filtering
+
+**Text-to-Speech (TTS) failed error:**
+   - Install Python3 if not already installed
+   - Install Google Text-to-Speech library: ``pip3 install gtts``
+   - The ``requirements.txt`` file in ``frontend/`` contains: ``gtts==2.5.0``
+   - TTS uses a Python script located at ``frontend/scripts/text2audio.py``
+   - Only one audio can play at a time (previous audio stops when new one starts)
+
+**Cannot leave group - only admin error:**
+   - If you're the only admin AND there are other members, you cannot leave
+   - If you're the only member (even as admin), you can leave (group becomes empty)
+   - To leave as the only admin with other members, promote another member to admin first
+
+**Next.js viewport metadata warning:**
+   - Fixed by moving viewport settings to separate ``viewport`` export
+   - Now uses ``export const viewport: Viewport = {}`` instead of including in metadata
 
 Environment Variables Reference
 --------------------------------

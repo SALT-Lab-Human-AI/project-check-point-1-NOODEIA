@@ -30,7 +30,7 @@ Perplexity returns answers with embedded citations and enables rapid web verific
 
 This is our proposed muti-agent workflow 
 
-<img width = "850px" alt = "Proposed workflow" src = "../additional items/workflow.png">
+<img width = "850px" alt = "Proposed workflow" src = "../InProgress/workflow.png">
 
 ### Proposed MEGRAG Architecture
 

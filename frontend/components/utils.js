@@ -35,8 +35,22 @@ export function timeAgo(date) {
   return rtf.format(value, unit);
 }
 
+// Global variable to track currently playing audio
+let currentAudio = null
+
 // fetch TTS audio from backend and play
 export async function text2audio(text) {
+  // Stop any currently playing audio
+  if (currentAudio) {
+    currentAudio.pause()
+    currentAudio.currentTime = 0
+    // Clean up the previous audio URL
+    if (currentAudio.src) {
+      URL.revokeObjectURL(currentAudio.src)
+    }
+    currentAudio = null
+  }
+
   const res = await fetch('/api/tts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -49,7 +63,25 @@ export async function text2audio(text) {
   const blob = await res.blob()
   const url = URL.createObjectURL(blob)
   const audio = new Audio(url)
+
+  // Store reference to current audio
+  currentAudio = audio
+
   audio.play()
-  // release object URL after audio ends
-  audio.onended = () => URL.revokeObjectURL(url)
+
+  // Clean up when audio ends
+  audio.onended = () => {
+    URL.revokeObjectURL(url)
+    if (currentAudio === audio) {
+      currentAudio = null
+    }
+  }
+
+  // Also clean up on error
+  audio.onerror = () => {
+    URL.revokeObjectURL(url)
+    if (currentAudio === audio) {
+      currentAudio = null
+    }
+  }
 }

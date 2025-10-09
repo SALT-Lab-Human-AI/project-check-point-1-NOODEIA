@@ -3,7 +3,7 @@
 <a name="readme-top"></a>
 
 <!-- Project banner -->
-<img width = "220px" alt = "AI Tutor Logo" src = "./additional items/logo.png">
+<img width = "220px" alt = "AI Tutor Logo" src = "./InProgress/logo.png">
 
 # ✨ **NOODEIA**  
 
@@ -134,7 +134,7 @@ The primary value proposition emerges from the system's ability to provide genui
 
 This is our proposed muti-agent workflow 
 
-<img width = "850px" alt = "Proposed workflow" src = "./additional items/workflow.png">
+<img width = "850px" alt = "Proposed workflow" src = "./InProgress/workflow.png">
 
 #### Workflow Overview
 
