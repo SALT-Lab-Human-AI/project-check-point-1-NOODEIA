@@ -35,53 +35,61 @@ export function timeAgo(date) {
   return rtf.format(value, unit);
 }
 
-// Global variable to track currently playing audio
-let currentAudio = null
+// Global variable to track currently playing speech synthesis
+let currentSpeech = null
 
-// fetch TTS audio from backend and play
+// Use browser's built-in Web Speech API for TTS (works on Vercel)
 export async function text2audio(text) {
-  // Stop any currently playing audio
-  if (currentAudio) {
-    currentAudio.pause()
-    currentAudio.currentTime = 0
-    // Clean up the previous audio URL
-    if (currentAudio.src) {
-      URL.revokeObjectURL(currentAudio.src)
-    }
-    currentAudio = null
-  }
-
-  const res = await fetch('/api/tts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text })
-  })
-  if (!res.ok) {
-    alert('TTS failed')
+  // Check if browser supports speech synthesis
+  if (!('speechSynthesis' in window)) {
+    alert('Text-to-speech is not supported in your browser')
     return
   }
-  const blob = await res.blob()
-  const url = URL.createObjectURL(blob)
-  const audio = new Audio(url)
 
-  // Store reference to current audio
-  currentAudio = audio
+  // Stop any currently playing speech
+  if (currentSpeech) {
+    window.speechSynthesis.cancel()
+    currentSpeech = null
+  }
 
-  audio.play()
+  // Create a new speech synthesis utterance
+  const utterance = new SpeechSynthesisUtterance(text)
 
-  // Clean up when audio ends
-  audio.onended = () => {
-    URL.revokeObjectURL(url)
-    if (currentAudio === audio) {
-      currentAudio = null
+  // Configure voice settings
+  utterance.rate = 1.0  // Speed (0.1 to 10)
+  utterance.pitch = 1.0  // Pitch (0 to 2)
+  utterance.volume = 1.0  // Volume (0 to 1)
+
+  // Try to use a good English voice if available
+  const voices = window.speechSynthesis.getVoices()
+  const englishVoice = voices.find(voice =>
+    voice.lang.startsWith('en') && voice.localService
+  ) || voices.find(voice =>
+    voice.lang.startsWith('en')
+  )
+
+  if (englishVoice) {
+    utterance.voice = englishVoice
+  }
+
+  // Store reference to current speech
+  currentSpeech = utterance
+
+  // Handle speech end
+  utterance.onend = () => {
+    if (currentSpeech === utterance) {
+      currentSpeech = null
     }
   }
 
-  // Also clean up on error
-  audio.onerror = () => {
-    URL.revokeObjectURL(url)
-    if (currentAudio === audio) {
-      currentAudio = null
+  // Handle speech error
+  utterance.onerror = (event) => {
+    console.error('Speech synthesis error:', event.error)
+    if (currentSpeech === utterance) {
+      currentSpeech = null
     }
   }
+
+  // Start speaking
+  window.speechSynthesis.speak(utterance)
 }
