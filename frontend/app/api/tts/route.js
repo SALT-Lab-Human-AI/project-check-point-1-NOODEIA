@@ -11,17 +11,15 @@ export async function POST(req) {
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'Missing text' }, { status: 400 })
     }
-    // 生成唯一文件名
     const filename = `tts_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`
     const outPath = path.join('/tmp', filename)
     const scriptPath = path.join(process.cwd(), 'scripts', 'text2audio.py')
 
-    // 调用python脚本
+    // call the python script
     await new Promise((resolve, reject) => {
       const py = spawn('python3', [scriptPath, text, outPath])
       py.on('error', reject)
       py.stderr.on('data', (data) => {
-        // 可选：收集错误日志
       })
       py.on('close', (code) => {
         if (code === 0) resolve()
@@ -29,9 +27,8 @@ export async function POST(req) {
       })
     })
 
-    // 读取音频内容
     const audio = await fs.readFile(outPath)
-    // 删除临时文件
+    // delete temperary file
     await fs.unlink(outPath)
 
     return new Response(audio, {

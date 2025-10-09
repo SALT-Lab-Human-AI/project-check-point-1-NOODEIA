@@ -1,4 +1,4 @@
-// 递归提取ReactNode中的纯文本
+// Extract text from React node (string, number, array, element)
 export function extractTextFromReactNode(node) {
   if (typeof node === 'string' || typeof node === 'number') return String(node)
   if (Array.isArray(node)) return node.map(extractTextFromReactNode).join(' ')
@@ -35,7 +35,7 @@ export function timeAgo(date) {
   return rtf.format(value, unit);
 }
 
-// 文本转音频函数：请求后端API，获取mp3并播放
+// fetch TTS audio from backend and play
 export async function text2audio(text) {
   const res = await fetch('/api/tts', {
     method: 'POST',
@@ -43,13 +43,13 @@ export async function text2audio(text) {
     body: JSON.stringify({ text })
   })
   if (!res.ok) {
-    alert('TTS服务异常')
+    alert('TTS failed')
     return
   }
   const blob = await res.blob()
   const url = URL.createObjectURL(blob)
   const audio = new Audio(url)
   audio.play()
-  // 可选：播放完释放URL
+  // release object URL after audio ends
   audio.onended = () => URL.revokeObjectURL(url)
 }

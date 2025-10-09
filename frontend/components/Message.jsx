@@ -6,7 +6,7 @@ export default function Message({ role, children }) {
   const isUser = role === "user"
   const [playing, setPlaying] = useState(false)
 
-  // 仅AI消息显示播放按钮
+  // show "play" button for AI messages
   return (
     <div className={cls("flex gap-3", isUser ? "justify-end" : "justify-start")}> 
       {!isUser && (
@@ -23,7 +23,7 @@ export default function Message({ role, children }) {
         )}
       >
         <span className="flex-1 break-words">{children}</span>
-        {/* AI消息显示播放按钮 */}
+        {/* show play button for AI messages */}
         {!isUser && (
           <button
             onClick={async () => {
@@ -37,7 +37,7 @@ export default function Message({ role, children }) {
             }}
             className="ml-2 inline-flex items-center gap-1 rounded bg-indigo-500 px-2 py-1 text-xs text-white hover:bg-indigo-600 disabled:opacity-50"
             disabled={playing}
-            title="播放AI回复"
+            title="play AI's response"
           >
             {playing ? 'playing...' : '▶ play'}
           </button>

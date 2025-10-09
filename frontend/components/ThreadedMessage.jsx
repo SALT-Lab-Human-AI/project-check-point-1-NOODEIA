@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from 'react'
-// 假设text2audio已在utils.js中实现
 import { text2audio, extractTextFromReactNode } from "./utils"
 import { MessageCircle, Edit2, Trash2, MoreVertical } from 'lucide-react'
 
@@ -102,7 +101,7 @@ export default function ThreadedMessage({
             <>
               <div className="text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                 <span className="flex-1 whitespace-pre-wrap">{message.content}</span>
-                {/* AI消息显示播放按钮 */}
+                {/* show play button for AI messages */}
                 {isAI && (
                   <button
                     onClick={async () => {
@@ -116,7 +115,7 @@ export default function ThreadedMessage({
                     }}
                     className="ml-2 inline-flex items-center gap-1 rounded bg-indigo-500 px-2 py-1 text-xs text-white hover:bg-indigo-600 disabled:opacity-50"
                     disabled={playing}
-                    title="播放AI回复"
+                    title="play AI's response"
                   >
                     {playing ? 'playing...' : '▶ play'}
                   </button>
