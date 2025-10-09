@@ -7,6 +7,9 @@ export default function Message({ role, children }) {
   const isUser = role === "user"
   const [playing, setPlaying] = useState(false)
 
+  // Check if children includes edit/resend buttons (for user messages)
+  const hasActions = role === "user" && typeof children === 'object' && children.props
+
   return (
     <div className="group">
       <div className={cls("flex gap-3", isUser ? "justify-end" : "justify-start")}>
@@ -23,7 +26,36 @@ export default function Message({ role, children }) {
               : "bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800",
           )}
         >
-          <div className="break-words">{children}</div>
+          {hasActions ? (
+            // User message with edit/resend actions - render as is
+            children
+          ) : (
+            // AI message - add play button inside
+            <>
+              <div className="break-words">{children}</div>
+              {!isUser && (
+                <div className="mt-2 flex items-center gap-4 opacity-0 transition-opacity group-hover:opacity-100">
+                  <button
+                    onClick={async () => {
+                      setPlaying(true)
+                      try {
+                        const text = extractTextFromReactNode(children)
+                        await text2audio(text)
+                      } finally {
+                        setPlaying(false)
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 disabled:opacity-50"
+                    disabled={playing}
+                    title="Play AI's response"
+                  >
+                    <Volume2 className="h-3 w-3" />
+                    {playing ? 'Playing...' : 'Play'}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
         {isUser && (
           <div className="mt-0.5 grid h-7 w-7 place-items-center rounded-full bg-zinc-900 text-[10px] font-bold text-white dark:bg-white dark:text-zinc-900">
@@ -31,31 +63,6 @@ export default function Message({ role, children }) {
           </div>
         )}
       </div>
-      {/* Play button below AI messages, visible on hover */}
-      {!isUser && (
-        <div className={cls("flex gap-3 mt-2", "justify-start")}>
-          <div className="w-7" /> {/* Spacer to align with message */}
-          <div className="opacity-0 transition-opacity group-hover:opacity-100">
-            <button
-              onClick={async () => {
-                setPlaying(true)
-                try {
-                  const text = extractTextFromReactNode(children)
-                  await text2audio(text)
-                } finally {
-                  setPlaying(false)
-                }
-              }}
-              className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 disabled:opacity-50"
-              disabled={playing}
-              title="Play AI's response"
-            >
-              <Volume2 className="h-3 w-3" />
-              {playing ? 'Playing...' : 'Play'}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

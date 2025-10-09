@@ -103,19 +103,9 @@ export default function ThreadedMessage({
                 {message.content}
               </div>
 
-              <div className="mt-2 flex items-center gap-3">
-                {!isInThread && (
-                  <button
-                    onClick={() => onOpenThread(message)}
-                    className="flex items-center gap-1 text-xs text-zinc-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
-                  >
-                    <MessageCircle className="h-3 w-3" />
-                    {message.replyCount > 0 ? `${message.replyCount} ${message.replyCount === 1 ? 'reply' : 'replies'}` : 'Reply'}
-                  </button>
-                )}
-
-                {/* Play button for AI messages */}
-                {isAI && !isEditing && (
+              {/* Play button for AI messages - inside message content area */}
+              {isAI && !isEditing && (
+                <div className="mt-2 opacity-0 transition-opacity group-hover:opacity-100">
                   <button
                     onClick={async () => {
                       setPlaying(true)
@@ -126,12 +116,24 @@ export default function ThreadedMessage({
                         setPlaying(false)
                       }
                     }}
-                    className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-50"
+                    className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 disabled:opacity-50"
                     disabled={playing}
                     title="Play AI's response"
                   >
                     <Volume2 className="h-3 w-3" />
                     {playing ? 'Playing...' : 'Play'}
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-2 flex items-center gap-3">
+                {!isInThread && (
+                  <button
+                    onClick={() => onOpenThread(message)}
+                    className="flex items-center gap-1 text-xs text-zinc-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
+                  >
+                    <MessageCircle className="h-3 w-3" />
+                    {message.replyCount > 0 ? `${message.replyCount} ${message.replyCount === 1 ? 'reply' : 'replies'}` : 'Reply'}
                   </button>
                 )}
 
