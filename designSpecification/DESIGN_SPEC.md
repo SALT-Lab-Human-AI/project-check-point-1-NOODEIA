@@ -1,25 +1,25 @@
 # Get Familiar With NOODIEA AI 
 
 ## Sign Up Demonstration
-![Sign Up Demonstration](./InProgress/demo1.gif)
+![Sign Up Demonstration](../InProgress/demo1.gif)
 
 ## Log In Demonstration
-![Log In Demonstration](./InProgress/demo2.gif)
+![Log In Demonstration](../InProgress/demo2.gif)
 
 ## Log Out Demonstration
-![Log Out Demonstration](./InProgress/demo3.gif)
+![Log Out Demonstration](../InProgress/demo3.gif)
 
 ## NOODIEA AI Tutor Demonstration
-![NOODIEA AI Tutor](./InProgress/demo4.gif)
+![NOODIEA AI Tutor](../InProgress/demo4.gif)
 
 ## NOODIEA AI Tutor In Group Chat Demonstration
-![NOODIEA AI Tutor In Group Chat](./InProgress/demo7.gif)
+![NOODIEA AI Tutor In Group Chat](../InProgress/demo7.gif)
 
 ## Scratch Paper Extension Demonstration
-![AI Tutor Scratch Paper](./InProgress/demo8.png)
+![AI Tutor Scratch Paper](../InProgress/demo8.png)
 
 ## Build Personalized Teaching Assistant Demonstration
-![Build Personalized Teaching Assistant](./InProgress/demo9.png)
+![Build Personalized Teaching Assistant](../InProgress/demo9.png)
 
 # Low Latency
 
@@ -58,19 +58,19 @@ return Distinct Recipe
 
 ```
 
-![SQL vs Neo4j](./InProgress/SQLvsNEO4j.png)
+![SQL vs Neo4j](../InProgress/SQLvsNEO4j.png)
 
 ### Query Speed Comparison
 
 Consider 1000000 people each with 50 friends, find the friends of a friend network and their information
 
-![SQL vs Neo4j1](./InProgress/SQLvsNEO4j1.png)
+![SQL vs Neo4j1](../InProgress/SQLvsNEO4j1.png)
 
 # High Accuracy
 
 We implement the [current SOTA model Gemini 2.5 Pro based on Vellum](https://www.vellum.ai/llm-leaderboard?utm_source=google&utm_medium=organic) that excels in math and reasoning compared to the most commonly used ChatGPT-4o 
 
-![Model Showcase](./InProgress/model.png)
+![Model Showcase](../InProgress/model.png)
 
 # Safety 
 
