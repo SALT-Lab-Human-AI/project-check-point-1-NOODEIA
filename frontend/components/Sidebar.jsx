@@ -186,7 +186,7 @@ export default function Sidebar({
                 title={collapsed ? "New Group Chat" : undefined}
               >
                 <Users className="h-4 w-4" />
-                {!collapsed && "New Group Chat"}
+                {!collapsed && "Group Chat"}
               </button>
             </div>
           </div>
