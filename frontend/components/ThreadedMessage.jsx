@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from 'react'
+// 假设text2audio已在utils.js中实现
+import { text2audio, extractTextFromReactNode } from "./utils"
 import { MessageCircle, Edit2, Trash2, MoreVertical } from 'lucide-react'
 
 export default function ThreadedMessage({
@@ -17,6 +19,7 @@ export default function ThreadedMessage({
 
   const isOwn = message.createdBy === currentUserId
   const isAI = message.isAI || message.createdBy === 'ai_assistant'
+  const [playing, setPlaying] = useState(false)
 
   const handleEdit = async () => {
     if (!editContent.trim() || editContent === message.content) {
@@ -97,8 +100,27 @@ export default function ThreadedMessage({
             </div>
           ) : (
             <>
-              <div className="text-sm text-zinc-900 dark:text-zinc-100">
-                <p className="whitespace-pre-wrap">{message.content}</p>
+              <div className="text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <span className="flex-1 whitespace-pre-wrap">{message.content}</span>
+                {/* AI消息显示播放按钮 */}
+                {isAI && (
+                  <button
+                    onClick={async () => {
+                      setPlaying(true)
+                      try {
+                        const text = extractTextFromReactNode(message.content)
+                        await text2audio(text)
+                      } finally {
+                        setPlaying(false)
+                      }
+                    }}
+                    className="ml-2 inline-flex items-center gap-1 rounded bg-indigo-500 px-2 py-1 text-xs text-white hover:bg-indigo-600 disabled:opacity-50"
+                    disabled={playing}
+                    title="播放AI回复"
+                  >
+                    {playing ? 'playing...' : '▶ play'}
+                  </button>
+                )}
               </div>
 
               <div className="mt-2 flex items-center gap-3">
