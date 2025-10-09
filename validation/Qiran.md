@@ -408,23 +408,23 @@ Would you like more riddles like this?
 
 * The systems demonstrate inadequate conceptual progression management as evidenced in case 8 where the tool introduced abstract concepts of negative numbers without first assessing whether students had achieved mastery of prerequisite mathematical foundations. 
 
-### Latency 
+## Latency 
 
 * The system constantly takes longer time to generate response as the conversation gets longer and longer
 
 
-### User Experience Friction
+## User Experience Friction
 
 * The interface design presents significant barriers to students as shown in cases 2, 4, 5, 6, 7, and 8 where each response contains 3 to 10 reference links. The overwhelming links create cognitive overload and they are inappropriate for the target demographic. 
 
 * The systems also lack fundamental engagement tracking mechanisms because they just deliver content without engaging and interacting with the students .
 
 
-### Safety 
+## Safety 
 
 * The system includes external citations to YouTube and various websites introduces uncontrolled factors as these platforms lack age appropriate filtering. 
 
-### Cost 
+## Cost 
 
 * Despite the increased cost, the responses from Sonar Pro indicate no significant improvement in teaching methodology since it still offers direct answers.  
 
