@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { text2audio, extractTextFromReactNode } from "./utils"
-import { MessageCircle, Edit2, Trash2, MoreVertical } from 'lucide-react'
+import { MessageCircle, Edit2, Trash2, MoreVertical, Volume2 } from 'lucide-react'
 
 export default function ThreadedMessage({
   message,
@@ -99,27 +99,8 @@ export default function ThreadedMessage({
             </div>
           ) : (
             <>
-              <div className="text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <span className="flex-1 whitespace-pre-wrap">{message.content}</span>
-                {/* show play button for AI messages */}
-                {isAI && (
-                  <button
-                    onClick={async () => {
-                      setPlaying(true)
-                      try {
-                        const text = extractTextFromReactNode(message.content)
-                        await text2audio(text)
-                      } finally {
-                        setPlaying(false)
-                      }
-                    }}
-                    className="ml-2 inline-flex items-center gap-1 rounded bg-indigo-500 px-2 py-1 text-xs text-white hover:bg-indigo-600 disabled:opacity-50"
-                    disabled={playing}
-                    title="play AI's response"
-                  >
-                    {playing ? 'playing...' : '▶ play'}
-                  </button>
-                )}
+              <div className="text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap">
+                {message.content}
               </div>
 
               <div className="mt-2 flex items-center gap-3">
@@ -133,6 +114,28 @@ export default function ThreadedMessage({
                   </button>
                 )}
 
+                {/* Play button for AI messages */}
+                {isAI && !isEditing && (
+                  <button
+                    onClick={async () => {
+                      setPlaying(true)
+                      try {
+                        const text = extractTextFromReactNode(message.content)
+                        await text2audio(text)
+                      } finally {
+                        setPlaying(false)
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-50"
+                    disabled={playing}
+                    title="Play AI's response"
+                  >
+                    <Volume2 className="h-3 w-3" />
+                    {playing ? 'Playing...' : 'Play'}
+                  </button>
+                )}
+
+                {/* Edit/Delete menu for own messages */}
                 {isOwn && !isEditing && (
                   <div className="relative">
                     <button

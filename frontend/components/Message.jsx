@@ -1,51 +1,59 @@
 
 import { cls, text2audio, extractTextFromReactNode } from "./utils"
 import { useState } from "react"
+import { Volume2 } from "lucide-react"
 
 export default function Message({ role, children }) {
   const isUser = role === "user"
   const [playing, setPlaying] = useState(false)
 
-  // show "play" button for AI messages
   return (
-    <div className={cls("flex gap-3", isUser ? "justify-end" : "justify-start")}> 
-      {!isUser && (
-        <div className="mt-0.5 grid h-7 w-7 place-items-center rounded-full bg-zinc-900 text-[10px] font-bold text-white dark:bg-white dark:text-zinc-900">
-          AI
-        </div>
-      )}
-      <div
-        className={cls(
-          "max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm flex items-center gap-2",
-          isUser
-            ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-            : "bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800",
-        )}
-      >
-        <span className="flex-1 break-words">{children}</span>
-        {/* show play button for AI messages */}
+    <div className="group">
+      <div className={cls("flex gap-3", isUser ? "justify-end" : "justify-start")}>
         {!isUser && (
-          <button
-            onClick={async () => {
-              setPlaying(true)
-              try {
-                const text = extractTextFromReactNode(children)
-                await text2audio(text)
-              } finally {
-                setPlaying(false)
-              }
-            }}
-            className="ml-2 inline-flex items-center gap-1 rounded bg-indigo-500 px-2 py-1 text-xs text-white hover:bg-indigo-600 disabled:opacity-50"
-            disabled={playing}
-            title="play AI's response"
-          >
-            {playing ? 'playing...' : '▶ play'}
-          </button>
+          <div className="mt-0.5 grid h-7 w-7 place-items-center rounded-full bg-zinc-900 text-[10px] font-bold text-white dark:bg-white dark:text-zinc-900">
+            AI
+          </div>
+        )}
+        <div
+          className={cls(
+            "max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm",
+            isUser
+              ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+              : "bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800",
+          )}
+        >
+          <div className="break-words">{children}</div>
+        </div>
+        {isUser && (
+          <div className="mt-0.5 grid h-7 w-7 place-items-center rounded-full bg-zinc-900 text-[10px] font-bold text-white dark:bg-white dark:text-zinc-900">
+            JD
+          </div>
         )}
       </div>
-      {isUser && (
-        <div className="mt-0.5 grid h-7 w-7 place-items-center rounded-full bg-zinc-900 text-[10px] font-bold text-white dark:bg-white dark:text-zinc-900">
-          JD
+      {/* Play button below AI messages, visible on hover */}
+      {!isUser && (
+        <div className={cls("flex gap-3 mt-2", "justify-start")}>
+          <div className="w-7" /> {/* Spacer to align with message */}
+          <div className="opacity-0 transition-opacity group-hover:opacity-100">
+            <button
+              onClick={async () => {
+                setPlaying(true)
+                try {
+                  const text = extractTextFromReactNode(children)
+                  await text2audio(text)
+                } finally {
+                  setPlaying(false)
+                }
+              }}
+              className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 disabled:opacity-50"
+              disabled={playing}
+              title="Play AI's response"
+            >
+              <Volume2 className="h-3 w-3" />
+              {playing ? 'Playing...' : 'Play'}
+            </button>
+          </div>
         </div>
       )}
     </div>
