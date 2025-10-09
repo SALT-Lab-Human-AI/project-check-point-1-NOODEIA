@@ -3,7 +3,7 @@
 <a name="readme-top"></a>
 
 <!-- Project banner -->
-<img width = "220px" alt = "AI Tutor Logo" src = "./InProgress/logo.png">
+<img width = "220px" alt = "AI Tutor Logo" src = "./inProgress/logo.png">
 
 # ✨ **NOODEIA**  
 
