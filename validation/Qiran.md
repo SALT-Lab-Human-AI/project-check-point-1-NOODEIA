@@ -430,5 +430,14 @@ Would you like more riddles like this?
 
 # Opportunity Framing
 
-*   
+* With the scratch paper interface that transforms the traditional problem solving experience into an interactive learning journey,  NOODIEA's digital workspace enables students to visualize their mathematical thinking and demonstrate their problem solving processes in real time. After successfully completing a problem, the system celebrates achievement through engaging visual rewards such as confetti animations, which fosters positive learning associations and intrinsic motivation. 
+
+* NOODIEA's group chat feature represents a significant shift from isolated AI tutoring to collaborative peer learning with AI assistants. Multiple students can simultaneously engage in real time discussions about mathematical concepts. The students can create virtual study group environments that mirror classroom collaboration dynamics as the threaded conversation architecture allows students to reply directly to specific messages. 
+
+* The @ai feature  provides personalized assistance by analyzing entire conversation threads to understand the context before responding. With its context awareness, NOODIEA can respond directly to the student who requested help, which provides personalized guidance in the collaborative learning environment. Students can switch between different chat rooms in order to engage in solving different mathematical problems based on their needs. 
+
+* NOODIEA's teaching assistant integration allows teaching assistants to upload detailed instructional notes and teaching strategies from professional educators so that NOODIEA can follow the current established classroom methodologies and individual teaching styles. This feature enables the NOODIEA to deliver feedback that mirrors the exact instructional approach students would receive from their regular teachers.
+
+* The NOODIEA’s advanced voice synthesis technology clones teaching assistants' voices to provide audio narration of questions and responses, which creates an inclusive learning environment that enhances comprehension and reduces cognitive distance between AI and human instruction. By preserving the teaching assistant's style within the AI system, NOODIEA ensures that it amplifies rather than replaces human educational expertise.
+  
 
