@@ -24,7 +24,8 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     return () => {
       if (pusherRef.current) {
         pusherRef.current.unsubscribe(`group-${groupId}`)
-        pusherRef.current.disconnect()
+        // Don't disconnect the shared Pusher instance
+        // pusherRef.current.disconnect()
       }
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current)
@@ -38,11 +39,16 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
 
     pusherRef.current = pusher
 
+    // Unsubscribe from any existing channel first
+    const existingChannel = pusher.channel(`group-${groupId}`)
+    if (existingChannel) {
+      pusher.unsubscribe(`group-${groupId}`)
+    }
+
     const channel = pusher.subscribe(`group-${groupId}`)
 
     channel.bind(PUSHER_EVENTS.MESSAGE_SENT, (data) => {
       // Add to main channel if it's not a thread reply
-      // Skip if it's your own message (already added optimistically in sendMessage)
       if (!data.parentId) {
         // Check if message already exists (avoid duplicates for own messages)
         setMessages(prev => {

@@ -11,15 +11,27 @@ export const pusherServer = process.env.PUSHER_APP_ID ? (() => {
   })
 })() : null
 
+// Store a single instance of the Pusher client
+let pusherClientInstance = null
+
 export const getPusherClient = () => {
   if (typeof window === 'undefined') return null
 
-  if (!process.env.NEXT_PUBLIC_PUSHER_KEY) return null
+  if (!process.env.NEXT_PUBLIC_PUSHER_KEY) {
+    return null
+  }
 
-  return new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY, {
+  // Return existing instance if already created
+  if (pusherClientInstance) {
+    return pusherClientInstance
+  }
+
+  pusherClientInstance = new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY, {
     cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
     authEndpoint: '/api/pusher/auth'
   })
+
+  return pusherClientInstance
 }
 
 export const PUSHER_EVENTS = {
