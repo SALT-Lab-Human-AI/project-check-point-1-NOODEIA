@@ -152,14 +152,6 @@ Would you like me to generate a few practice problems with multiple-choice answe
 
 ---
 
-## AI Use and Disclosure
-In preparing the Prompting Protocol and validation plan, I made use of **ChatGPT (OpenAI GPT-5, 2025)** for the following:  
-
-- Drafting task descriptions and example prompts for the three scenarios (homework help, item generation, step fix).  
-- Suggesting a standardized protocol structure to ensure consistency across tools.  
-
-All AI-generated content was **critically reviewed, edited, and adapted by human team members** before inclusion.  
-
 
 ## Opportunity Framework
 ### 1. Enhance Step Clarity

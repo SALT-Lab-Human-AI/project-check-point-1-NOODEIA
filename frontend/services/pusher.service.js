@@ -75,14 +75,14 @@ class PusherService {
     }
   }
 
-  async notifyTyping(groupId, userId, userEmail) {
+  async notifyTyping(groupId, userId, userName) {
     if (!this.pusher) return
 
     try {
       await this.pusher.trigger(
         `group-${groupId}`,
         PUSHER_EVENTS.TYPING,
-        { userId, userEmail }
+        { userId, userName }
       )
     } catch (error) {
       console.error('Failed to notify typing:', error)

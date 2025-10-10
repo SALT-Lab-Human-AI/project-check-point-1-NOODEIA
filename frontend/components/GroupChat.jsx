@@ -16,6 +16,12 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
   const messagesEndRef = useRef(null)
   const pusherRef = useRef(null)
   const typingTimeoutRef = useRef(null)
+  const currentUserRef = useRef(currentUser)
+
+  // Keep currentUserRef updated
+  useEffect(() => {
+    currentUserRef.current = currentUser
+  }, [currentUser])
 
   useEffect(() => {
     loadMessages()
@@ -75,7 +81,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     })
 
     channel.bind(PUSHER_EVENTS.TYPING, (data) => {
-      if (data.userId !== currentUser.id) {
+      if (data.userId !== currentUserRef.current.id) {
         setTypingUsers(prev => {
           const filtered = prev.filter(u => u.userId !== data.userId)
           return [...filtered, data]
@@ -327,7 +333,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
 
         {typingUsers.length > 0 && (
           <div className="mt-4 text-sm italic text-zinc-500 dark:text-zinc-400">
-            {typingUsers.map(u => u.userEmail).join(', ')}{' '}
+            {typingUsers.map(u => u.userName).join(', ')}{' '}
             {typingUsers.length === 1 ? 'is' : 'are'} typing...
           </div>
         )}
