@@ -169,7 +169,7 @@ The Podcast feature was unhelpful, and didn't use any instruction or prior conve
 
 Overall, I was disappointed in NotebookLM’s tutoring ability across the board. The UI was difficult to figure out, the model's output changed heavily depending on how I prompted it, and it didn't give useful answers. Because it can be so easily jailbroken from a prompt, there's also a safety risk in it ignoring instructions and outputting whatever a user wants it to instead.
 
-### Opportunity framing: the specific product requirements your tool should meet that others don’t.
+### Opportunity framing:
 In comparison to NotebookLM, our tool accomplishes a number of tasks in a more direct way. 
 * NOODEIA lets users have any message read out loud to them, something not offered by NotebookLM.
 * NOODEIA has group chats, allowing users to interact with one another. 
