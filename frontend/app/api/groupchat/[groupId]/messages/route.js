@@ -10,8 +10,12 @@ const supabase = createClient(
 
 // Helper function to trigger AI response asynchronously
 async function triggerAIResponse(groupId, parentMessageId, authHeader) {
+  console.log('🤖 triggerAIResponse called with:', { groupId, parentMessageId })
+
   try {
+    console.log('🤖 Importing AI route handler...')
     const { POST: handleAI } = await import('../ai/route')
+    console.log('🤖 AI route handler imported successfully')
 
     const aiRequest = new Request('http://localhost/api/groupchat/' + groupId + '/ai', {
       method: 'POST',
@@ -22,9 +26,13 @@ async function triggerAIResponse(groupId, parentMessageId, authHeader) {
       body: JSON.stringify({ parentMessageId })
     })
 
-    await handleAI(aiRequest, { params: Promise.resolve({ groupId }) })
+    console.log('🤖 Calling AI handler...')
+    const result = await handleAI(aiRequest, { params: Promise.resolve({ groupId }) })
+    console.log('🤖 AI handler completed:', result.status)
+    return result
   } catch (error) {
     console.error('🤖 AI response error:', error)
+    console.error('🤖 Error stack:', error.stack)
     throw error
   }
 }
@@ -115,10 +123,15 @@ export async function POST(request, { params }) {
 
     // Check if message contains @ai mention and trigger AI response asynchronously
     // Works for both main channel messages and replies
+    console.log('📝 Message content:', content)
+    console.log('📝 Contains @ai?', content.includes('@ai'))
+
     if (content.includes('@ai')) {
+      console.log('🤖 @ai detected, triggering AI response...')
       // Fire-and-forget: Process AI response without blocking
       triggerAIResponse(groupId, parentMessageId || message.id, authHeader).catch(err => {
         console.error('🤖 Background AI error:', err)
+        console.error('🤖 Background AI error stack:', err.stack)
       })
     }
 
