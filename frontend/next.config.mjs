@@ -9,6 +9,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Skip static page generation that requires environment variables
+  output: 'standalone',
 }
 
 export default nextConfig
