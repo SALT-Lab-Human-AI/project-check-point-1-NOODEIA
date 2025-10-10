@@ -4,9 +4,6 @@
   "framework": "nextjs",
   "functions": {
     "app/api/groupchat/[groupId]/messages/route.js": {
-      "maxDuration": 10
-    },
-    "app/api/groupchat/[groupId]/ai-trigger/route.js": {
       "maxDuration": 60
     }
   },

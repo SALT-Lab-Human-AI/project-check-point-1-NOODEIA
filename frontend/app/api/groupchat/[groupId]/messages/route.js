@@ -98,26 +98,99 @@ export async function POST(request, { params }) {
     console.log('📝 Contains @ai?', content.includes('@ai'))
 
     if (content.includes('@ai')) {
-      console.log('🤖 @ai detected, triggering AI processing')
+      console.log('🤖 @ai detected, processing inline')
 
-      // Call the Edge function endpoint
-      const aiTriggerUrl = process.env.NODE_ENV === 'production'
-        ? `https://noodeia.vercel.app/api/groupchat/${groupId}/ai-trigger`
-        : `http://localhost:3000/api/groupchat/${groupId}/ai-trigger`
+      // Process AI response inline with timeout protection
+      const processAI = async () => {
+        try {
+          const startTime = Date.now()
 
-      // Fire and forget - don't wait for response
-      fetch(aiTriggerUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          parentMessageId: parentMessageId || message.id,
-          userId: user.id
-        })
-      })
-      .then(res => console.log('🤖 AI trigger response:', res.status))
-      .catch(err => console.error('🤖 AI trigger error:', err))
+          // Import services
+          const [gemini, groupChat, pusher] = await Promise.all([
+            import('../../../../../services/gemini.service'),
+            import('../../../../../services/groupchat.service'),
+            import('../../../../../services/pusher.service')
+          ])
+
+          const geminiService = gemini.default
+          const groupChatService = groupChat.default
+          const pusherService = pusher.default
+
+          console.log(`🤖 Services imported in ${Date.now() - startTime}ms`)
+
+          // Get parent message
+          const parentMessage = await groupChatService.getMessage(
+            parentMessageId || message.id,
+            user.id
+          )
+
+          if (!parentMessage) {
+            console.error('🤖 Parent message not found')
+            return
+          }
+
+          // Get thread context
+          const threadMessages = await groupChatService.getThreadMessages(
+            parentMessageId || message.id,
+            user.id
+          )
+
+          console.log(`🤖 Context loaded in ${Date.now() - startTime}ms`)
+
+          // Build prompt
+          const userName = parentMessage.userName || parentMessage.userEmail.split('@')[0]
+          let prompt = `You are a Socratic AI tutor. Guide with questions, not answers. Keep under 50 words.
+Start with "@${userName}, Hi!"
+
+Message: ${parentMessage.content}`
+
+          if (threadMessages.length > 0) {
+            prompt += '\nPrevious messages:\n'
+            threadMessages.forEach(msg => {
+              prompt += `${msg.userName || msg.userEmail}: ${msg.content}\n`
+            })
+          }
+
+          // Call Gemini with timeout
+          const geminiStart = Date.now()
+          const aiResponse = await Promise.race([
+            geminiService.chat(prompt),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Gemini timeout')), 30000)
+            )
+          ])
+          console.log(`🤖 Gemini responded in ${Date.now() - geminiStart}ms`)
+
+          // Build response
+          let responseText = `Thread context:\n${parentMessage.userName || parentMessage.userEmail}: ${parentMessage.content}\n`
+
+          if (threadMessages.length > 0) {
+            threadMessages.forEach(msg => {
+              responseText += `${msg.userName || msg.userEmail}: ${msg.content}\n`
+            })
+          }
+
+          responseText += '\n' + aiResponse
+
+          // Create AI message
+          const aiMessage = await groupChatService.createMessage(
+            groupId,
+            'ai_assistant',
+            responseText,
+            parentMessageId || message.id
+          )
+
+          // Send via Pusher
+          await pusherService.sendMessage(groupId, aiMessage)
+          console.log(`🤖 AI complete in ${Date.now() - startTime}ms`)
+
+        } catch (error) {
+          console.error('🤖 AI error:', error.message)
+        }
+      }
+
+      // Don't wait for AI processing
+      processAI().catch(err => console.error('🤖 Background AI error:', err))
     }
 
     return NextResponse.json(message, { status: 201 })
