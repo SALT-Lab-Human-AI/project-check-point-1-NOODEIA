@@ -108,9 +108,9 @@ export default function ThreadPanel({
 
       if (!response.ok) throw new Error('Failed to send reply')
 
-      const newReply = await response.json()
-      setReplies(prev => [...prev, newReply])
-      scrollToBottom()
+      await response.json()
+      // Don't add locally - let Pusher handle it to avoid duplicates
+      // The reply will appear via Pusher event in real-time
     } catch (error) {
       console.error('Failed to send reply:', error)
       setReplyContent(content)
