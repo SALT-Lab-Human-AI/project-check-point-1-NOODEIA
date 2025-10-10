@@ -72,13 +72,13 @@ Our tool needs to work for four very different stakeholders, each with their own
 
 ## 🏁 Competitive Landscape and AI Limitations
 
-Khanmigo is a $4-per-month GPT-4 tutoring tool with content integrated from Khan Academy. While it fits in classroom settings, it has limited cross-platform usability and lacks long-term personalization. 
+NotebookLM is a tool by Google to be used by students for help with homework. It can take images as inputs, and answer user questions similar to other LLMs. Our findings show that NotebookLM explains answers, but does not do a great job providing reasoning, intuition, and explaining *how* to solve a problem to a student who doesn’t get it. NotebookLM also has an audio podcast feature, which only uses the image input to generate an audio description of said image. The audio feature did not use conversational context to help the user.
 
-Meanwhile, general large language model chat tutors (ChatGPT, Gemini) can quickly and somewhat accurately explain answers, but struggle with step-by-step instructions. They fail to identify errors, provide follow-up guidance, and may even agree with students' incorrect answers.
+GPT-5 is a large language model developed by OpenAI. It has a high number of users, and can answer questions in many domains. GPT-5 output extra noise during our testing, which can be confusing to younger users who don’t understand complex sentences. GPT-5 also was on the slower side, often taking a couple seconds to properly run after being prompted.
 
-Duolingo does a good job at motivating their users through fun games and a leveling system, but its core focus is on language learning, not math. Duolingo has not been adapted for math tutoring. It also lacks knowledge graphs and verification step-checking. 
+Copilot did a better job matching our instructions, but sometimes gave answers that were too simple or didn’t explain its thinking enough. However, Copilot is also integrated into GitHub and Microsoft Office, giving it a broader knowledge base. That may make it too complex for users who only want a chatbot.
 
-Lastly, Perplexity is good at citing sources, but it's not a true tutor: it doesn't have a student model or provide step-by-step guidance.
+ Perplexity solved most problems correctly, but assumed certain parts about the user’s background knowledge in its answers. This sometimes led to answers being made more complicated than necessary. There were also lots of links given which adds noise and may distract students.
 
 ## 📚 Literature Review Highlights
 
