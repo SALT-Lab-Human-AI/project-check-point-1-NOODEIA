@@ -48,23 +48,21 @@ export async function text2audio(text, options = {}) {
     }
 
     const {
-      voice = 'v2/en_speaker_6',  // Friendly default voice
-      useBark = true,              // Use Bark by default
-      temperature = 0.7
+      speaker_id = 0,              // Default speaker
+      useVibeVoice = true,         // Use VibeVoice by default
     } = options
 
-    // Try Bark API first (higher quality with voice cloning)
-    if (useBark) {
+    // Try VibeVoice API first (higher quality with voice cloning)
+    if (useVibeVoice) {
       try {
-        const response = await fetch('/api/tts-bark', {
+        const response = await fetch('/api/tts-vibevoice', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             text,
-            voice,
-            temperature
+            speaker_id
           })
         })
 
@@ -95,7 +93,7 @@ export async function text2audio(text, options = {}) {
           return
         }
       } catch (error) {
-        console.warn('Bark TTS failed, falling back to browser TTS:', error)
+        console.warn('VibeVoice TTS failed, falling back to browser TTS:', error)
       }
     }
 
@@ -142,10 +140,10 @@ function useBrowserTTS(text) {
   window.speechSynthesis.speak(utterance)
 }
 
-// Function to get available Bark voices
+// Function to get available VibeVoice speakers
 export async function getAvailableVoices() {
   try {
-    const response = await fetch('/api/tts-bark')
+    const response = await fetch('/api/tts-vibevoice')
     if (response.ok) {
       return await response.json()
     }
