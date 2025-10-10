@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import pusherService from '../../../../services/pusher.service'
-import neo4jClient from '../../../../lib/neo4j'
+import { neo4jService as neo4jClient } from '../../../../lib/neo4j'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
