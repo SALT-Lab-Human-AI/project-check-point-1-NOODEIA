@@ -145,8 +145,8 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       if (!response.ok) throw new Error('Failed to send message')
 
       const newMsg = await response.json()
-      setMessages(prev => [...prev, newMsg])
-      scrollToBottom()
+      // Don't add locally - let Pusher handle it to avoid duplicates
+      // The message will appear via Pusher event in real-time
 
       if (hasAiMention) {
         try {
