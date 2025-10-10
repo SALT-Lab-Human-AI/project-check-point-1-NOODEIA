@@ -98,6 +98,23 @@ export async function POST(request, { params }) {
     console.log('📝 Contains @ai?', content.includes('@ai'))
 
     if (content.includes('@ai')) {
+      console.log('🤖 @ai detected, using simple AI endpoint')
+
+      // Call the simplified AI endpoint that avoids slow Neo4j queries
+      fetch(`${process.env.NODE_ENV === 'production' ? 'https://noodeia.vercel.app' : 'http://localhost:3000'}/api/groupchat/${groupId}/ai-simple`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parentMessageId: parentMessageId || message.id,
+          userId: user.id,
+          messageContent: content,
+          userName: message.userName || user.email.split('@')[0]
+        })
+      })
+      .then(res => console.log('🤖 Simple AI response:', res.status))
+      .catch(err => console.error('🤖 Simple AI error:', err))
+
+      /* DISABLED - Too slow on Vercel (48+ seconds for context loading)
       console.log('🤖 @ai detected, processing inline')
 
       // Process AI response inline with timeout protection
@@ -118,22 +135,36 @@ export async function POST(request, { params }) {
 
           console.log(`🤖 Services imported in ${Date.now() - startTime}ms`)
 
-          // Get parent message
-          const parentMessage = await groupChatService.getMessage(
-            parentMessageId || message.id,
-            user.id
-          )
+          // Get parent message with timeout
+          const contextStart = Date.now()
+          const parentMessage = await Promise.race([
+            groupChatService.getMessage(parentMessageId || message.id, user.id),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Context timeout')), 5000)
+            )
+          ])
 
           if (!parentMessage) {
             console.error('🤖 Parent message not found')
             return
           }
 
-          // Get thread context
-          const threadMessages = await groupChatService.getThreadMessages(
-            parentMessageId || message.id,
-            user.id
-          )
+          console.log(`🤖 Parent message loaded in ${Date.now() - contextStart}ms`)
+
+          // Get thread context with timeout - limit to 5 messages for speed
+          let threadMessages = []
+          try {
+            threadMessages = await Promise.race([
+              groupChatService.getThreadMessages(parentMessageId || message.id, user.id),
+              new Promise((resolve) => setTimeout(() => resolve([]), 3000)) // Return empty if slow
+            ])
+
+            // Limit to 5 most recent messages for performance
+            threadMessages = threadMessages.slice(0, 5)
+          } catch (err) {
+            console.log('🤖 Thread context skipped (timeout)')
+            threadMessages = []
+          }
 
           console.log(`🤖 Context loaded in ${Date.now() - startTime}ms`)
 
@@ -156,7 +187,7 @@ Message: ${parentMessage.content}`
           const aiResponse = await Promise.race([
             geminiService.chat(prompt),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Gemini timeout')), 30000)
+              setTimeout(() => reject(new Error('Gemini timeout')), 15000)
             )
           ])
           console.log(`🤖 Gemini responded in ${Date.now() - geminiStart}ms`)
@@ -191,6 +222,7 @@ Message: ${parentMessage.content}`
 
       // Don't wait for AI processing
       processAI().catch(err => console.error('🤖 Background AI error:', err))
+      */
     }
 
     return NextResponse.json(message, { status: 201 })

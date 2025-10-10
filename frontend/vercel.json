@@ -5,6 +5,9 @@
   "functions": {
     "app/api/groupchat/[groupId]/messages/route.js": {
       "maxDuration": 60
+    },
+    "app/api/groupchat/[groupId]/ai-simple/route.js": {
+      "maxDuration": 30
     }
   },
   "crons": []
