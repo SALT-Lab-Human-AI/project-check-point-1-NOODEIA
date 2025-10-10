@@ -1,4 +1,7 @@
 # Get Familiar With NOODIEA AI 
+Our project has a simple and bright user interface, designed for kids to be able to use and understand. It starts with the teacher, who can easily log into the screens and set up the computers for the students. From here, there are a number of options students can choose from, including starting a new chat, creating a group chat, and using scratch paper.
+
+We chose a darker theme to make the words stand out against the background. Words are large to make them easier for kids to read. AI outputs are simple and easy to understand.
 
 ## Sign Up Demonstration
 When it comes to logging in, all that’s needed to create an account is a username and password A confirmation email will subsequently be sent to that inbox for account creation.
