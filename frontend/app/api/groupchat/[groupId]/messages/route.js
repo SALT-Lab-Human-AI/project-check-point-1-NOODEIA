@@ -8,16 +8,20 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// Helper function to trigger AI response asynchronously
+// Helper function to trigger AI response asynchronously via HTTP request
 async function triggerAIResponse(groupId, parentMessageId, authHeader) {
   console.log('🤖 triggerAIResponse called with:', { groupId, parentMessageId })
 
   try {
-    console.log('🤖 Importing AI route handler...')
-    const { POST: handleAI } = await import('../ai/route')
-    console.log('🤖 AI route handler imported successfully')
+    // Get the base URL - use Vercel URL in production, localhost in development
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000'
 
-    const aiRequest = new Request('http://localhost/api/groupchat/' + groupId + '/ai', {
+    const aiUrl = `${baseUrl}/api/groupchat/${groupId}/ai`
+    console.log('🤖 Making HTTP request to:', aiUrl)
+
+    const response = await fetch(aiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -26,9 +30,16 @@ async function triggerAIResponse(groupId, parentMessageId, authHeader) {
       body: JSON.stringify({ parentMessageId })
     })
 
-    console.log('🤖 Calling AI handler...')
-    const result = await handleAI(aiRequest, { params: Promise.resolve({ groupId }) })
-    console.log('🤖 AI handler completed:', result.status)
+    console.log('🤖 AI response status:', response.status)
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('🤖 AI response error:', errorData)
+      throw new Error(`AI request failed: ${response.status}`)
+    }
+
+    const result = await response.json()
+    console.log('🤖 AI handler completed successfully')
     return result
   } catch (error) {
     console.error('🤖 AI response error:', error)
