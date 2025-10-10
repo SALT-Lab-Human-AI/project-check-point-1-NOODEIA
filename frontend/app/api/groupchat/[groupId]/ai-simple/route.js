@@ -21,11 +21,45 @@ export async function POST(request, { params }) {
 
     console.log('🤖 Simple AI endpoint called')
 
-    // Simple prompt without fetching context (to avoid Neo4j slowness)
+    // Fetch thread messages with optimized query
+    const threadResult = await session.run(
+      `
+      MATCH (parent:Message {id: $parentMessageId})
+      OPTIONAL MATCH (parent)<-[:REPLY_TO]-(reply:Message)
+      OPTIONAL MATCH (author:User)-[:POSTED]->(reply)
+      WITH parent, reply, author
+      ORDER BY reply.createdAt ASC
+      RETURN parent.content as parentContent,
+             collect({
+               content: reply.content,
+               userName: coalesce(author.name, author.email)
+             }) as replies
+      `,
+      { parentMessageId }
+    )
+
+    let threadContext = ''
+    if (threadResult.records.length > 0) {
+      const record = threadResult.records[0]
+      const parentContent = record.get('parentContent')
+      const replies = record.get('replies') || []
+
+      threadContext = `${userName}: ${parentContent}\n`
+      replies.forEach(reply => {
+        if (reply.content && reply.userName) {
+          threadContext += `${reply.userName}: ${reply.content}\n`
+        }
+      })
+    }
+
+    console.log(`🤖 Thread context loaded: ${threadContext.split('\n').length} messages`)
+
+    // Build prompt with full thread context
     const prompt = `You are a Socratic AI tutor. Guide with questions, not answers. Keep under 50 words.
 Start with "@${userName}, Hi!"
 
-Student asks: ${messageContent}
+Thread conversation:
+${threadContext}
 
 Respond with guiding questions to help them think:`
 
@@ -50,8 +84,8 @@ Respond with guiding questions to help them think:`
 
     console.log(`🤖 Gemini responded in ${Date.now() - startTime}ms`)
 
-    // Build response with context
-    const responseText = `Thread context:\n${userName}: ${messageContent}\n\n${aiText}`
+    // Build response with full thread context
+    const responseText = `Thread context (previous messages in this conversation):\n${threadContext}\n${aiText}`
 
     // Create AI message directly in Neo4j (bypass service layer)
     const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
