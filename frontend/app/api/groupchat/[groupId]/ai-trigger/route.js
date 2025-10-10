@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-
-// Edge Runtime for background processing
-export const runtime = 'edge'
+import geminiService from '../../../../../services/gemini.service'
+import groupChatService from '../../../../../services/groupchat.service'
+import pusherService from '../../../../../services/pusher.service'
 
 export async function POST(request, { params }) {
   try {
@@ -9,17 +9,6 @@ export async function POST(request, { params }) {
     const { parentMessageId, userId } = await request.json()
 
     console.log('🤖 AI trigger endpoint called:', { groupId, parentMessageId })
-
-    // Import services
-    const [
-      { default: geminiService },
-      { default: groupChatService },
-      { default: pusherService }
-    ] = await Promise.all([
-      import('../../../../../services/gemini.service'),
-      import('../../../../../services/groupchat.service'),
-      import('../../../../../services/pusher.service')
-    ])
 
     // Get parent message
     const parentMessage = await groupChatService.getMessage(parentMessageId, userId)
