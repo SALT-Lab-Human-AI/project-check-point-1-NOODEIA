@@ -11,6 +11,7 @@ const supabase = createClient(
 
 export async function POST(request, { params }) {
   try {
+    const startTime = Date.now()
     const { groupId } = await params
     const authHeader = request.headers.get('authorization')
 
@@ -31,8 +32,12 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Parent message ID required' }, { status: 400 })
     }
 
+    console.log('🤖 AI request started')
+
     // Get parent message directly (much faster than fetching all 50 messages)
+    const t1 = Date.now()
     const parentMessage = await groupChatService.getMessage(parentMessageId, user.id)
+    console.log(`🤖 Parent message fetched in ${Date.now() - t1}ms`)
 
     if (!parentMessage) {
       console.error('🤖 Parent message not found:', parentMessageId)
@@ -40,7 +45,9 @@ export async function POST(request, { params }) {
     }
 
     // Get thread messages to build context
+    const t2 = Date.now()
     const threadMessages = await groupChatService.getThreadMessages(parentMessageId, user.id)
+    console.log(`🤖 Thread messages fetched in ${Date.now() - t2}ms (${threadMessages.length} messages)`)
 
     // Build prompt with thread context
     const userName = parentMessage.userName || parentMessage.userEmail.split('@')[0]
@@ -78,7 +85,9 @@ export async function POST(request, { params }) {
 
     prompt += `Remember to start with a greeting like "@${userName}, Hi!" and then respond with guiding questions and hints, not direct answers:`
 
+    const t3 = Date.now()
     const aiResponse = await geminiService.chat(prompt)
+    console.log(`🤖 Gemini API responded in ${Date.now() - t3}ms`)
 
     // Build response with visible thread context
     let responseWithContext = ''
@@ -100,15 +109,21 @@ export async function POST(request, { params }) {
     responseWithContext += aiResponse
 
     // Create AI reply in the thread
+    const t4 = Date.now()
     const aiMessage = await groupChatService.createMessage(
       groupId,
       'ai_assistant',
       responseWithContext,
       parentMessageId
     )
+    console.log(`🤖 AI message created in Neo4j in ${Date.now() - t4}ms`)
 
     // Broadcast AI message via Pusher for real-time updates
+    const t5 = Date.now()
     await pusherService.sendMessage(groupId, aiMessage)
+    console.log(`🤖 Pusher broadcast completed in ${Date.now() - t5}ms`)
+
+    console.log(`🤖 Total AI request time: ${Date.now() - startTime}ms`)
 
     return NextResponse.json(aiMessage)
   } catch (error) {
