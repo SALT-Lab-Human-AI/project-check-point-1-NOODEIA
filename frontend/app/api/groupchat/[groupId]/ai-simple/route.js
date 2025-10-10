@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import neo4j from 'neo4j-driver'
+import pusherService from '../../../../../services/pusher.service'
 
 const driver = neo4j.driver(
   process.env.NEXT_PUBLIC_NEO4J_URI,
@@ -82,29 +83,21 @@ Respond with guiding questions to help them think:`
 
     console.log(`🤖 Message created in Neo4j in ${Date.now() - startTime}ms`)
 
-    // Broadcast via Pusher
-    const pusherResponse = await fetch('https://api-us2.pusher.com/apps/2059509/events', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.PUSHER_SECRET}`
-      },
-      body: JSON.stringify({
-        channels: [`group-${groupId}`],
-        name: 'message-sent',
-        data: JSON.stringify({
-          id: messageId,
-          content: responseText,
-          createdBy: 'ai_assistant',
-          userName: 'AI Assistant',
-          userEmail: 'ai@assistant.com',
-          createdAt: new Date().toISOString(),
-          edited: false,
-          parentId: parentMessageId,
-          replyCount: 0
-        })
-      })
-    })
+    // Broadcast via Pusher using the service
+    const aiMessage = {
+      id: messageId,
+      content: responseText,
+      createdBy: 'ai_assistant',
+      userName: 'AI Assistant',
+      userEmail: 'ai@assistant.com',
+      createdAt: new Date().toISOString(),
+      edited: false,
+      parentId: parentMessageId,
+      replyCount: 0
+    }
+
+    await pusherService.sendMessage(groupId, aiMessage)
+    console.log(`🤖 Pusher broadcast completed`)
 
     console.log(`🤖 Total time: ${Date.now() - startTime}ms`)
 
