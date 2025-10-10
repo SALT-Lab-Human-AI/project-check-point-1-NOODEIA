@@ -7,6 +7,9 @@
     },
     "app/api/groupchat/[groupId]/messages/route.js": {
       "maxDuration": 60
+    },
+    "app/api/webhook/ai/route.js": {
+      "maxDuration": 60
     }
   }
 }

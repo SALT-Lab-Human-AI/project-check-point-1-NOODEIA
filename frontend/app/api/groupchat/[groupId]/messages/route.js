@@ -8,37 +8,45 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// Helper function to trigger AI response asynchronously
-async function triggerAIResponse(groupId, parentMessageId, authHeader) {
-  console.log('🤖 triggerAIResponse called with:', { groupId, parentMessageId })
+// Helper function to trigger AI response via webhook
+async function triggerAIResponse(groupId, parentMessageId, userId) {
+  console.log('🤖 Triggering AI webhook:', { groupId, parentMessageId })
 
   try {
-    // Import and call the AI handler directly
-    const { POST: handleAI } = await import('../ai/route')
+    // Use the main domain to call our webhook
+    const webhookUrl = process.env.NODE_ENV === 'production'
+      ? 'https://noodeia.vercel.app/api/webhook/ai'
+      : 'http://localhost:3000/api/webhook/ai'
 
-    // Create a proper request object with headers
-    const request = new Request('http://localhost/api/groupchat/' + groupId + '/ai', {
+    console.log('🤖 Calling webhook:', webhookUrl)
+
+    // Make a fire-and-forget request to the webhook
+    // We don't await this - it runs independently
+    fetch(webhookUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ parentMessageId })
+      body: JSON.stringify({
+        groupId,
+        parentMessageId,
+        userId
+      })
+    })
+    .then(res => {
+      console.log('🤖 Webhook response:', res.status)
+      return res.json()
+    })
+    .then(data => {
+      console.log('🤖 Webhook completed:', data)
+    })
+    .catch(error => {
+      console.error('🤖 Webhook error:', error)
     })
 
-    console.log('🤖 Calling AI handler directly...')
-
-    // Call the handler - it will run in its own context
-    const response = await handleAI(request, {
-      params: Promise.resolve({ groupId })
-    })
-
-    console.log('🤖 AI handler completed')
-    return response
+    console.log('🤖 Webhook triggered (not waiting for completion)')
   } catch (error) {
-    console.error('🤖 AI response error:', error)
-    console.error('🤖 Error stack:', error.stack)
-    throw error
+    console.error('🤖 Error triggering webhook:', error)
   }
 }
 
@@ -126,21 +134,22 @@ export async function POST(request, { params }) {
 
     await pusherService.sendMessage(groupId, message)
 
+    // Return immediately to user
+    const response = NextResponse.json(message, { status: 201 })
+
     // Check if message contains @ai mention and trigger AI response asynchronously
     // Works for both main channel messages and replies
     console.log('📝 Message content:', content)
     console.log('📝 Contains @ai?', content.includes('@ai'))
 
     if (content.includes('@ai')) {
-      console.log('🤖 @ai detected, triggering AI response...')
-      // Fire-and-forget: Process AI response without blocking
-      triggerAIResponse(groupId, parentMessageId || message.id, authHeader).catch(err => {
-        console.error('🤖 Background AI error:', err)
-        console.error('🤖 Background AI error stack:', err.stack)
-      })
+      console.log('🤖 @ai detected, will trigger AI response...')
+
+      // Trigger webhook - it runs completely independently
+      triggerAIResponse(groupId, parentMessageId || message.id, user.id)
     }
 
-    return NextResponse.json(message, { status: 201 })
+    return response
   } catch (error) {
     console.error('Error sending message:', error)
     return NextResponse.json(
