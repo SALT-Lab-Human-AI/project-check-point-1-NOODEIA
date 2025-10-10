@@ -8,20 +8,16 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// Helper function to trigger AI response asynchronously via HTTP request
+// Helper function to trigger AI response asynchronously
 async function triggerAIResponse(groupId, parentMessageId, authHeader) {
   console.log('🤖 triggerAIResponse called with:', { groupId, parentMessageId })
 
   try {
-    // Get the base URL - use the main domain in production
-    const baseUrl = process.env.NODE_ENV === 'production'
-      ? 'https://noodeia.vercel.app'
-      : 'http://localhost:3000'
+    // Import and call the AI handler directly
+    const { POST: handleAI } = await import('../ai/route')
 
-    const aiUrl = `${baseUrl}/api/groupchat/${groupId}/ai`
-    console.log('🤖 Making HTTP request to:', aiUrl)
-
-    const response = await fetch(aiUrl, {
+    // Create a proper request object with headers
+    const request = new Request('http://localhost/api/groupchat/' + groupId + '/ai', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -30,23 +26,15 @@ async function triggerAIResponse(groupId, parentMessageId, authHeader) {
       body: JSON.stringify({ parentMessageId })
     })
 
-    console.log('🤖 AI response status:', response.status)
+    console.log('🤖 Calling AI handler directly...')
 
-    if (!response.ok) {
-      let errorData
-      try {
-        errorData = await response.json()
-      } catch (e) {
-        // Response wasn't JSON, probably HTML error page
-        errorData = await response.text()
-      }
-      console.error('🤖 AI response error:', errorData)
-      throw new Error(`AI request failed: ${response.status}`)
-    }
+    // Call the handler - it will run in its own context
+    const response = await handleAI(request, {
+      params: Promise.resolve({ groupId })
+    })
 
-    const result = await response.json()
-    console.log('🤖 AI handler completed successfully')
-    return result
+    console.log('🤖 AI handler completed')
+    return response
   } catch (error) {
     console.error('🤖 AI response error:', error)
     console.error('🤖 Error stack:', error.stack)
