@@ -26,8 +26,15 @@ export default function ThreadPanel({
     setupPusher()
 
     return () => {
+      // Don't unsubscribe - the channel is shared with GroupChat
+      // Just unbind this component's event handlers
       if (pusherRef.current) {
-        pusherRef.current.unsubscribe(`group-${groupId}`)
+        const channel = pusherRef.current.channel(`group-${groupId}`)
+        if (channel) {
+          channel.unbind(PUSHER_EVENTS.MESSAGE_SENT)
+          channel.unbind(PUSHER_EVENTS.MESSAGE_EDITED)
+          channel.unbind(PUSHER_EVENTS.MESSAGE_DELETED)
+        }
       }
     }
   }, [parentMessage.id])
@@ -37,7 +44,12 @@ export default function ThreadPanel({
     if (!pusher) return
 
     pusherRef.current = pusher
-    const channel = pusher.subscribe(`group-${groupId}`)
+
+    // Get or subscribe to the channel (don't unsubscribe, it's shared with GroupChat)
+    let channel = pusher.channel(`group-${groupId}`)
+    if (!channel) {
+      channel = pusher.subscribe(`group-${groupId}`)
+    }
 
     // Listen for new messages in this thread
     channel.bind(PUSHER_EVENTS.MESSAGE_SENT, (data) => {

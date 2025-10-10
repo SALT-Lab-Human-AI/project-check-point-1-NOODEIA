@@ -13,11 +13,7 @@ class GeminiService {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          // Disable thinking for faster responses and lower token usage
-          thinkingConfig: { thinkingBudget: 0 }
-        }
+        contents: [{ parts: [{ text: prompt }] }]
       })
     })
 
