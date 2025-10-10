@@ -53,7 +53,14 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
 
     const channel = pusher.subscribe(`group-${groupId}`)
 
+    console.log('📡 Subscribed to channel:', `group-${groupId}`)
+
+    channel.bind('pusher:subscription_succeeded', () => {
+      console.log('✅ Channel subscription succeeded for:', `group-${groupId}`)
+    })
+
     channel.bind(PUSHER_EVENTS.MESSAGE_SENT, (data) => {
+      console.log('📨 MESSAGE_SENT event received:', data)
       // Add to main channel if it's not a thread reply
       if (!data.parentId) {
         // Check if message already exists (avoid duplicates for own messages)
