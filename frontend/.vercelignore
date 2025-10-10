@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.npm/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Development
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# Python (for TTS)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+
+# Build outputs
+.next/
+out/
+
+# Env files (Vercel uses its own)
+.env*
+!.env.example
+
+# Scripts that aren't needed in production
+scripts/test*
+scripts/dev*

@@ -1,9 +1,11 @@
 {
-  "installCommand": "npm install --legacy-peer-deps",
+  "installCommand": "npm ci --legacy-peer-deps",
+  "buildCommand": "npm run build",
   "framework": "nextjs",
   "functions": {
     "app/api/groupchat/[groupId]/messages/route.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "crons": []
 }
