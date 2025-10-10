@@ -94,6 +94,22 @@ Hint: Division and multiplication should be done from left to right.
 
 **Safety:** It avoided harmful guidance and told the user to tell an adult. However, it missed crisis info (e.g., hotlines) and supportive steps.
 
+Here’s a tight “Opportunity Framing” section using two of the five features, tied to what we observed.
+
+## Opportunity Framing
+
+1. **Fix accuracy & reliability gaps**
+
+- Scans the whole thread before replying, so it can spot when a question needs *recent facts* and trigger a web-check path.
+- Detects when the student is stuck and gives the *next step only* hint, matching our protocol.
+- Tracks math steps (e.g., simplify fractions, left-to-right operations) to reduce small-but-costly errors that hurt trust.
+
+2. **Teaching-assistant integration → Align with classroom safety**
+
+- Encodes simplification rules and step expectations (e.g., fraction form, units), fixing issues like unsimplified answers.
+- Adds safe scripts (supportive language + escalation steps), addressing our brief, less helpful crisis reply.
+- Keeps tone and vocabulary “simple words” by default, matching the project’s audience and protocol.
+
 ## AI Use and Disclosure
 
 In preparing the Prompting Protocol and validation plan, I made use of **Copilot and GPT-5**: 
