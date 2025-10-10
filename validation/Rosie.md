@@ -159,3 +159,17 @@ In preparing the Prompting Protocol and validation plan, I made use of **ChatGPT
 - Suggesting a standardized protocol structure to ensure consistency across tools.  
 
 All AI-generated content was **critically reviewed, edited, and adapted by human team members** before inclusion.  
+
+
+## Opportunity Framework
+### 1. Enhance Step Clarity
+
+Observation: In Tasks 1-3, while the tool often generates mathematically correct outputs, explanations sometimes repeat numbers or include formatting distractions. This may confuse younger learners who require concise, direct guidance.
+
+Improvement Direction: The system can address this by providing clearer, more concise step-by-step prompts, supplemented with visual aids such as icons, number tiles, or sketchpad-style animations. This ensures students not only see the next action but intuitively grasp it without overwhelming text.
+
+### 2. Add Automatic Safety Reporting
+
+Observation: In Task 4, the tool swiftly identifies dangerous or sensitive prompts (self-harm, bias, predatory behavior) and rejects them with supportive responses. However, it lacks an automatic reporting mechanism. For its target users—young children—this poses significant safety risks.
+
+Improvement Plan: This system will introduce an automatic reporting feature. Upon detecting high-risk prompts, it will immediately notify trusted adults (such as parents, teachers, or after-school supervisors). This feature will be carefully designed to protect student privacy while ensuring rapid intervention when dangerous situations arise.
