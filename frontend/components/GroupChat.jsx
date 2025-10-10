@@ -41,9 +41,17 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     const channel = pusher.subscribe(`group-${groupId}`)
 
     channel.bind(PUSHER_EVENTS.MESSAGE_SENT, (data) => {
-      // Only add to main channel if it's not a thread reply
-      if (data.createdBy !== currentUser.id && !data.parentId) {
-        setMessages(prev => [...prev, data])
+      // Add to main channel if it's not a thread reply
+      // Skip if it's your own message (already added optimistically in sendMessage)
+      if (!data.parentId) {
+        // Check if message already exists (avoid duplicates for own messages)
+        setMessages(prev => {
+          const messageExists = prev.some(msg => msg.id === data.id)
+          if (messageExists) {
+            return prev
+          }
+          return [...prev, data]
+        })
         scrollToBottom()
       }
     })
@@ -140,7 +148,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
           })
 
           if (aiResponse.ok) {
-            const aiData = await aiResponse.json()
+            await aiResponse.json() // Just consume the response
             setMessages(prev =>
               prev.map(msg =>
                 msg.id === newMsg.id

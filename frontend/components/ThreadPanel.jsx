@@ -42,8 +42,15 @@ export default function ThreadPanel({
     // Listen for new messages in this thread
     channel.bind(PUSHER_EVENTS.MESSAGE_SENT, (data) => {
       // Only add if it's a reply to our parent message
-      if (data.parentId === parentMessage.id && data.createdBy !== currentUser.id) {
-        setReplies(prev => [...prev, data])
+      if (data.parentId === parentMessage.id) {
+        // Check if message already exists (avoid duplicates for own messages)
+        setReplies(prev => {
+          const messageExists = prev.some(msg => msg.id === data.id)
+          if (messageExists) {
+            return prev
+          }
+          return [...prev, data]
+        })
         scrollToBottom()
       }
     })
