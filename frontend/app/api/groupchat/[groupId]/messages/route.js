@@ -1,11 +1,21 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import neo4j from 'neo4j-driver'
 import groupChatService from '../../../../../services/groupchat.service'
 import pusherService from '../../../../../services/pusher.service'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
+const driver = neo4j.driver(
+  process.env.NEXT_PUBLIC_NEO4J_URI,
+  neo4j.auth.basic(
+    process.env.NEXT_PUBLIC_NEO4J_USERNAME,
+    process.env.NEXT_PUBLIC_NEO4J_PASSWORD
+  ),
+  { disableLosslessIntegers: true }
 )
 
 
@@ -98,26 +108,108 @@ export async function POST(request, { params }) {
     console.log('📝 Contains @ai?', content.includes('@ai'))
 
     if (content.includes('@ai')) {
-      console.log('🤖 @ai detected, using simple AI endpoint')
+      console.log('🤖 @ai detected, processing AI response')
 
-      const baseUrl = process.env.NODE_ENV === 'production' ? 'https://noodeia.vercel.app' : 'http://localhost:3001'
-      const aiUrl = `${baseUrl}/api/groupchat/${groupId}/ai-simple`
+      // Import and call AI service directly to avoid HTTP self-calling issues
+      import('../../../../../services/gemini.service').then(async ({ default: geminiService }) => {
+        try {
+          const aiSession = driver.session()
 
-      console.log('🤖 Calling AI URL:', aiUrl)
+          // Fetch thread context
+          const threadResult = await aiSession.run(
+            `MATCH (parent:Message {id: $parentMessageId})
+             OPTIONAL MATCH (parent)<-[:REPLY_TO]-(reply:Message)
+             OPTIONAL MATCH (author:User)-[:POSTED]->(reply)
+             WITH parent, reply, author
+             ORDER BY reply.createdAt ASC
+             RETURN parent.content as parentContent,
+                    collect({
+                      content: reply.content,
+                      userName: coalesce(author.name, author.email)
+                    }) as replies`,
+            { parentMessageId: parentMessageId || message.id }
+          )
 
-      // Call the simplified AI endpoint that avoids slow Neo4j queries
-      fetch(aiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          parentMessageId: parentMessageId || message.id,
-          userId: user.id,
-          messageContent: content,
-          userName: message.userName || user.email.split('@')[0]
-        })
+          let threadContext = ''
+          if (threadResult.records.length > 0) {
+            const record = threadResult.records[0]
+            const parentContent = record.get('parentContent')
+            const replies = record.get('replies') || []
+
+            const contextUserName = message.userName || user.email.split('@')[0]
+            threadContext = `${contextUserName}: ${parentContent}\n`
+            replies.forEach(reply => {
+              if (reply.content && reply.userName) {
+                threadContext += `${reply.userName}: ${reply.content}\n`
+              }
+            })
+          }
+
+          // Build prompt
+          const userName = message.userName || user.email.split('@')[0]
+          const prompt = `You are a Socratic AI tutor. Guide with questions, not answers. Keep under 50 words.
+Start with "@${userName}, Hi!"
+
+Thread conversation:
+${threadContext}
+
+Respond with guiding questions to help them think:`
+
+          // Call Gemini
+          console.log('🤖 Calling Gemini...')
+          const aiText = await geminiService.chat(prompt)
+          console.log('🤖 Gemini responded')
+
+          // Build response with context
+          const responseText = `Thread context (previous messages in this conversation):\n${threadContext}\n${aiText}`
+
+          // Create AI message
+          const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+          await aiSession.run(
+            `MATCH (g:GroupChat {id: $groupId})
+             CREATE (m:Message {
+               id: $messageId,
+               content: $content,
+               createdBy: 'ai_assistant',
+               createdAt: datetime(),
+               edited: false,
+               parentId: $parentId
+             })
+             CREATE (g)-[:CONTAINS]->(m)
+             WITH m
+             OPTIONAL MATCH (parent:Message {id: $parentId})
+             WHERE parent IS NOT NULL
+             CREATE (m)-[:REPLY_TO]->(parent)
+             RETURN m`,
+            {
+              groupId,
+              messageId,
+              content: responseText,
+              parentId: parentMessageId || message.id
+            }
+          )
+
+          // Broadcast via Pusher
+          const aiMessage = {
+            id: messageId,
+            content: responseText,
+            createdBy: 'ai_assistant',
+            userName: 'AI Assistant',
+            userEmail: 'ai@assistant.com',
+            createdAt: new Date().toISOString(),
+            edited: false,
+            parentId: parentMessageId || message.id,
+            replyCount: 0
+          }
+
+          await pusherService.sendMessage(groupId, aiMessage)
+          console.log('🤖 AI response sent via Pusher')
+
+          await aiSession.close()
+        } catch (error) {
+          console.error('🤖 AI processing error:', error)
+        }
       })
-      .then(res => console.log('🤖 Simple AI response:', res.status))
-      .catch(err => console.error('🤖 Simple AI error:', err))
 
       /* DISABLED - Too slow on Vercel (48+ seconds for context loading)
       console.log('🤖 @ai detected, processing inline')
