@@ -1,7 +1,7 @@
 class GeminiService {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY
-    this.apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent'
+    this.apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
   }
 
   async chat(prompt) {
@@ -13,7 +13,11 @@ class GeminiService {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          // Disable thinking for faster responses and lower token usage
+          thinkingConfig: { thinkingBudget: 0 }
+        }
       })
     })
 
