@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
-import { Send, Users, LogOut } from 'lucide-react'
+import { Send, Users, LogOut, RefreshCw } from 'lucide-react'
 import ThreadedMessage from './ThreadedMessage'
 import ThreadPanel from './ThreadPanel'
 import { getPusherClient, PUSHER_EVENTS } from '../lib/pusher'
@@ -112,10 +112,12 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
 
   const loadMessages = async () => {
     try {
-      const response = await fetch(`/api/groupchat/${groupId}/messages`, {
+      console.log('📥 Loading messages for group:', groupId)
+      const response = await fetch(`/api/groupchat/${groupId}/messages?t=${Date.now()}`, {
         headers: {
           Authorization: `Bearer ${authToken}`
-        }
+        },
+        cache: 'no-store'
       })
 
       if (!response.ok) {
@@ -126,8 +128,10 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       }
 
       const data = await response.json()
+      console.log('📥 Received messages from API:', data.length)
       const messagesArray = Array.isArray(data) ? data : []
       const topLevelMessages = messagesArray.filter(msg => !msg.parentId)
+      console.log('📥 Top-level messages after filtering:', topLevelMessages.length)
       setMessages(topLevelMessages.reverse())
       scrollToBottom()
     } catch (error) {
@@ -279,6 +283,16 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              console.log('🔄 Refreshing messages...')
+              loadMessages()
+            }}
+            className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            title="Refresh Messages"
+          >
+            <RefreshCw className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+          </button>
           <button
             onClick={() => {
               if (confirm('Are you sure you want to leave this group chat?')) {
