@@ -35,32 +35,95 @@ export function timeAgo(date) {
   return rtf.format(value, unit);
 }
 
-// Global variable to track currently playing speech synthesis
-let currentSpeech = null
+// Global variable to track currently playing audio
+let currentAudio = null
 
-// Use browser's built-in Web Speech API for TTS (works on Vercel)
-export async function text2audio(text) {
-  // Check if browser supports speech synthesis
+// Enhanced TTS using Bark for voice cloning
+export async function text2audio(text, options = {}) {
+  try {
+    // Stop any currently playing audio
+    if (currentAudio) {
+      currentAudio.pause()
+      currentAudio = null
+    }
+
+    const {
+      voice = 'v2/en_speaker_6',  // Friendly default voice
+      useBark = true,              // Use Bark by default
+      temperature = 0.7
+    } = options
+
+    // Try Bark API first (higher quality with voice cloning)
+    if (useBark) {
+      try {
+        const response = await fetch('/api/tts-bark', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text,
+            voice,
+            temperature
+          })
+        })
+
+        if (response.ok) {
+          const audioBlob = await response.blob()
+          const audioUrl = URL.createObjectURL(audioBlob)
+
+          // Create and play audio
+          const audio = new Audio(audioUrl)
+          currentAudio = audio
+
+          // Clean up after playing
+          audio.onended = () => {
+            URL.revokeObjectURL(audioUrl)
+            if (currentAudio === audio) {
+              currentAudio = null
+            }
+          }
+
+          audio.onerror = (error) => {
+            console.error('Audio playback error:', error)
+            URL.revokeObjectURL(audioUrl)
+            // Fallback to browser TTS
+            useBrowserTTS(text)
+          }
+
+          await audio.play()
+          return
+        }
+      } catch (error) {
+        console.warn('Bark TTS failed, falling back to browser TTS:', error)
+      }
+    }
+
+    // Fallback to browser's built-in Web Speech API
+    useBrowserTTS(text)
+  } catch (error) {
+    console.error('TTS error:', error)
+    alert('Failed to play audio. Please try again.')
+  }
+}
+
+// Fallback browser TTS function
+function useBrowserTTS(text) {
   if (!('speechSynthesis' in window)) {
     alert('Text-to-speech is not supported in your browser')
     return
   }
 
   // Stop any currently playing speech
-  if (currentSpeech) {
-    window.speechSynthesis.cancel()
-    currentSpeech = null
-  }
+  window.speechSynthesis.cancel()
 
-  // Create a new speech synthesis utterance
+  // Create speech utterance
   const utterance = new SpeechSynthesisUtterance(text)
+  utterance.rate = 1.0
+  utterance.pitch = 1.0
+  utterance.volume = 1.0
 
-  // Configure voice settings
-  utterance.rate = 1.0  // Speed (0.1 to 10)
-  utterance.pitch = 1.0  // Pitch (0 to 2)
-  utterance.volume = 1.0  // Volume (0 to 1)
-
-  // Try to use a good English voice if available
+  // Try to use a good English voice
   const voices = window.speechSynthesis.getVoices()
   const englishVoice = voices.find(voice =>
     voice.lang.startsWith('en') && voice.localService
@@ -72,24 +135,22 @@ export async function text2audio(text) {
     utterance.voice = englishVoice
   }
 
-  // Store reference to current speech
-  currentSpeech = utterance
-
-  // Handle speech end
-  utterance.onend = () => {
-    if (currentSpeech === utterance) {
-      currentSpeech = null
-    }
-  }
-
-  // Handle speech error
   utterance.onerror = (event) => {
     console.error('Speech synthesis error:', event.error)
-    if (currentSpeech === utterance) {
-      currentSpeech = null
-    }
   }
 
-  // Start speaking
   window.speechSynthesis.speak(utterance)
+}
+
+// Function to get available Bark voices
+export async function getAvailableVoices() {
+  try {
+    const response = await fetch('/api/tts-bark')
+    if (response.ok) {
+      return await response.json()
+    }
+  } catch (error) {
+    console.error('Failed to get voices:', error)
+  }
+  return null
 }
