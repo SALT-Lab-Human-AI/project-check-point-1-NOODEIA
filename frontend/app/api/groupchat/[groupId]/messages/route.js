@@ -13,9 +13,9 @@ async function triggerAIResponse(groupId, parentMessageId, authHeader) {
   console.log('🤖 triggerAIResponse called with:', { groupId, parentMessageId })
 
   try {
-    // Get the base URL - use Vercel URL in production, localhost in development
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
+    // Get the base URL - use the main domain in production
+    const baseUrl = process.env.NODE_ENV === 'production'
+      ? 'https://noodeia.vercel.app'
       : 'http://localhost:3000'
 
     const aiUrl = `${baseUrl}/api/groupchat/${groupId}/ai`
@@ -33,7 +33,13 @@ async function triggerAIResponse(groupId, parentMessageId, authHeader) {
     console.log('🤖 AI response status:', response.status)
 
     if (!response.ok) {
-      const errorData = await response.json()
+      let errorData
+      try {
+        errorData = await response.json()
+      } catch (e) {
+        // Response wasn't JSON, probably HTML error page
+        errorData = await response.text()
+      }
       console.error('🤖 AI response error:', errorData)
       throw new Error(`AI request failed: ${response.status}`)
     }
