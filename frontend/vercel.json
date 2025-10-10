@@ -2,13 +2,7 @@
   "installCommand": "npm install --legacy-peer-deps",
   "framework": "nextjs",
   "functions": {
-    "app/api/groupchat/[groupId]/ai/route.js": {
-      "maxDuration": 60
-    },
     "app/api/groupchat/[groupId]/messages/route.js": {
-      "maxDuration": 60
-    },
-    "app/api/webhook/ai/route.js": {
       "maxDuration": 60
     }
   }
