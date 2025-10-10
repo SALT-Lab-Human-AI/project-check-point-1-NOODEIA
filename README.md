@@ -33,8 +33,11 @@
 4. [Literature Review](#-literature-review)
 5. [Initial Concept and Value Proposition](#-initial-concept-and-value-proposition)  
 6. [Frontend Application](#-frontend-application)
-7. [Contributions](#-contributions)  
-8. [License](#-license)  
+7. [Contributions](#-contributions)
+8. [Quick Start](#-quick-start)  
+9. [Feedback Overview](#-feedback-overview)
+10. [Inspiration and Disclosures](#-inspiration-and-disclosures)
+11. [License](#-license)  
 
 ---
 
@@ -331,7 +334,26 @@ The frontend is configured for deployment to Vercel with zero configuration.
 
 ---
 
-## Inspiration and Disclosure
+## Feedback Overview
+
+After presenting checkpoint 1 to the class, we received feedback and addressed it in the following ways:
+
+Feedback 1: Add direct links to comparable products
+We addressed this point by ensuring all tools and AIs used were properly hyperlinked throughout the project’s README files.
+
+Feedback 2: Explicitly acknowledge AI tool usage
+We have added a new section titled [Inspiration and Disclosures](#-Inspiration-and-disclosures) at the bottom of our GitHub repository. This section will be updated throughout the duration of our project, showcasing which AI tools we’ve used, how we’ve used them, and for what specific purpose. 
+
+Feedback 3 and 4: Clarify use case scenarios and mitigate risks of children using AI
+After speaking with our relevant stakeholders, we’ve decided it’s best if our AI tutor is used only when the teacher is nearby and watching over the student. This way, the AI’s outputs can be monitored at all times, and the tutor can be most effectively utilized. 
+
+Feedback 5: Add a team collaboration summary
+All of our individual contributions are tracked by GitHub and added to the [Contributions](#-contributions) section of this README. 
+
+
+---
+
+## Inspiration and Disclosures
 
 The logo image is inspired by [FREEP!K](https://www.freepik.com/premium-vector/tree-with-lines-dots-vector-design-ai-generate_328598955.htm) and referenced by similar generated images. 
 
