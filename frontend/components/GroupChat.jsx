@@ -65,6 +65,15 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
           return [...prev, data]
         })
         scrollToBottom()
+      } else {
+        // This is a thread reply - update the parent message's reply count
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === data.parentId
+              ? { ...msg, replyCount: (msg.replyCount || 0) + 1 }
+              : msg
+          )
+        )
       }
     })
 
@@ -126,7 +135,6 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     if (!newMessage.trim() || sending) return
 
     const messageContent = newMessage.trim()
-    const hasAiMention = messageContent.includes('@ai')
 
     setNewMessage('')
     setSending(true)
@@ -144,37 +152,10 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
 
       if (!response.ok) throw new Error('Failed to send message')
 
-      const newMsg = await response.json()
+      await response.json()
       // Don't add locally - let Pusher handle it to avoid duplicates
       // The message will appear via Pusher event in real-time
-
-      if (hasAiMention) {
-        try {
-          const aiResponse = await fetch(`/api/groupchat/${groupId}/ai`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${authToken}`
-            },
-            body: JSON.stringify({ parentMessageId: newMsg.id })
-          })
-
-          if (aiResponse.ok) {
-            await aiResponse.json() // Just consume the response
-            setMessages(prev =>
-              prev.map(msg =>
-                msg.id === newMsg.id
-                  ? { ...msg, replyCount: (msg.replyCount || 0) + 1 }
-                  : msg
-              )
-            )
-          } else {
-            console.error('AI response failed:', aiResponse.status, await aiResponse.text())
-          }
-        } catch (aiError) {
-          console.error('AI response error:', aiError)
-        }
-      }
+      // Reply count will be updated automatically via Pusher when AI responds
     } catch (error) {
       console.error('Failed to send message:', error)
       setNewMessage(messageContent)
