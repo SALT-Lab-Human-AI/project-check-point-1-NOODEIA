@@ -100,8 +100,13 @@ export async function POST(request, { params }) {
     if (content.includes('@ai')) {
       console.log('🤖 @ai detected, using simple AI endpoint')
 
+      const baseUrl = process.env.NODE_ENV === 'production' ? 'https://noodeia.vercel.app' : 'http://localhost:3001'
+      const aiUrl = `${baseUrl}/api/groupchat/${groupId}/ai-simple`
+
+      console.log('🤖 Calling AI URL:', aiUrl)
+
       // Call the simplified AI endpoint that avoids slow Neo4j queries
-      fetch(`${process.env.NODE_ENV === 'production' ? 'https://noodeia.vercel.app' : 'http://localhost:3000'}/api/groupchat/${groupId}/ai-simple`, {
+      fetch(aiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
