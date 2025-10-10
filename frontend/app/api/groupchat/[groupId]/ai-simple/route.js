@@ -130,10 +130,18 @@ Respond with guiding questions to help them think:`
       replyCount: 0
     }
 
+    console.log('🤖 Broadcasting AI message via Pusher:', {
+      messageId: aiMessage.id,
+      parentId: aiMessage.parentId,
+      channel: `group-${groupId}`,
+      contentLength: aiMessage.content.length
+    })
+
     await pusherService.sendMessage(groupId, aiMessage)
     console.log(`🤖 Pusher broadcast completed`)
 
     console.log(`🤖 Total time: ${Date.now() - startTime}ms`)
+    console.log(`🤖 AI message should now appear in thread: ${parentMessageId}`)
 
     return NextResponse.json({ success: true, messageId })
   } catch (error) {
