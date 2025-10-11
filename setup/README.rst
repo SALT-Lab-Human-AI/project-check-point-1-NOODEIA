@@ -16,7 +16,7 @@ Noodeia is a personalized AI tutor chat application with:
 * **Database**: Neo4j AuraDB (Graph Database)
 * **AI Model**: Google Gemini 2.5 Pro
 * **Real-time**: Pusher (optional)
-* **Deployment**: Vercel
+* **Deployment**: Railway / Render (migrated from Vercel on 2025-10-10)
 
 Prerequisites
 -------------
@@ -420,3 +420,52 @@ Development Notes
 * Neo4j driver connection uses singleton pattern
 * Database adapter provides abstraction layer for easy rollback if needed
 * Supabase Auth user IDs are used as Node IDs in Neo4j
+
+Deployment
+----------
+
+The application can be deployed on Railway or Render. Vercel is no longer supported due to timeout limitations.
+
+**Railway Deployment** (Recommended for AI/Voice Features):
+
+* Supports long-running processes (60+ second timeouts)
+* Python environment for voice cloning
+* Better for AI workloads
+* See ``RAILWAY_DEPLOYMENT.md`` and ``RAILWAY_CLI_DEPLOY.md`` for details
+
+**Render Deployment** (Alternative):
+
+* Better Next.js build compatibility
+* Easier setup and deployment
+* Auto-deploy on git push
+* See ``setup/RENDER_DEPLOYMENT.md`` for details
+
+**Configuration Files**:
+
+* ``railway.toml`` - Railway configuration
+* ``nixpacks.toml`` - Build environment (Node.js 20 + Python 3.11)
+* ``Procfile`` - Start command
+* ``render.yaml`` - Render configuration
+
+Recent Updates (2025-10-11)
+----------------------------
+
+**Infinite Scroll**:
+   * Messages now load 50 at a time
+   * Scroll to top to automatically load older messages
+   * Efficient pagination for groups with 100+ messages
+
+**AI Message Persistence**:
+   * Fixed bug where AI responses disappeared when reopening threads
+   * AI messages now properly load with ``OPTIONAL MATCH`` in Cypher queries
+
+**Deployment Migration**:
+   * Migrated from Vercel to Railway/Render
+   * Removed all Vercel-specific configuration
+   * Added Python support for future voice cloning features
+
+**UI Improvements**:
+   * Removed unnecessary refresh button (everything is real-time)
+   * All messages update via Pusher in real-time
+   * Cleaner interface
+
