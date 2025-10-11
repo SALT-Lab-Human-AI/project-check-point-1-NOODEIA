@@ -10,10 +10,13 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
   const [sending, setSending] = useState(false)
   const [typingUsers, setTypingUsers] = useState([])
   const [selectedThread, setSelectedThread] = useState(null)
   const messagesEndRef = useRef(null)
+  const messagesContainerRef = useRef(null)
   const pusherRef = useRef(null)
   const typingTimeoutRef = useRef(null)
   const currentUserRef = useRef(currentUser)
@@ -110,9 +113,9 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     })
   }
 
-  const loadMessages = async () => {
+  const loadMessages = async (skip = 0) => {
     try {
-      const response = await fetch(`/api/groupchat/${groupId}/messages?limit=200`, {
+      const response = await fetch(`/api/groupchat/${groupId}/messages?limit=50&skip=${skip}`, {
         headers: {
           Authorization: `Bearer ${authToken}`
         }
@@ -121,22 +124,58 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       if (!response.ok) {
         const errorData = await response.json()
         console.error('Messages API error:', errorData)
-        setMessages([])
+        if (skip === 0) setMessages([])
         return
       }
 
       const data = await response.json()
       const messagesArray = Array.isArray(data) ? data : []
       const topLevelMessages = messagesArray.filter(msg => !msg.parentId)
-      setMessages(topLevelMessages.reverse())
-      scrollToBottom()
+
+      if (skip === 0) {
+        // Initial load
+        setMessages(topLevelMessages.reverse())
+        scrollToBottom()
+      } else {
+        // Load more (prepend older messages)
+        setMessages(prev => [...topLevelMessages.reverse(), ...prev])
+      }
+
+      // Check if there are more messages to load
+      setHasMore(topLevelMessages.length === 50)
     } catch (error) {
       console.error('Failed to load messages:', error)
-      setMessages([])
+      if (skip === 0) setMessages([])
     } finally {
-      setLoading(false)
+      if (skip === 0) {
+        setLoading(false)
+      } else {
+        setLoadingMore(false)
+      }
     }
   }
+
+  const loadMoreMessages = async () => {
+    if (loadingMore || !hasMore) return
+
+    setLoadingMore(true)
+    await loadMessages(messages.length)
+  }
+
+  // Detect scroll to top
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      if (container.scrollTop < 100 && hasMore && !loadingMore) {
+        loadMoreMessages()
+      }
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [hasMore, loadingMore, messages.length])
 
   const sendMessage = async () => {
     if (!newMessage.trim() || sending) return
@@ -294,7 +333,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-3 sm:p-6">
         {loading ? (
           <div className="flex items-center justify-center text-zinc-500 dark:text-zinc-400">
             Loading messages...
@@ -305,6 +344,11 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
           </div>
         ) : (
           <>
+            {loadingMore && (
+              <div className="flex items-center justify-center py-2 text-sm text-zinc-500 dark:text-zinc-400">
+                Loading more messages...
+              </div>
+            )}
             {messages.map(message => (
               <ThreadedMessage
                 key={message.id}
