@@ -366,13 +366,13 @@ class GroupChatService {
         MATCH (parent:Message {id: $parentMessageId})<-[:CONTAINS]-(g:GroupChat)
         MATCH (u:User {id: $userId})-[:MEMBER_OF]->(g)
         MATCH (m:Message)-[:REPLY_TO]->(parent)
-        MATCH (author:User)-[:POSTED]->(m)
+        OPTIONAL MATCH (author:User)-[:POSTED]->(m)
         OPTIONAL MATCH (parentAuthor:User)-[:POSTED]->(parent)
         OPTIONAL MATCH (m)<-[:REPLY_TO]-(reply:Message)
         WITH m, author, parent, parentAuthor, count(DISTINCT reply) as replyCount
         RETURN m,
-               author.name as userName,
-               author.email as userEmail,
+               coalesce(author.name, m.createdBy) as userName,
+               coalesce(author.email, m.createdBy + '@assistant.com') as userEmail,
                parent.id as parentId,
                parentAuthor.name as parentAuthorName,
                parentAuthor.email as parentAuthorEmail,
