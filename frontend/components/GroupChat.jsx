@@ -21,7 +21,6 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
   const typingTimeoutRef = useRef(null)
   const currentUserRef = useRef(currentUser)
 
-  // Keep currentUserRef updated
   useEffect(() => {
     currentUserRef.current = currentUser
   }, [currentUser])
@@ -33,8 +32,6 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     return () => {
       if (pusherRef.current) {
         pusherRef.current.unsubscribe(`group-${groupId}`)
-        // Don't disconnect the shared Pusher instance
-        // pusherRef.current.disconnect()
       }
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current)
@@ -48,7 +45,6 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
 
     pusherRef.current = pusher
 
-    // Unsubscribe from any existing channel first
     const existingChannel = pusher.channel(`group-${groupId}`)
     if (existingChannel) {
       pusher.unsubscribe(`group-${groupId}`)
@@ -56,27 +52,15 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
 
     const channel = pusher.subscribe(`group-${groupId}`)
 
-    console.log('📡 Subscribed to channel:', `group-${groupId}`)
-
-    channel.bind('pusher:subscription_succeeded', () => {
-      console.log('✅ Channel subscription succeeded for:', `group-${groupId}`)
-    })
-
     channel.bind(PUSHER_EVENTS.MESSAGE_SENT, (data) => {
-      console.log('📨 MESSAGE_SENT event received:', data)
-      // Add to main channel if it's not a thread reply
       if (!data.parentId) {
-        // Check if message already exists (avoid duplicates for own messages)
         setMessages(prev => {
           const messageExists = prev.some(msg => msg.id === data.id)
-          if (messageExists) {
-            return prev
-          }
+          if (messageExists) return prev
           return [...prev, data]
         })
         scrollToBottom()
       } else {
-        // This is a thread reply - update the parent message's reply count
         setMessages(prev =>
           prev.map(msg =>
             msg.id === data.parentId

@@ -22,22 +22,13 @@ export const getPusherClient = () => {
     return null
   }
 
-  // Return existing instance if already created
   if (pusherClientInstance) {
     return pusherClientInstance
   }
 
-  console.log('🔌 Creating Pusher client with key:', process.env.NEXT_PUBLIC_PUSHER_KEY?.slice(0, 8) + '...')
-  console.log('🔌 Pusher cluster:', process.env.NEXT_PUBLIC_PUSHER_CLUSTER)
-
   pusherClientInstance = new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY, {
     cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
     authEndpoint: '/api/pusher/auth'
-  })
-
-  // Log connection state changes
-  pusherClientInstance.connection.bind('connected', () => {
-    console.log('✅ Pusher connected')
   })
 
   pusherClientInstance.connection.bind('error', (err) => {
