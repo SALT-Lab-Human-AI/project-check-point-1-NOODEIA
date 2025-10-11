@@ -112,7 +112,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
 
   const loadMessages = async () => {
     try {
-      const response = await fetch(`/api/groupchat/${groupId}/messages`, {
+      const response = await fetch(`/api/groupchat/${groupId}/messages?limit=200`, {
         headers: {
           Authorization: `Bearer ${authToken}`
         }
