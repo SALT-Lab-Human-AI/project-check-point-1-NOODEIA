@@ -38,8 +38,8 @@ export function timeAgo(date) {
 // Global variable to track currently playing audio
 let currentAudio = null
 
-// Enhanced TTS using Bark for voice cloning
-export async function text2audio(text, options = {}) {
+// Simple TTS using gTTS via text2audio.py
+export async function text2audio(text) {
   try {
     // Stop any currently playing audio
     if (currentAudio) {
@@ -47,54 +47,44 @@ export async function text2audio(text, options = {}) {
       currentAudio = null
     }
 
-    const {
-      speaker_id = 0,              // Default speaker
-      useVibeVoice = true,         // Use VibeVoice by default
-    } = options
+    // Try gTTS API first
+    try {
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text })
+      })
 
-    // Try VibeVoice API first (higher quality with voice cloning)
-    if (useVibeVoice) {
-      try {
-        const response = await fetch('/api/tts-vibevoice', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text,
-            speaker_id
-          })
-        })
+      if (response.ok) {
+        const audioBlob = await response.blob()
+        const audioUrl = URL.createObjectURL(audioBlob)
 
-        if (response.ok) {
-          const audioBlob = await response.blob()
-          const audioUrl = URL.createObjectURL(audioBlob)
+        // Create and play audio
+        const audio = new Audio(audioUrl)
+        currentAudio = audio
 
-          // Create and play audio
-          const audio = new Audio(audioUrl)
-          currentAudio = audio
-
-          // Clean up after playing
-          audio.onended = () => {
-            URL.revokeObjectURL(audioUrl)
-            if (currentAudio === audio) {
-              currentAudio = null
-            }
+        // Clean up after playing
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl)
+          if (currentAudio === audio) {
+            currentAudio = null
           }
-
-          audio.onerror = (error) => {
-            console.error('Audio playback error:', error)
-            URL.revokeObjectURL(audioUrl)
-            // Fallback to browser TTS
-            useBrowserTTS(text)
-          }
-
-          await audio.play()
-          return
         }
-      } catch (error) {
-        console.warn('VibeVoice TTS failed, falling back to browser TTS:', error)
+
+        audio.onerror = (error) => {
+          console.error('Audio playback error:', error)
+          URL.revokeObjectURL(audioUrl)
+          // Fallback to browser TTS
+          useBrowserTTS(text)
+        }
+
+        await audio.play()
+        return
       }
+    } catch (error) {
+      console.warn('gTTS failed, falling back to browser TTS:', error)
     }
 
     // Fallback to browser's built-in Web Speech API
@@ -138,17 +128,4 @@ function useBrowserTTS(text) {
   }
 
   window.speechSynthesis.speak(utterance)
-}
-
-// Function to get available VibeVoice speakers
-export async function getAvailableVoices() {
-  try {
-    const response = await fetch('/api/tts-vibevoice')
-    if (response.ok) {
-      return await response.json()
-    }
-  } catch (error) {
-    console.error('Failed to get voices:', error)
-  }
-  return null
 }

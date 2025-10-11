@@ -15,6 +15,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
   const [sending, setSending] = useState(false)
   const [typingUsers, setTypingUsers] = useState([])
   const [selectedThread, setSelectedThread] = useState(null)
+  const [totalMessagesLoaded, setTotalMessagesLoaded] = useState(0) // Track total messages from DB
   const messagesEndRef = useRef(null)
   const messagesContainerRef = useRef(null)
   const pusherRef = useRef(null)
@@ -108,7 +109,10 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       if (!response.ok) {
         const errorData = await response.json()
         console.error('Messages API error:', errorData)
-        if (skip === 0) setMessages([])
+        if (skip === 0) {
+          setMessages([])
+          setTotalMessagesLoaded(0)
+        }
         return
       }
 
@@ -119,17 +123,37 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       if (skip === 0) {
         // Initial load
         setMessages(topLevelMessages.reverse())
+        setTotalMessagesLoaded(messagesArray.length) // Track total messages from DB
         scrollToBottom()
       } else {
         // Load more (prepend older messages)
+        // Save scroll position before adding messages
+        const container = messagesContainerRef.current
+        const scrollHeightBefore = container?.scrollHeight || 0
+        const scrollTopBefore = container?.scrollTop || 0
+
         setMessages(prev => [...topLevelMessages.reverse(), ...prev])
+        setTotalMessagesLoaded(prev => prev + messagesArray.length)
+
+        // Restore scroll position after messages are added
+        setTimeout(() => {
+          if (container) {
+            const scrollHeightAfter = container.scrollHeight
+            const addedHeight = scrollHeightAfter - scrollHeightBefore
+            container.scrollTop = scrollTopBefore + addedHeight
+          }
+        }, 0)
       }
 
       // Check if there are more messages to load
-      setHasMore(topLevelMessages.length === 50)
+      // If we got less than 50 messages, we've reached the end
+      setHasMore(messagesArray.length === 50)
     } catch (error) {
       console.error('Failed to load messages:', error)
-      if (skip === 0) setMessages([])
+      if (skip === 0) {
+        setMessages([])
+        setTotalMessagesLoaded(0)
+      }
     } finally {
       if (skip === 0) {
         setLoading(false)
@@ -143,7 +167,8 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     if (loadingMore || !hasMore) return
 
     setLoadingMore(true)
-    await loadMessages(messages.length)
+    // Use totalMessagesLoaded instead of messages.length for correct skip value
+    await loadMessages(totalMessagesLoaded)
   }
 
   // Detect scroll to top
@@ -159,7 +184,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
 
     container.addEventListener('scroll', handleScroll)
     return () => container.removeEventListener('scroll', handleScroll)
-  }, [hasMore, loadingMore, messages.length])
+  }, [hasMore, loadingMore, totalMessagesLoaded])
 
   const sendMessage = async () => {
     if (!newMessage.trim() || sending) return
