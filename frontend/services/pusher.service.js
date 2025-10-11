@@ -6,16 +6,28 @@ class PusherService {
   }
 
   async sendMessage(groupId, message) {
-    if (!this.pusher) return
+    if (!this.pusher) {
+      console.error('❌ Pusher not initialized!')
+      return
+    }
 
     try {
+      console.log('📤 Broadcasting message via Pusher:', {
+        channel: `group-${groupId}`,
+        messageId: message.id,
+        createdBy: message.createdBy,
+        hasParentId: !!message.parentId
+      })
+
       await this.pusher.trigger(
         `group-${groupId}`,
         PUSHER_EVENTS.MESSAGE_SENT,
         message
       )
+
+      console.log('✅ Pusher broadcast successful')
     } catch (error) {
-      console.error('Failed to send message via Pusher:', error)
+      console.error('❌ Failed to send message via Pusher:', error)
     }
   }
 
