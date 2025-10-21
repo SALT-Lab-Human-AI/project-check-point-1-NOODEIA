@@ -11,17 +11,6 @@ export default function MindMapViewer({ markdown, className = "" }) {
   const [zoom, setZoom] = useState(1)
   const [markmap, setMarkmap] = useState(null)
 
-  // Color scheme for the mind map - must be defined before loadMarkmap
-  const colorScheme = [
-    '#6366f1', // indigo-500
-    '#8b5cf6', // violet-500
-    '#ec4899', // pink-500
-    '#f59e0b', // amber-500
-    '#10b981', // emerald-500
-    '#3b82f6', // blue-500
-    '#f43f5e', // rose-500,
-  ]
-
   const loadMarkmap = async () => {
     try {
       setIsLoading(true)
@@ -40,16 +29,11 @@ export default function MindMapViewer({ markdown, className = "" }) {
         svgRef.current.innerHTML = ''
       }
 
-      // Create and render markmap without loading external CSS/JS
+      // Create and render markmap with simplified options
       const mm = Markmap.create(svgRef.current, {
-        color: colorScheme,
         duration: 300,
         maxWidth: 300,
-        paddingX: 20,
-        zoom: true,
-        pan: true,
-        // Disable auto-loading of assets
-        autoFit: false
+        paddingX: 20
       }, root)
 
       setMarkmap(mm)
