@@ -49,7 +49,7 @@ export default function Composer({ onSend, busy }) {
   const disabled = busy || sending || !value.trim()
 
   return (
-    <form onSubmit={handleSubmit} className="border-t p-3 sm:p-4 dark:border-zinc-800">
+    <form onSubmit={handleSubmit} className="border-t p-3 sm:p-4 dark:border-zinc-800 flex-shrink-0">
       <div className="mx-auto max-w-3xl">
         <div className="flex items-end gap-2">
           <textarea
@@ -59,8 +59,9 @@ export default function Composer({ onSend, busy }) {
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             disabled={busy || sending}
-            className="min-h-[40px] flex-1 resize-none rounded-lg border bg-white px-3 py-2 text-sm sm:text-base focus:border-zinc-400 focus:outline-none disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-500"
+            className="min-h-[40px] max-h-[160px] flex-1 resize-none rounded-lg border bg-white px-3 py-2 text-sm sm:text-base focus:border-zinc-400 focus:outline-none disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-500"
             rows={1}
+            style={{ WebkitAppearance: 'none', appearance: 'none' }}
           />
           <button
             type="submit"

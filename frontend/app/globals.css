@@ -86,7 +86,34 @@
   * {
     @apply border-border;
   }
+
+  html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
   body {
     @apply bg-background text-foreground;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: fixed;
+    /* Prevent layout shift when mobile keyboard appears */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  /* Handle mobile keyboard viewport */
+  @supports (padding: max(0px)) {
+    body {
+      padding-left: max(0px, env(safe-area-inset-left));
+      padding-right: max(0px, env(safe-area-inset-right));
+      padding-top: max(0px, env(safe-area-inset-top));
+      padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
   }
 }

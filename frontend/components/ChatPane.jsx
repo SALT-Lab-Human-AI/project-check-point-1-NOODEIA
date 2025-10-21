@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Pencil, RefreshCw, Check, X } from "lucide-react"
 import Message from "./Message"
 import Composer from "./Composer"
@@ -31,6 +31,16 @@ export default function ChatPane({
   const scrollRef = useRef(null)
   const [editingId, setEditingId] = useState(null)
   const [editValue, setEditValue] = useState("")
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (scrollRef.current) {
+      // Use setTimeout to ensure DOM is updated
+      setTimeout(() => {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+      }, 0)
+    }
+  }, [messages, isThinking])
 
   function startEdit(message) {
     setEditingId(message.id)
@@ -70,8 +80,8 @@ export default function ChatPane({
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 sm:p-4">
+    <div className="flex flex-1 flex-col min-h-0">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="mx-auto max-w-3xl space-y-3 sm:space-y-4">
           {messages.length === 0 ? (
             <div className="flex h-full items-center justify-center py-12">
