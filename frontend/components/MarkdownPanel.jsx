@@ -221,9 +221,21 @@ export default function MarkdownPanel({
   if (!isOpen) return null
 
   return (
-    <div
-      className={`fixed ${isFullscreen ? 'inset-0' : 'top-0 right-0 h-full w-96'} bg-white dark:bg-zinc-900 shadow-xl z-50 flex flex-col transition-all duration-300`}
-    >
+    <>
+      {/* Backdrop overlay */}
+      {!isFullscreen && (
+        <div
+          className="fixed inset-0 bg-black/20 z-40 transition-opacity duration-300"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Main panel */}
+      <div
+        className={`fixed ${isFullscreen ? 'inset-0' : 'top-0 right-0 h-full w-96'} bg-white dark:bg-zinc-900 shadow-2xl z-50 flex flex-col transition-all duration-300 transform ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-700">
         <div className="flex items-center gap-2">
@@ -412,5 +424,6 @@ export default function MarkdownPanel({
         </div>
       </div>
     </div>
+    </>
   )
 }

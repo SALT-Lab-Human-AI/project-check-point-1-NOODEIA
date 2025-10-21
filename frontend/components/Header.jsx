@@ -22,10 +22,11 @@ export default function Header({ onMenuClick, currentUser, onLogout, onMarkdownC
           </div>
           <button
             onClick={onMarkdownClick}
-            className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            title="Open markdown notes"
+            className="flex items-center gap-2 rounded-lg px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors font-medium"
+            title="Open markdown notes panel"
           >
             <FileText className="h-5 w-5" />
+            <span className="text-sm hidden sm:inline">Notes</span>
           </button>
           <button
             onClick={onLogout}
