@@ -32,6 +32,8 @@ export default function ChatPane({
   const [editingId, setEditingId] = useState(null)
   const [editValue, setEditValue] = useState("")
 
+  const messages = conversation?.messages || []
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
@@ -59,8 +61,6 @@ export default function ChatPane({
     setEditingId(null)
     setEditValue("")
   }
-
-  const messages = conversation?.messages || []
 
   if (!conversation) {
     return (

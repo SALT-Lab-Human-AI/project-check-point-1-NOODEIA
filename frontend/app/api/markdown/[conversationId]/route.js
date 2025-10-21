@@ -87,7 +87,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({
         conversationId: record.get('conversationId'),
         content: record.get('content'),
-        lastModified: record.get('lastModified').toISO(),
+        lastModified: record.get('lastModified').toISOString(),
         success: true
       })
     } finally {
