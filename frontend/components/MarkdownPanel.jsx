@@ -140,30 +140,6 @@ export default function MarkdownPanel({
     )
   }, [markdown])
 
-  const generateMindMap = async () => {
-    try {
-      const response = await fetch('/api/markdown/mindmap', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify({
-          markdown,
-          conversationId
-        })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        // Here you would render the actual mind map using markmap
-        console.log("Mind map data:", data)
-      }
-    } catch (error) {
-      console.error("Error generating mind map:", error)
-    }
-  }
-
   const exportMarkdown = () => {
     const blob = new Blob([markdown], { type: 'text/markdown' })
     const url = URL.createObjectURL(blob)

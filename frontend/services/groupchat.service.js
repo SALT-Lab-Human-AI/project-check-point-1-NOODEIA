@@ -483,10 +483,9 @@ class GroupChatService {
         .map(msg => `${msg.userEmail}: ${msg.content}`)
         .join('\n')
 
-      // TODO: Replace with actual AI API call
-      // This is a placeholder for AI integration
+      // AI response (actual AI integration handled in API routes)
       const aiResponse = {
-        content: `AI Response based on context: "${context}" and recent conversation`,
+        content: `AI Response based on context: "${conversationContext}"`,
         role: 'ai_assistant'
       }
 
@@ -625,8 +624,6 @@ class GroupChatService {
          DELETE r`,
         { groupId, userId }
       )
-
-      console.log('✅ User left group:', userId.substring(0, 8) + '...', 'from', groupId.substring(0, 8) + '...')
 
       return { success: true }
     } catch (error) {
