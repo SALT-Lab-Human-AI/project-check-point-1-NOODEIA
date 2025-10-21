@@ -32,8 +32,10 @@ export default function MindMapViewer({ markdown, className = "" }) {
       const { Transformer } = await import('markmap-lib')
 
       // Load markmap styles
-      const { scripts } = await loadCSS()
-      await loadJS(scripts)
+      const cssResult = await loadCSS()
+      if (cssResult && cssResult.scripts) {
+        await loadJS(cssResult.scripts)
+      }
 
       // Create transformer and transform markdown
       const transformer = new Transformer()

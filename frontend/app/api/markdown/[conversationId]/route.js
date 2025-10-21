@@ -33,7 +33,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({
         conversationId: record.get('conversationId'),
         content,
-        lastModified: lastModified ? lastModified.toISO() : null
+        lastModified: lastModified ? (lastModified.toISOString ? lastModified.toISOString() : lastModified.toString()) : null
       })
     } finally {
       await session.close()
@@ -83,11 +83,12 @@ export async function POST(request, { params }) {
       }
 
       const record = result.records[0]
+      const lastModified = record.get('lastModified')
 
       return NextResponse.json({
         conversationId: record.get('conversationId'),
         content: record.get('content'),
-        lastModified: record.get('lastModified').toISOString(),
+        lastModified: lastModified ? (lastModified.toISOString ? lastModified.toISOString() : lastModified.toString()) : null,
         success: true
       })
     } finally {
