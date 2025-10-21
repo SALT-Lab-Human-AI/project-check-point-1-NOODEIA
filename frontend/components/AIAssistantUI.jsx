@@ -5,6 +5,7 @@ import Sidebar from "./Sidebar"
 import Header from "./Header"
 import ChatPane from "./ChatPane"
 import AuthForm from "./AuthForm"
+import MarkdownPanel from "./MarkdownPanel"
 import { supabase } from "../lib/supabase"
 import { databaseAdapter } from "../lib/database-adapter"
 
@@ -44,6 +45,8 @@ export default function AIAssistantUI() {
   const [conversations, setConversations] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [isThinking, setIsThinking] = useState(false)
+  const [markdownPanelOpen, setMarkdownPanelOpen] = useState(false)
+  const [currentMarkdown, setCurrentMarkdown] = useState("")
 
   useEffect(() => {
     checkAuth()
@@ -565,6 +568,7 @@ export default function AIAssistantUI() {
           onMenuClick={() => setSidebarOpen(true)}
           currentUser={currentUser}
           onLogout={handleLogout}
+          onMarkdownClick={() => setMarkdownPanelOpen(true)}
         />
         <main className="flex flex-1 flex-col">
           <ChatPane
@@ -576,6 +580,16 @@ export default function AIAssistantUI() {
           />
         </main>
       </div>
+
+      {/* Markdown Panel */}
+      <MarkdownPanel
+        isOpen={markdownPanelOpen}
+        onClose={() => setMarkdownPanelOpen(false)}
+        conversationId={selectedId}
+        userId={userId}
+        initialContent={currentMarkdown}
+        onSave={(content) => setCurrentMarkdown(content)}
+      />
     </div>
   )
 }

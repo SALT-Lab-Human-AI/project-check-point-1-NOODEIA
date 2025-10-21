@@ -1,8 +1,8 @@
 "use client"
 
-import { Menu, LogOut, User } from "lucide-react"
+import { Menu, LogOut, User, FileText } from "lucide-react"
 
-export default function Header({ onMenuClick, currentUser, onLogout }) {
+export default function Header({ onMenuClick, currentUser, onLogout, onMarkdownClick }) {
   return (
     <header className="flex items-center justify-between border-b px-4 py-3 dark:border-zinc-800">
       <button
@@ -20,6 +20,13 @@ export default function Header({ onMenuClick, currentUser, onLogout }) {
             <User className="h-4 w-4 text-indigo-500" />
             <span className="text-sm font-medium">{currentUser.name}</span>
           </div>
+          <button
+            onClick={onMarkdownClick}
+            className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            title="Open markdown notes"
+          >
+            <FileText className="h-5 w-5" />
+          </button>
           <button
             onClick={onLogout}
             className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
