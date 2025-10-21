@@ -28,14 +28,8 @@ export default function MindMapViewer({ markdown, className = "" }) {
       setError(null)
 
       // Dynamically import markmap libraries
-      const { Markmap, loadCSS, loadJS } = await import('markmap-view')
+      const { Markmap } = await import('markmap-view')
       const { Transformer } = await import('markmap-lib')
-
-      // Load markmap styles
-      const cssResult = await loadCSS()
-      if (cssResult && cssResult.scripts) {
-        await loadJS(cssResult.scripts)
-      }
 
       // Create transformer and transform markdown
       const transformer = new Transformer()
@@ -46,14 +40,16 @@ export default function MindMapViewer({ markdown, className = "" }) {
         svgRef.current.innerHTML = ''
       }
 
-      // Create and render markmap
+      // Create and render markmap without loading external CSS/JS
       const mm = Markmap.create(svgRef.current, {
         color: colorScheme,
         duration: 300,
         maxWidth: 300,
         paddingX: 20,
         zoom: true,
-        pan: true
+        pan: true,
+        // Disable auto-loading of assets
+        autoFit: false
       }, root)
 
       setMarkmap(mm)
@@ -61,7 +57,9 @@ export default function MindMapViewer({ markdown, className = "" }) {
 
       // Auto-fit on initial load
       setTimeout(() => {
-        mm.fit()
+        if (mm && mm.fit) {
+          mm.fit()
+        }
       }, 100)
     } catch (err) {
       console.error('Error loading markmap:', err)
