@@ -41,12 +41,12 @@ export default function MindMapViewer({ markdown, className = "" }) {
       const { Transformer } = await import('markmap-lib')
 
       // Load markmap styles
-      const { styles, scripts } = await loadCSS()
+      const { scripts } = await loadCSS()
       await loadJS(scripts)
 
       // Create transformer and transform markdown
       const transformer = new Transformer()
-      const { root, features } = transformer.transform(markdown)
+      const { root } = transformer.transform(markdown)
 
       // Clear previous SVG content
       if (svgRef.current) {
