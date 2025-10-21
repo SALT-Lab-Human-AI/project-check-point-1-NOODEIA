@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Download, ZoomIn, ZoomOut, Maximize2, Home } from "lucide-react"
+import { Download, ZoomIn, ZoomOut, Maximize2 } from "lucide-react"
 
 export default function MindMapViewer({ markdown, className = "" }) {
   const containerRef = useRef(null)
@@ -10,6 +10,17 @@ export default function MindMapViewer({ markdown, className = "" }) {
   const [error, setError] = useState(null)
   const [zoom, setZoom] = useState(1)
   const [markmap, setMarkmap] = useState(null)
+
+  // Color scheme for the mind map - must be defined before loadMarkmap
+  const colorScheme = [
+    '#6366f1', // indigo-500
+    '#8b5cf6', // violet-500
+    '#ec4899', // pink-500
+    '#f59e0b', // amber-500
+    '#10b981', // emerald-500
+    '#3b82f6', // blue-500
+    '#f43f5e', // rose-500,
+  ]
 
   useEffect(() => {
     if (!markdown) {
@@ -65,17 +76,6 @@ export default function MindMapViewer({ markdown, className = "" }) {
       setIsLoading(false)
     }
   }
-
-  // Color scheme for the mind map
-  const colorScheme = [
-    '#6366f1', // indigo-500
-    '#8b5cf6', // violet-500
-    '#ec4899', // pink-500
-    '#f59e0b', // amber-500
-    '#10b981', // emerald-500
-    '#3b82f6', // blue-500
-    '#f43f5e', // rose-500
-  ]
 
   const handleZoomIn = () => {
     if (markmap) {
