@@ -22,15 +22,6 @@ export default function MindMapViewer({ markdown, className = "" }) {
     '#f43f5e', // rose-500,
   ]
 
-  useEffect(() => {
-    if (!markdown) {
-      setIsLoading(false)
-      return
-    }
-
-    loadMarkmap()
-  }, [markdown])
-
   const loadMarkmap = async () => {
     try {
       setIsLoading(true)
@@ -76,6 +67,15 @@ export default function MindMapViewer({ markdown, className = "" }) {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (!markdown) {
+      setIsLoading(false)
+      return
+    }
+
+    loadMarkmap()
+  }, [markdown])
 
   const handleZoomIn = () => {
     if (markmap) {
