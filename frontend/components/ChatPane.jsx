@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Pencil, RefreshCw, Check, X } from "lucide-react"
+import { Pencil, RefreshCw, Check, X, ChevronDown } from "lucide-react"
 import Message from "./Message"
 import Composer from "./Composer"
 import { timeAgo } from "./utils"
@@ -31,12 +31,29 @@ export default function ChatPane({
   const scrollRef = useRef(null)
   const [editingId, setEditingId] = useState(null)
   const [editValue, setEditValue] = useState("")
+  const [isNearBottom, setIsNearBottom] = useState(true)
 
   const messages = conversation?.messages || []
 
-  // Auto-scroll to bottom when new messages arrive
+  // Track scroll position to determine if user is near bottom
   useEffect(() => {
-    if (scrollRef.current) {
+    const scrollContainer = scrollRef.current
+    if (!scrollContainer) return
+
+    const handleScroll = () => {
+      const threshold = 100 // pixels from bottom
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+      setIsNearBottom(distanceFromBottom < threshold)
+    }
+
+    scrollContainer.addEventListener('scroll', handleScroll)
+    return () => scrollContainer.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Auto-scroll to bottom only when user is already near bottom
+  useEffect(() => {
+    if (scrollRef.current && isNearBottom) {
       // Use setTimeout to ensure DOM is updated
       setTimeout(() => {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -62,6 +79,15 @@ export default function ChatPane({
     setEditValue("")
   }
 
+  function scrollToBottom() {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
+  }
+
   if (!conversation) {
     return (
       <div className="flex flex-1 flex-col">
@@ -80,7 +106,7 @@ export default function ChatPane({
   }
 
   return (
-    <div className="flex flex-1 flex-col min-h-0">
+    <div className="flex flex-1 flex-col min-h-0 relative">
       <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="mx-auto max-w-3xl space-y-3 sm:space-y-4">
           {messages.length === 0 ? (
@@ -157,6 +183,18 @@ export default function ChatPane({
           {isThinking && <ThinkingMessage />}
         </div>
       </div>
+
+      {/* Scroll to bottom button */}
+      {!isNearBottom && messages.length > 0 && (
+        <button
+          onClick={scrollToBottom}
+          className="absolute bottom-20 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg border border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:hover:bg-zinc-700 transition-all duration-200"
+          aria-label="Scroll to bottom"
+        >
+          <ChevronDown className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+        </button>
+      )}
+
       <Composer onSend={onSend} busy={isThinking} />
     </div>
   )
