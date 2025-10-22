@@ -563,14 +563,14 @@ export default function AIAssistantUI() {
         onDeleteConversation={deleteConversation}
       />
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           currentUser={currentUser}
           onLogout={handleLogout}
           onMarkdownClick={() => setMarkdownPanelOpen(true)}
         />
-        <main className="flex flex-1 flex-col">
+        <main className="flex flex-1 flex-col min-h-0 overflow-hidden">
           <ChatPane
             conversation={selectedConversation}
             onSend={(text) => sendMessage(selectedConversation?.id, text)}

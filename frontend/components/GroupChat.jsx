@@ -57,8 +57,11 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       if (!data.parentId) {
         setMessages(prev => {
           const messageExists = prev.some(msg => msg.id === data.id)
-          if (messageExists) return prev
-          return [...prev, data]
+          if (messageExists) {
+            console.warn(`Duplicate message prevented via Pusher: ${data.id}`)
+            return prev
+          }
+          return [data, ...prev]
         })
         scrollToBottom()
       } else {
@@ -121,8 +124,11 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       const topLevelMessages = messagesArray.filter(msg => !msg.parentId)
 
       if (skip === 0) {
-        // Initial load
-        setMessages(topLevelMessages.reverse())
+        // Initial load - deduplicate messages
+        const uniqueMessages = topLevelMessages.reverse().filter(
+          (msg, index, self) => self.findIndex(m => m.id === msg.id) === index
+        )
+        setMessages(uniqueMessages)
         setTotalMessagesLoaded(messagesArray.length) // Track total messages from DB
         scrollToBottom()
       } else {
@@ -132,7 +138,14 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
         const scrollHeightBefore = container?.scrollHeight || 0
         const scrollTopBefore = container?.scrollTop || 0
 
-        setMessages(prev => [...topLevelMessages.reverse(), ...prev])
+        setMessages(prev => {
+          // Deduplicate when merging
+          const newMessages = topLevelMessages.reverse()
+          const merged = [...newMessages, ...prev]
+          return merged.filter(
+            (msg, index, self) => self.findIndex(m => m.id === msg.id) === index
+          )
+        })
         setTotalMessagesLoaded(prev => prev + messagesArray.length)
 
         // Restore scroll position after messages are added

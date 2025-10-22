@@ -116,4 +116,69 @@
       padding-bottom: max(0px, env(safe-area-inset-bottom));
     }
   }
+
+  /* iOS-specific scrolling improvements */
+  @supports (-webkit-touch-callout: none) {
+    /* Target iOS devices specifically */
+    .overflow-y-auto {
+      -webkit-overflow-scrolling: touch;
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      will-change: scroll-position;
+    }
+
+    /* Prevent scroll locking on iOS */
+    .scroll-smooth {
+      -webkit-scroll-behavior: smooth;
+      scroll-behavior: smooth;
+    }
+
+    /* Fix iOS momentum scrolling */
+    [ref="scrollRef"] {
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
+    }
+
+    /* Prevent iOS overscroll bounce in chat container */
+    .overscroll-contain {
+      overscroll-behavior: contain;
+    }
+
+    /* Fix iOS Safari scrollbar */
+    .overflow-y-auto::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 3px;
+    }
+
+    .dark .overflow-y-auto::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  /* Additional mobile touch improvements */
+  @media (hover: none) and (pointer: coarse) {
+    /* Touch devices */
+    .overflow-y-auto {
+      scroll-snap-type: y proximity;
+      overscroll-behavior-y: contain;
+    }
+
+    /* Ensure smooth touch scrolling */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
+
+    /* Optimize touch response */
+    button, a, [role="button"] {
+      touch-action: manipulation;
+    }
+  }
 }
