@@ -8,6 +8,15 @@ const config: Config = {
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     '*.{js,ts,jsx,tsx,mdx}',
   ],
+  safelist: [
+    'overscroll-contain',
+    'overflow-y-auto',
+    'overflow-x-hidden',
+    'scroll-smooth',
+    'min-h-0',
+    'overflow-hidden',
+    'safe-bottom',
+  ],
   theme: {
     extend: {
       colors: {

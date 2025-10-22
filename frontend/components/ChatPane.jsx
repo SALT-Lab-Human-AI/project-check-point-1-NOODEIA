@@ -5,6 +5,7 @@ import { Pencil, RefreshCw, Check, X, ChevronDown } from "lucide-react"
 import Message from "./Message"
 import Composer from "./Composer"
 import { timeAgo } from "./utils"
+import styles from "./ChatPane.module.css"
 
 function ThinkingMessage() {
   return (
@@ -109,19 +110,7 @@ export default function ChatPane({
     <div className="flex flex-1 flex-col min-h-0 relative overflow-hidden">
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 scroll-smooth min-h-0 overscroll-contain"
-        style={{
-          WebkitOverflowScrolling: 'touch',
-          // iOS-specific fixes for better scrolling
-          WebkitTransform: 'translateZ(0)', // Enable hardware acceleration
-          transform: 'translateZ(0)',
-          willChange: 'scroll-position', // Optimize scrolling performance
-          // Prevent iOS bounce on boundaries
-          WebkitScrollBehavior: 'smooth',
-          scrollBehavior: 'smooth',
-          // Fix for iOS momentum scrolling
-          WebkitMaskImage: '-webkit-radial-gradient(white, black)',
-        }}>
+        className={styles.scrollContainer}>
         <div className="mx-auto max-w-3xl space-y-3 sm:space-y-4">
           {messages.length === 0 ? (
             <div className="flex h-full items-center justify-center py-12">
@@ -202,12 +191,7 @@ export default function ChatPane({
       {!isNearBottom && messages.length > 0 && (
         <button
           onClick={scrollToBottom}
-          className="fixed sm:absolute bottom-24 sm:bottom-20 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg border border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:hover:bg-zinc-700 transition-all duration-200 safe-bottom"
-          style={{
-            // Account for iOS Safari bottom bar
-            paddingBottom: 'env(safe-area-inset-bottom, 0)',
-            marginBottom: 'max(0px, env(safe-area-inset-bottom, 0))',
-          }}
+          className={styles.scrollButton}
           aria-label="Scroll to bottom"
         >
           <ChevronDown className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
