@@ -34,7 +34,7 @@ html {
 }
         `}</style>
       </head>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning style={{ backgroundColor: '#FDFBD4' }}>
         {children}
       </body>
     </html>

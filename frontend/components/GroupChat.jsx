@@ -376,6 +376,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
                 key={message.id}
                 message={message}
                 currentUserId={currentUser.id}
+                currentUser={currentUser}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onOpenThread={setSelectedThread}

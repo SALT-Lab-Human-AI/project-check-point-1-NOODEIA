@@ -7,9 +7,9 @@ import Composer from "./Composer"
 import { timeAgo } from "./utils"
 import styles from "./ChatPane.module.css"
 
-function ThinkingMessage() {
+function ThinkingMessage({ currentUser }) {
   return (
-    <Message role="assistant">
+    <Message role="assistant" currentUser={currentUser}>
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1">
           <div className="h-2 w-2 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.3s]"></div>
@@ -24,6 +24,7 @@ function ThinkingMessage() {
 
 export default function ChatPane({
   conversation,
+  currentUser,
   onSend,
   onEditMessage,
   onResendMessage,
@@ -91,10 +92,10 @@ export default function ChatPane({
 
   if (!conversation) {
     return (
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col" style={{ backgroundColor: '#FDFBD4' }}>
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-xl font-semibold text-zinc-900">
               Welcome to AI Assistant
             </h2>
             <p className="mt-2 text-sm text-zinc-500">
@@ -107,10 +108,11 @@ export default function ChatPane({
   }
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 relative overflow-hidden">
+    <div className="flex flex-1 flex-col min-h-0 relative overflow-hidden" style={{ backgroundColor: '#FDFBD4' }}>
       <div
         ref={scrollRef}
-        className={styles.scrollContainer}>
+        className={styles.scrollContainer}
+        style={{ backgroundColor: '#FDFBD4' }}>
         <div className="mx-auto max-w-3xl space-y-3 sm:space-y-4">
           {messages.length === 0 ? (
             <div className="flex h-full items-center justify-center py-12">
@@ -126,7 +128,7 @@ export default function ChatPane({
           ) : (
             messages.map((message) => (
               <div key={message.id} className="group relative">
-                <Message role={message.role}>
+                <Message role={message.role} currentUser={currentUser}>
                   {editingId === message.id ? (
                     <div className="space-y-2">
                       <textarea
@@ -183,7 +185,7 @@ export default function ChatPane({
               </div>
             ))
           )}
-          {isThinking && <ThinkingMessage />}
+          {isThinking && <ThinkingMessage currentUser={currentUser} />}
         </div>
       </div>
 

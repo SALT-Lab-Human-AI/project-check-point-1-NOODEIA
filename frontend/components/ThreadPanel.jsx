@@ -152,13 +152,13 @@ export default function ThreadPanel({
       {/* Mobile backdrop */}
       <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden" onClick={onClose} />
 
-      <div className="fixed right-0 top-0 z-50 flex h-screen w-full sm:w-96 flex-col border-l bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="fixed right-0 top-0 z-50 flex h-screen w-full sm:w-96 flex-col border-l bg-sidebar-cream dark:border-zinc-800 dark:bg-sidebar-dark">
         {/* Header */}
         <div className="flex h-14 items-center justify-between border-b px-4 dark:border-zinc-800">
           <h3 className="text-sm font-semibold">Thread</h3>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="rounded-lg p-1 hover:bg-black/10 dark:hover:bg-white/10"
           >
             <X className="h-5 w-5" />
           </button>
@@ -202,6 +202,7 @@ export default function ThreadPanel({
                 key={reply.id}
                 message={reply}
                 currentUserId={currentUser.id}
+                currentUser={currentUser}
                 onEdit={onEdit}
                 onDelete={(id) => {
                   onDelete(id)
@@ -231,7 +232,7 @@ export default function ThreadPanel({
               }}
               placeholder="Reply to thread..."
               disabled={sending}
-              className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 bg-white dark:bg-black/30"
             />
             <button
               onClick={sendReply}

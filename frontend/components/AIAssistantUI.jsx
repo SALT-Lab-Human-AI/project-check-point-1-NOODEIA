@@ -6,6 +6,7 @@ import Header from "./Header"
 import ChatPane from "./ChatPane"
 import AuthForm from "./AuthForm"
 import MarkdownPanel from "./MarkdownPanel"
+import UserSettingsModal from "./UserSettingsModal"
 import { supabase } from "../lib/supabase"
 import { databaseAdapter } from "../lib/database-adapter"
 
@@ -22,8 +23,9 @@ export default function AIAssistantUI() {
     const saved = localStorage.getItem("theme")
     if (saved) {
       setTheme(saved)
-    } else if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark")
+    } else {
+      // Always default to light mode to show cream background
+      setTheme("light")
     }
   }, [])
 
@@ -47,6 +49,19 @@ export default function AIAssistantUI() {
   const [isThinking, setIsThinking] = useState(false)
   const [markdownPanelOpen, setMarkdownPanelOpen] = useState(false)
   const [currentMarkdown, setCurrentMarkdown] = useState("")
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
+
+  useEffect(() => {
+    // Add chat-interface class to html and body for proper styling
+    document.documentElement.classList.add("chat-interface")
+    document.body.classList.add("chat-interface")
+
+    // Remove the classes when component unmounts
+    return () => {
+      document.documentElement.classList.remove("chat-interface")
+      document.body.classList.remove("chat-interface")
+    }
+  }, [])
 
   useEffect(() => {
     checkAuth()
@@ -106,6 +121,10 @@ export default function AIAssistantUI() {
     setConversations([])
     setSelectedId(null)
     setIsLoading(false)
+  }
+
+  async function handleUpdateUser(updatedUser) {
+    setCurrentUser(updatedUser)
   }
 
   async function loadConversations(uid) {
@@ -538,8 +557,8 @@ export default function AIAssistantUI() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white dark:bg-zinc-950">
-        <div className="text-zinc-600 dark:text-zinc-400">Loading...</div>
+      <div className="flex h-screen items-center justify-center" style={{ backgroundColor: '#FDFBD4' }}>
+        <div className="text-zinc-600">Loading...</div>
       </div>
     )
   }
@@ -549,7 +568,7 @@ export default function AIAssistantUI() {
   }
 
   return (
-    <div className="flex h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
+    <div className="flex h-screen text-zinc-900" style={{ backgroundColor: '#FDFBD4' }}>
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -563,16 +582,18 @@ export default function AIAssistantUI() {
         onDeleteConversation={deleteConversation}
       />
 
-      <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
+      <div className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: '#FDFBD4' }}>
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           currentUser={currentUser}
           onLogout={handleLogout}
           onMarkdownClick={() => setMarkdownPanelOpen(true)}
+          onSettingsClick={() => setSettingsModalOpen(true)}
         />
-        <main className="flex flex-1 flex-col min-h-0 overflow-hidden">
+        <main className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: '#FDFBD4' }}>
           <ChatPane
             conversation={selectedConversation}
+            currentUser={currentUser}
             onSend={(text) => sendMessage(selectedConversation?.id, text)}
             onEditMessage={updateMessage}
             onResendMessage={resendMessage}
@@ -589,6 +610,14 @@ export default function AIAssistantUI() {
         userId={userId}
         initialContent={currentMarkdown}
         onSave={(content) => setCurrentMarkdown(content)}
+      />
+
+      {/* User Settings Modal */}
+      <UserSettingsModal
+        isOpen={settingsModalOpen}
+        onClose={() => setSettingsModalOpen(false)}
+        currentUser={currentUser}
+        onUpdateUser={handleUpdateUser}
       />
     </div>
   )

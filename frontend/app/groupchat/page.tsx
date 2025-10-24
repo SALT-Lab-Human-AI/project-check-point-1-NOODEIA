@@ -40,6 +40,18 @@ export default function GroupChatPage() {
   }, [theme])
 
   useEffect(() => {
+    // Add chat-interface class to html and body for proper styling
+    document.documentElement.classList.add("chat-interface")
+    document.body.classList.add("chat-interface")
+
+    // Remove the classes when component unmounts
+    return () => {
+      document.documentElement.classList.remove("chat-interface")
+      document.body.classList.remove("chat-interface")
+    }
+  }, [])
+
+  useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       const { data: { session } } = await supabase.auth.getSession()

@@ -208,7 +208,7 @@ export default function MarkdownPanel({
 
       {/* Main panel */}
       <div
-        className={`fixed ${isFullscreen ? 'inset-0' : 'top-0 right-0 h-full w-96'} bg-white dark:bg-zinc-900 shadow-2xl z-50 flex flex-col transition-all duration-300 transform ${
+        className={`fixed ${isFullscreen ? 'inset-0' : 'top-0 right-0 h-full w-96'} bg-sidebar-cream dark:bg-sidebar-dark shadow-2xl z-50 flex flex-col transition-all duration-300 transform ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -228,7 +228,7 @@ export default function MarkdownPanel({
           )}
           <button
             onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10"
           >
             {isFullscreen ? (
               <Minimize2 className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
@@ -238,7 +238,7 @@ export default function MarkdownPanel({
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10"
           >
             <X className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
           </button>
@@ -296,49 +296,49 @@ export default function MarkdownPanel({
             <div className="p-2 border-b border-zinc-200 dark:border-zinc-700 flex gap-1 flex-wrap">
               <button
                 onClick={() => insertMarkdownTemplate("heading")}
-                className="px-2 py-1 text-xs rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="px-2 py-1 text-xs rounded hover:bg-black/10 dark:hover:bg-white/10"
                 title="Insert Heading"
               >
                 H1
               </button>
               <button
                 onClick={() => insertMarkdownTemplate("bold")}
-                className="px-2 py-1 text-xs rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 font-bold"
+                className="px-2 py-1 text-xs rounded hover:bg-black/10 dark:hover:bg-white/10 font-bold"
                 title="Bold"
               >
                 B
               </button>
               <button
                 onClick={() => insertMarkdownTemplate("italic")}
-                className="px-2 py-1 text-xs rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 italic"
+                className="px-2 py-1 text-xs rounded hover:bg-black/10 dark:hover:bg-white/10 italic"
                 title="Italic"
               >
                 I
               </button>
               <button
                 onClick={() => insertMarkdownTemplate("list")}
-                className="px-2 py-1 text-xs rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="px-2 py-1 text-xs rounded hover:bg-black/10 dark:hover:bg-white/10"
                 title="Insert List"
               >
                 List
               </button>
               <button
                 onClick={() => insertMarkdownTemplate("link")}
-                className="px-2 py-1 text-xs rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="px-2 py-1 text-xs rounded hover:bg-black/10 dark:hover:bg-white/10"
                 title="Insert Link"
               >
                 Link
               </button>
               <button
                 onClick={() => insertMarkdownTemplate("code")}
-                className="px-2 py-1 text-xs rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="px-2 py-1 text-xs rounded hover:bg-black/10 dark:hover:bg-white/10"
                 title="Insert Code Block"
               >
                 Code
               </button>
               <button
                 onClick={() => insertMarkdownTemplate("table")}
-                className="px-2 py-1 text-xs rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="px-2 py-1 text-xs rounded hover:bg-black/10 dark:hover:bg-white/10"
                 title="Insert Table"
               >
                 Table
@@ -377,7 +377,7 @@ export default function MarkdownPanel({
         <div className="flex gap-2">
           <button
             onClick={exportMarkdown}
-            className="px-3 py-1.5 text-sm rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center gap-2"
+            className="px-3 py-1.5 text-sm rounded-lg bg-black/10 dark:bg-white/10 hover:bg-black/15 dark:hover:bg-white/15 flex items-center gap-2"
           >
             <Download className="w-4 h-4" />
             Export

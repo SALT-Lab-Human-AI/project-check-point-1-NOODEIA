@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { text2audio, extractTextFromReactNode } from "./utils"
 import { MessageCircle, Edit2, Trash2, MoreVertical, Volume2 } from 'lucide-react'
+import UserAvatar from './UserAvatar'
 
 export default function ThreadedMessage({
   message,
@@ -10,7 +11,8 @@ export default function ThreadedMessage({
   onEdit,
   onDelete,
   onOpenThread,
-  isInThread = false
+  isInThread = false,
+  currentUser
 }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(message.content)
@@ -59,7 +61,20 @@ export default function ThreadedMessage({
   return (
     <div className="group relative mb-2 rounded-lg p-3 hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
       <div className="flex gap-3">
-        <div className="h-8 w-8 flex-shrink-0 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+        <UserAvatar
+          user={
+            isAI
+              ? { id: 'ai_assistant', isAI: true }
+              : isOwn && currentUser
+              ? currentUser
+              : {
+                  id: message.createdBy,
+                  name: message.userName,
+                  email: message.userEmail
+                }
+          }
+          size="md"
+        />
 
         <div className="flex-1">
           <div className="mb-1 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">

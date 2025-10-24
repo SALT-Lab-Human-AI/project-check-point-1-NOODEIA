@@ -19,9 +19,25 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        'xs': '475px',
+      },
       colors: {
         background: 'hsl(var(--background))',
+        'app-bg': '#FDFBD4',
+        'app-bg-cream': '#FDFBD4',
+        'app-bg-dark': '#DECC9C',
+        'sidebar-cream': '#878672',
+        'sidebar-dark': '#545333',
         foreground: 'hsl(var(--foreground))',
+        // Noodeia brand colors (adapted from Thinky)
+        noodeia: {
+          dark: "#191716",
+          primary: "#440D0F",
+          secondary: "#5a3238",
+          tertiary: "#6b4c57",
+          light: "#9a8a92",
+        },
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
@@ -97,6 +113,12 @@ const config: Config = {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+      },
+      fontFamily: {
+        patrick: ['"Patrick Hand"'],
+        sans: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        display: ["Georgia", "Times New Roman", "Times", "serif"],
+        mono: ["Consolas", "Monaco", "Courier New", "monospace"],
       },
     },
   },

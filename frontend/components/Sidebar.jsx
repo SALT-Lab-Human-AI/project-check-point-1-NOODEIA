@@ -49,7 +49,7 @@ export default function Sidebar({
       )}
 
       <div
-        className={`fixed inset-y-0 left-0 z-50 transform bg-white transition-all duration-300 ease-in-out dark:bg-zinc-950 lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 transform bg-sidebar-cream transition-all duration-300 ease-in-out dark:bg-sidebar-dark lg:relative lg:translate-x-0 ${
           collapsed ? "lg:w-16" : "lg:w-80"
         } ${
           open ? "translate-x-0 w-80" : "-translate-x-full"
@@ -62,7 +62,7 @@ export default function Sidebar({
               {!collapsed && <ThemeToggle theme={theme} setTheme={setTheme} />}
               <button
                 onClick={() => setCollapsed(!collapsed)}
-                className="hidden rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 lg:block"
+                className="hidden rounded-lg p-2 hover:bg-sidebar-cream/80 dark:hover:bg-sidebar-dark/80 lg:block"
                 title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
                 {collapsed ? (

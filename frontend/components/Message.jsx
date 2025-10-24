@@ -2,8 +2,9 @@
 import { cls, text2audio, extractTextFromReactNode } from "./utils"
 import { useState } from "react"
 import { Volume2 } from "lucide-react"
+import UserAvatar from "./UserAvatar"
 
-export default function Message({ role, children }) {
+export default function Message({ role, children, currentUser }) {
   const isUser = role === "user"
   const [playing, setPlaying] = useState(false)
 
@@ -14,17 +15,36 @@ export default function Message({ role, children }) {
     <div className="group">
       <div className={cls("flex gap-3", isUser ? "justify-end" : "justify-start")}>
         {!isUser && (
-          <div className="mt-0.5 grid h-7 w-7 place-items-center rounded-full bg-zinc-900 text-[10px] font-bold text-white dark:bg-white dark:text-zinc-900">
-            AI
-          </div>
+          <UserAvatar
+            user={{ id: 'ai_assistant', isAI: true }}
+            size="sm"
+            className="mt-0.5"
+          />
         )}
-        <div
-          className={cls(
-            "max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm",
-            isUser
-              ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-              : "bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800",
-          )}
+<div
+  className={cls(
+    "relative max-w-[80%] rounded-2xl px-3 py-2 text-lg font-patrick shadow-sm",
+
+    isUser
+      ? [
+          "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900",
+          "after:content-[''] after:absolute after:top-3 after:-right-2",
+          "after:border-y-[8px] after:border-y-transparent after:border-l-[10px]",
+          "after:border-l-zinc-900 dark:after:border-l-white",
+        ].join(" ")
+      : [
+
+          "bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800",
+
+          "before:content-[''] before:absolute before:top-3 before:-left-[11px]",
+          "before:border-y-[9px] before:border-y-transparent before:border-r-[11px]",
+          "before:border-r-zinc-200 dark:before:border-r-zinc-800",
+
+          "after:content-[''] after:absolute after:top-3 after:-left-[10px]",
+          "after:border-y-[8px] after:border-y-transparent after:border-r-[10px]",
+          "after:border-r-white dark:after:border-r-zinc-900",
+        ].join(" ")
+      )}
         >
           {hasActions ? (
             // User message with edit/resend actions - render as is
@@ -58,9 +78,11 @@ export default function Message({ role, children }) {
           )}
         </div>
         {isUser && (
-          <div className="mt-0.5 grid h-7 w-7 place-items-center rounded-full bg-zinc-900 text-[10px] font-bold text-white dark:bg-white dark:text-zinc-900">
-            JD
-          </div>
+          <UserAvatar
+            user={currentUser}
+            size="sm"
+            className="mt-0.5"
+          />
         )}
       </div>
     </div>

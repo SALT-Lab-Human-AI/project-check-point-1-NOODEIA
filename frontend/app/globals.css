@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 
 @layer utilities {
   .text-balance {
@@ -12,7 +13,7 @@
   :root {
     --font-sans: var(--font-geist-sans);
     --font-mono: var(--font-geist-mono);
-    --background: 0 0% 100%;
+    --background: 54 87% 91%;  /* #FDFBD4 - light cream */
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
@@ -37,30 +38,30 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-background: 42 10% 49%;  /* #878672 - grayish brown/taupe */
+    --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
+    --sidebar-accent: 42 8% 44%;  /* Slightly darker for hover states */
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 42 10% 40%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    --background: 36 44% 71%;  /* #DECC9C - light beige/cream for dark mode */
+    --foreground: 0 0% 10%;
+    --card: 36 44% 75%;  /* Slightly lighter than background */
+    --card-foreground: 0 0% 10%;
+    --popover: 36 44% 75%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 0 0% 20%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 36 44% 65%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 36 44% 65%;
+    --muted-foreground: 0 0% 35%;
+    --accent: 36 44% 65%;
+    --accent-foreground: 0 0% 10%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
@@ -71,13 +72,13 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-background: 40 20% 27%;  /* #545333 - darkish olive/brown */
+    --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-accent: 40 18% 32%;  /* Slightly lighter for hover states */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 40 18% 24%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
@@ -88,23 +89,40 @@
   }
 
   html {
-    height: 100%;
     width: 100%;
-    overflow: hidden;
+    background-color: #FDFBD4;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: #FDFBD4;
+  }
+
+  /* Apply fixed positioning only to chat interfaces */
+  html.chat-interface {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body.chat-interface {
     height: 100%;
     width: 100%;
     overflow: hidden;
     position: fixed;
     /* Prevent layout shift when mobile keyboard appears */
-    position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
+  }
+
+  /* Dark mode backgrounds */
+  .dark html {
+    background-color: #DECC9C !important;
+  }
+
+  .dark body {
+    background-color: #DECC9C !important;
   }
 
   /* Handle mobile keyboard viewport */
@@ -181,4 +199,12 @@
       touch-action: manipulation;
     }
   }
+}
+
+/* Text gradient for landing page */
+.text-gradient {
+  background: linear-gradient(135deg, #440d0f 0%, #84596b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
