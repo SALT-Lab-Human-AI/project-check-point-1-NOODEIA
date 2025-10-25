@@ -38,13 +38,13 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: 42 10% 49%;  /* #878672 - grayish brown/taupe */
-    --sidebar-foreground: 0 0% 98%;
+    --sidebar-background: 54 87% 91%;  /* Same as main background - #FDFBD4 */
+    --sidebar-foreground: 0 0% 3.9%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 42 8% 44%;  /* Slightly darker for hover states */
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 42 10% 40%;
+    --sidebar-accent: 54 87% 85%;  /* Slightly darker for hover states */
+    --sidebar-accent-foreground: 0 0% 3.9%;
+    --sidebar-border: 54 20% 80%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
@@ -72,13 +72,13 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 40 20% 27%;  /* #545333 - darkish olive/brown */
-    --sidebar-foreground: 0 0% 100%;
+    --sidebar-background: 36 44% 71%;  /* Same as main background - #DECC9C */
+    --sidebar-foreground: 0 0% 10%;
     --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 40 18% 32%;  /* Slightly lighter for hover states */
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 40 18% 24%;
+    --sidebar-accent: 36 44% 65%;  /* Slightly darker for hover states */
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 36 30% 60%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
@@ -198,6 +198,71 @@
     button, a, [role="button"] {
       touch-action: manipulation;
     }
+  }
+
+  /* Critical: Prevent keyboard zoom on iOS/mobile devices */
+  /* Force 16px minimum font size to prevent iOS auto-zoom */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px !important;  /* Prevents iOS zoom on focus */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Ensure the viewport stays stable when keyboard appears */
+  @supports (-webkit-touch-callout: none) {
+    /* iOS specific */
+    input, textarea, select {
+      font-size: 16px !important;
+      -webkit-appearance: none;
+      -webkit-border-radius: 0;
+    }
+
+    /* Prevent viewport manipulation on focus */
+    input:focus,
+    textarea:focus,
+    select:focus {
+      font-size: 16px !important;
+      -webkit-text-size-adjust: 100%;
+    }
+  }
+}
+
+/* Handle mobile keyboard properly */
+@media screen and (max-width: 768px) {
+  /* Prevent page from jumping when keyboard appears */
+  .chat-interface {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    min-height: fill-available;
+  }
+
+  /* Ensure inputs maintain proper size */
+  input, textarea, select {
+    font-size: 16px !important;
+    transform: scale(1);
+    zoom: 1;
+  }
+
+  /* Handle visual viewport changes */
+  @supports (height: 100dvh) {
+    .chat-interface {
+      min-height: 100dvh;
+    }
+  }
+}
+
+/* Prevent form zoom on all touch devices */
+@media (pointer: coarse) {
+  input, textarea, select {
+    font-size: 16px !important;
   }
 }
 

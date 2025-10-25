@@ -412,7 +412,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
             }}
             placeholder="Type a message..."
             disabled={sending}
-            className="flex-1 rounded-lg border border-zinc-200 px-3 sm:px-4 py-2 text-sm sm:text-base dark:border-zinc-700 dark:bg-zinc-900"
+            className="flex-1 rounded-lg border border-zinc-200 px-3 sm:px-4 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900"
           />
           <button
             onClick={sendMessage}

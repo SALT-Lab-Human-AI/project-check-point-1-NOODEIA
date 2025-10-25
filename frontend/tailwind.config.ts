@@ -27,8 +27,8 @@ const config: Config = {
         'app-bg': '#FDFBD4',
         'app-bg-cream': '#FDFBD4',
         'app-bg-dark': '#DECC9C',
-        'sidebar-cream': '#878672',
-        'sidebar-dark': '#545333',
+        'sidebar-cream': '#FDFBD4',  // Same as main background
+        'sidebar-dark': '#DECC9C',   // Same as dark mode background
         foreground: 'hsl(var(--foreground))',
         // Noodeia brand colors (adapted from Thinky)
         noodeia: {

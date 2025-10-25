@@ -186,7 +186,7 @@ export default function GroupChatPage() {
           <div className="flex h-14 items-center justify-between border-b px-4 dark:border-zinc-800">
             <h2 className="text-lg font-semibold">Group Chats</h2>
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/ai')}
               className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               title="Back to AI Tutor"
             >
@@ -205,7 +205,7 @@ export default function GroupChatPage() {
           <div className="border-t dark:border-zinc-800">
             <div className="px-4 py-2">
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/ai')}
                 className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-zinc-100 px-4 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
               >
                 <ArrowLeft className="h-4 w-4" />

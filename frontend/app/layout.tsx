@@ -13,9 +13,9 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   minimumScale: 1,
-  maximumScale: 5,
+  maximumScale: 1,  // Prevent zoom to fix keyboard issues
   viewportFit: 'cover',
-  userScalable: true, // Allow zooming for accessibility
+  userScalable: false, // Disable zoom to prevent keyboard scaling issues
 }
 
 export default function RootLayout({

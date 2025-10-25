@@ -59,7 +59,7 @@ export default function Composer({ onSend, busy }) {
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             disabled={busy || sending}
-            className="min-h-[40px] max-h-[160px] flex-1 resize-none rounded-xl glass-input px-3 py-2 text-sm sm:text-base disabled:opacity-50"
+            className="min-h-[40px] max-h-[160px] flex-1 resize-none rounded-xl glass-input px-3 py-2 text-base disabled:opacity-50"
             rows={1}
             style={{ WebkitAppearance: 'none', appearance: 'none' }}
           />

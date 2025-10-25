@@ -232,7 +232,7 @@ export default function ThreadPanel({
               }}
               placeholder="Reply to thread..."
               disabled={sending}
-              className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 bg-white dark:bg-black/30"
+              className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-base dark:border-zinc-700 bg-white dark:bg-black/30"
             />
             <button
               onClick={sendReply}
