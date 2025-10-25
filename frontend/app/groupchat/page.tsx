@@ -57,7 +57,7 @@ export default function GroupChatPage() {
       const { data: { session } } = await supabase.auth.getSession()
 
       if (!user || !session) {
-        router.push('/')
+        router.push('/login')
       } else {
         setUser(user)
         setAuthToken(session.access_token)

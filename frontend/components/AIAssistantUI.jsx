@@ -1,16 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import Sidebar from "./Sidebar"
 import Header from "./Header"
 import ChatPane from "./ChatPane"
-import AuthForm from "./AuthForm"
 import MarkdownPanel from "./MarkdownPanel"
 import UserSettingsModal from "./UserSettingsModal"
 import { supabase } from "../lib/supabase"
 import { databaseAdapter } from "../lib/database-adapter"
 
 export default function AIAssistantUI() {
+  const router = useRouter()
   const [theme, setTheme] = useState("light")
   const [isClient, setIsClient] = useState(false)
   const [userId, setUserId] = useState(null)
@@ -553,6 +554,14 @@ export default function AIAssistantUI() {
     return () => window.removeEventListener("keydown", onKey)
   }, [sidebarOpen])
 
+  // Handle authentication redirect with useEffect to avoid render errors
+  // This must be called before any conditional returns to follow React's Rules of Hooks
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated && authChecked) {
+      router.push('/login')
+    }
+  }, [isLoading, isAuthenticated, authChecked, router])
+
   const selectedConversation = conversations.find(c => c.id === selectedId)
 
   if (isLoading) {
@@ -564,7 +573,11 @@ export default function AIAssistantUI() {
   }
 
   if (!isAuthenticated) {
-    return <AuthForm onSuccess={handleAuthSuccess} />
+    return (
+      <div className="flex h-screen items-center justify-center" style={{ backgroundColor: '#FDFBD4' }}>
+        <div className="text-zinc-600">Redirecting to login...</div>
+      </div>
+    )
   }
 
   return (

@@ -5,40 +5,97 @@ export function FloatingElements() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {/* Floating geometric shapes with yellow/orange/green colors */}
-      {[...Array(12)].map((_, i) => {
+      {[...Array(25)].map((_, i) => {
         const colors = [
-          "from-yellow-400/30 to-orange-400/30",
-          "from-orange-400/30 to-red-400/30",
-          "from-green-400/30 to-emerald-400/30",
-          "from-lime-400/30 to-green-400/30",
-          "from-amber-400/30 to-yellow-400/30",
-          "from-emerald-400/30 to-teal-400/30",
-          "from-indigo-400/30 to-purple-400/30",
-          "from-pink-400/30 to-rose-400/30",
+          "from-yellow-400/50 to-orange-400/50",
+          "from-orange-400/50 to-red-400/50",
+          "from-green-400/50 to-emerald-400/50",
+          "from-lime-400/50 to-green-400/50",
+          "from-amber-400/50 to-yellow-400/50",
+          "from-emerald-400/50 to-teal-400/50",
+          "from-indigo-400/50 to-purple-400/50",
+          "from-pink-400/50 to-rose-400/50",
+          "from-blue-400/50 to-cyan-400/50",
+          "from-violet-400/50 to-fuchsia-400/50",
         ]
-        const shapes = ["rounded-full", "rounded-lg", "rounded-xl", "rounded-2xl"]
-        const sizes = ["w-8 h-8", "w-10 h-10", "w-12 h-12", "w-14 h-14", "w-16 h-16"]
 
-        // Use deterministic positions based on index to avoid hydration mismatch
+        // Mix of circles (rounded-full), squares (rounded-lg), and triangles
+        const shapeTypes = ["circle", "square", "triangle", "circle", "square"]
+        const currentShape = shapeTypes[i % shapeTypes.length]
+
+        const sizes = ["w-6 h-6", "w-8 h-8", "w-10 h-10", "w-12 h-12", "w-14 h-14", "w-16 h-16", "w-20 h-20"]
+
+        // More distributed positions for better coverage
         const positions = [
-          { x: "10%", y: "15%" },
-          { x: "85%", y: "20%" },
-          { x: "15%", y: "70%" },
-          { x: "70%", y: "80%" },
-          { x: "30%", y: "40%" },
-          { x: "60%", y: "60%" },
-          { x: "90%", y: "50%" },
-          { x: "20%", y: "90%" },
-          { x: "45%", y: "25%" },
-          { x: "75%", y: "45%" },
-          { x: "5%", y: "45%" },
-          { x: "50%", y: "85%" },
+          { x: "5%", y: "10%" },
+          { x: "15%", y: "25%" },
+          { x: "85%", y: "15%" },
+          { x: "75%", y: "30%" },
+          { x: "10%", y: "45%" },
+          { x: "90%", y: "40%" },
+          { x: "25%", y: "20%" },
+          { x: "65%", y: "50%" },
+          { x: "45%", y: "10%" },
+          { x: "35%", y: "35%" },
+          { x: "55%", y: "25%" },
+          { x: "20%", y: "60%" },
+          { x: "80%", y: "55%" },
+          { x: "95%", y: "70%" },
+          { x: "5%", y: "75%" },
+          { x: "30%", y: "50%" },
+          { x: "70%", y: "65%" },
+          { x: "50%", y: "45%" },
+          { x: "40%", y: "70%" },
+          { x: "60%", y: "80%" },
+          { x: "15%", y: "85%" },
+          { x: "85%", y: "85%" },
+          { x: "25%", y: "75%" },
+          { x: "75%", y: "10%" },
+          { x: "95%", y: "25%" },
         ]
+
+        // For triangles, we'll use a different approach
+        if (currentShape === "triangle") {
+          return (
+            <motion.div
+              key={i}
+              className="absolute"
+              style={{
+                left: positions[i].x,
+                top: positions[i].y,
+                width: 0,
+                height: 0,
+                borderLeft: "15px solid transparent",
+                borderRight: "15px solid transparent",
+                borderBottom: `25px solid rgba(${i % 2 === 0 ? '251, 191, 36' : i % 3 === 0 ? '34, 197, 94' : '249, 115, 22'}, 0.5)`,
+              }}
+              initial={{
+                rotate: 0,
+                scale: 0,
+                opacity: 0,
+              }}
+              animate={{
+                rotate: [0, 360],
+                scale: [0.5, 1, 0.8, 1.2, 0.5],
+                opacity: [0.4, 0.6, 0.8, 0.6, 0.4],
+              }}
+              transition={{
+                duration: 8 + (i * 0.5),
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+                delay: i * 0.1,
+              }}
+            />
+          )
+        }
+
+        // For circles and squares
+        const shapeClass = currentShape === "circle" ? "rounded-full" : "rounded-lg"
 
         return (
           <motion.div
             key={i}
-            className={`absolute ${sizes[i % sizes.length]} bg-gradient-to-br ${colors[i % colors.length]} ${shapes[i % shapes.length]}`}
+            className={`absolute ${sizes[i % sizes.length]} bg-gradient-to-br ${colors[i % colors.length]} ${shapeClass}`}
             style={{
               left: positions[i].x,
               top: positions[i].y,
@@ -51,13 +108,13 @@ export function FloatingElements() {
             animate={{
               rotate: [0, 360],
               scale: [0.5, 1, 0.8, 1.2, 0.5],
-              opacity: [0.3, 0.6, 0.8, 0.6, 0.3],
+              opacity: [0.4, 0.6, 0.8, 0.6, 0.4],
             }}
             transition={{
-              duration: 20 + (i * 1.5), // Deterministic duration based on index
+              duration: 8 + (i * 0.5),
               repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut",
-              delay: i * 0.2, // Stagger the animations
+              delay: i * 0.1,
             }}
           />
         )
@@ -119,6 +176,52 @@ export function ThinkingBubbles({ className = "" }: { className?: string }) {
           }}
         />
       </motion.div>
+    </div>
+  )
+}
+
+export function AnimatedBackground() {
+  return (
+    <div className="fixed inset-0 -z-20">
+      {/* Animated gradient blobs */}
+      <div className="absolute inset-0">
+        <motion.div
+          className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-gradient-to-r from-yellow-400/30 to-orange-400/30 blur-3xl"
+          animate={{
+            x: [0, 30, 0],
+            y: [0, 50, 0],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute top-40 right-10 w-80 h-80 rounded-full bg-gradient-to-r from-green-400/30 to-lime-400/30 blur-3xl"
+          animate={{
+            x: [0, -40, 0],
+            y: [0, 30, 0],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-20 left-40 w-72 h-72 rounded-full bg-gradient-to-r from-orange-400/30 to-red-400/30 blur-3xl"
+          animate={{
+            x: [0, 50, 0],
+            y: [0, -40, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          }}
+        />
+      </div>
     </div>
   )
 }
@@ -219,134 +322,54 @@ export function CreativeIllustration() {
 
         {/* Plant */}
         <motion.g
-          initial={{ scale: 0 }}
+          initial={{ scale: 0, transformOrigin: "bottom center" }}
           animate={{ scale: 1 }}
-          transition={{ duration: 0.6, delay: 1, type: "spring" }}
+          transition={{ duration: 0.8, delay: 0.8 }}
         >
-          <ellipse cx="160" cy="130" rx="8" ry="6" fill="#8B4513" />
-          <path d="M160 125 Q155 115, 150 110 Q155 115, 160 120 Q165 115, 170 110 Q165 115, 160 125" fill="#32CD32" />
-          <path d="M160 120 Q150 110, 145 105 Q150 110, 160 115 Q170 110, 175 105 Q170 110, 160 120" fill="#228B22" />
+          <rect x="150" y="125" width="15" height="5" rx="2" fill="#654321" />
+          <path d="M158 125 Q158 115, 155 110" fill="none" stroke="#228B22" strokeWidth="2" />
+          <ellipse cx="155" cy="108" rx="6" ry="8" fill="url(#leafGradient)" />
+          <ellipse cx="160" cy="112" rx="5" ry="7" fill="url(#leafGradient)" transform="rotate(15 160 112)" />
+          <ellipse cx="150" cy="112" rx="5" ry="7" fill="url(#leafGradient)" transform="rotate(-15 150 112)" />
         </motion.g>
 
-        {/* Floating design elements */}
+        {/* Floating creative elements */}
         <motion.g
           animate={{
-            rotate: [0, 360],
+            y: [0, -10, 0],
+            rotate: [0, 5, 0],
           }}
           transition={{
-            duration: 20,
+            duration: 4,
             repeat: Number.POSITIVE_INFINITY,
-            ease: "linear",
+            ease: "easeInOut",
           }}
         >
-          <circle cx="30" cy="60" r="3" fill="#FFD700" opacity="0.6" />
-          <rect x="170" y="50" width="6" height="6" fill="#32CD32" opacity="0.6" />
-          <polygon points="180,70 185,70 182.5,75" fill="#FFA500" opacity="0.6" />
+          <circle cx="30" cy="60" r="4" fill="#FFB6C1" opacity="0.7" />
+          <rect x="50" y="55" width="8" height="8" fill="#87CEEB" opacity="0.7" transform="rotate(45 54 59)" />
+          <polygon points="160,60 165,50 170,60" fill="#98FB98" opacity="0.7" />
         </motion.g>
 
-        {/* Gradients */}
+        {/* Gradient definitions */}
         <defs>
           <linearGradient id="deskGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#D2B48C" />
-            <stop offset="100%" stopColor="#8B7355" />
+            <stop offset="0%" stopColor="#D2691E" />
+            <stop offset="100%" stopColor="#8B4513" />
           </linearGradient>
           <linearGradient id="screenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#4A90E2" />
-            <stop offset="50%" stopColor="#7B68EE" />
-            <stop offset="100%" stopColor="#9370DB" />
+            <stop offset="0%" stopColor="#87CEEB" />
+            <stop offset="100%" stopColor="#4169E1" />
           </linearGradient>
           <linearGradient id="cupGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#F5F5DC" />
-            <stop offset="100%" stopColor="#D2B48C" />
+            <stop offset="0%" stopColor="#D2691E" />
+            <stop offset="100%" stopColor="#A0522D" />
+          </linearGradient>
+          <linearGradient id="leafGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#90EE90" />
+            <stop offset="100%" stopColor="#228B22" />
           </linearGradient>
         </defs>
       </svg>
     </motion.div>
-  )
-}
-
-export function PulsatingOrb({ className = "" }: { className?: string }) {
-  return (
-    <motion.div
-      className={`rounded-full bg-gradient-to-r from-thinky-primary to-thinky-tertiary ${className}`}
-      animate={{
-        scale: [1, 1.2, 1],
-        opacity: [0.7, 1, 0.7],
-      }}
-      transition={{
-        duration: 3,
-        repeat: Number.POSITIVE_INFINITY,
-        ease: "easeInOut",
-      }}
-    />
-  )
-}
-
-export function LoadingSpinner() {
-  return (
-    <motion.div
-      className="w-8 h-8 border-3 border-thinky-light border-t-thinky-primary rounded-full"
-      animate={{ rotate: 360 }}
-      transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-    />
-  )
-}
-
-export function ProgressBar({ progress }: { progress: number }) {
-  return (
-    <div className="w-full h-2 bg-thinky-light/30 rounded-full overflow-hidden">
-      <motion.div
-        className="h-full bg-gradient-to-r from-thinky-primary to-thinky-tertiary"
-        initial={{ width: 0 }}
-        animate={{ width: `${progress}%` }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-      />
-    </div>
-  )
-}
-
-export function AnimatedBackground() {
-  return (
-    <div className="fixed inset-0 -z-10 overflow-hidden">
-      <motion.div
-        className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-yellow-400/5 to-orange-400/5 rounded-full blur-3xl"
-        animate={{
-          x: [0, 100, 0],
-          y: [0, -50, 0],
-          scale: [1, 1.1, 1],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Number.POSITIVE_INFINITY,
-          ease: "easeInOut",
-        }}
-      />
-      <motion.div
-        className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-green-400/5 to-emerald-400/5 rounded-full blur-3xl"
-        animate={{
-          x: [0, -100, 0],
-          y: [0, 50, 0],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          duration: 25,
-          repeat: Number.POSITIVE_INFINITY,
-          ease: "easeInOut",
-        }}
-      />
-      <motion.div
-        className="absolute top-1/2 left-1/2 w-60 h-60 bg-gradient-to-r from-amber-400/3 to-lime-400/3 rounded-full blur-3xl"
-        animate={{
-          x: [-100, 100, -100],
-          y: [-50, 50, -50],
-          scale: [1, 1.3, 1],
-        }}
-        transition={{
-          duration: 30,
-          repeat: Number.POSITIVE_INFINITY,
-          ease: "easeInOut",
-        }}
-      />
-    </div>
   )
 }

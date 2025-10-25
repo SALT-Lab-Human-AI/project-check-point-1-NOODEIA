@@ -24,17 +24,26 @@ import {
   FloatingElements,
   ThinkingBubbles,
 } from "@/components/animated-graphics"
+import { LogoCarousel } from "@/components/LogoCarousel"
 import { supabase } from "@/lib/supabase"
 
 export default function HomePage() {
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userName, setUserName] = useState("")
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         setIsAuthenticated(!!session)
+        if (session?.user) {
+          // Get user name from metadata or email
+          const name = session.user.user_metadata?.name ||
+                       session.user.email?.split("@")[0] ||
+                       "User"
+          setUserName(name)
+        }
       } catch (error) {
         console.error("Error checking auth:", error)
       }
@@ -44,6 +53,12 @@ export default function HomePage() {
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session)
+      if (session?.user) {
+        const name = session.user.user_metadata?.name ||
+                     session.user.email?.split("@")[0] ||
+                     "User"
+        setUserName(name)
+      }
     })
 
     return () => {
@@ -119,7 +134,7 @@ export default function HomePage() {
           </Link>
           {isAuthenticated ? (
             <Link className="text-sm font-medium hover:text-noodeia-primary transition-colors" href="/ai">
-              Dashboard
+              Hi! {userName}
             </Link>
           ) : (
             <Link className="text-sm font-medium hover:text-noodeia-primary transition-colors" href="/login">
@@ -130,7 +145,7 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="w-full py-16 md:py-24 lg:py-32 xl:py-48 relative z-10">
+      <section className="w-full py-12 md:py-16 lg:py-20 xl:py-24 relative z-10">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col items-center">
             {/* Text content - centered */}
@@ -215,6 +230,11 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+
+        {/* Logo Carousel - Moved higher, inside hero section */}
+        <div className="mt-12 pb-8">
+          <LogoCarousel />
+        </div>
       </section>
 
       {/* Features Section */}
@@ -282,7 +302,7 @@ export default function HomePage() {
               <h2 className="text-3xl font-display font-bold tracking-tight sm:text-4xl md:text-5xl text-white">
                 Ready to Transform Your Learning?
               </h2>
-              <p className="max-w-[600px] text-white/90 text-lg md:text-xl font-light leading-relaxed">
+              <p className="max-w-[600px] mx-auto text-white/90 text-lg md:text-xl font-light leading-relaxed">
                 Join thousands of students who are already learning smarter with Noodeia's AI-powered tutoring.
               </p>
             </div>
