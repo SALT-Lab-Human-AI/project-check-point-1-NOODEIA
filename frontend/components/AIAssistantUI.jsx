@@ -71,7 +71,22 @@ export default function AIAssistantUI() {
       if (!authChecked) return
 
       if (event === 'SIGNED_IN' && session) {
-        const userData = await databaseAdapter.getUserById(session.user.id)
+        let userData = await databaseAdapter.getUserById(session.user.id)
+
+        // If user doesn't exist in Neo4j, create them
+        if (!userData) {
+          const userEmail = session.user.email || 'user@example.com'
+          const userName = session.user.user_metadata?.name ||
+                         userEmail.split('@')[0] ||
+                         'User'
+
+          userData = await databaseAdapter.createUser(
+            session.user.id,
+            userEmail,
+            userName
+          )
+        }
+
         if (userData) {
           handleAuthSuccess(userData)
         }
@@ -88,10 +103,27 @@ export default function AIAssistantUI() {
       const { data: { session } } = await supabase.auth.getSession()
 
       if (session) {
-        const userData = await databaseAdapter.getUserById(session.user.id)
+        let userData = await databaseAdapter.getUserById(session.user.id)
+
+        // If user doesn't exist in Neo4j, create them
+        if (!userData) {
+          const userEmail = session.user.email || 'user@example.com'
+          const userName = session.user.user_metadata?.name ||
+                         userEmail.split('@')[0] ||
+                         'User'
+
+          userData = await databaseAdapter.createUser(
+            session.user.id,
+            userEmail,
+            userName
+          )
+        }
+
         if (userData) {
           await handleAuthSuccess(userData)
         } else {
+          // Only fail authentication if we couldn't create the user
+          console.error('Failed to create user in database')
           setIsLoading(false)
         }
       } else {
