@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -20,6 +20,26 @@ export default function LoginPage() {
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
+  // Check if user is already logged in and redirect
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          // User is already logged in, redirect to AI interface
+          router.push("/ai")
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error)
+      } finally {
+        setCheckingAuth(false)
+      }
+    }
+
+    checkUser()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,6 +84,15 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Show loading state while checking authentication
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-app-bg via-yellow-50/20 to-orange-50/20 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
   }
 
   return (
@@ -124,7 +153,7 @@ export default function LoginPage() {
                       placeholder="John Doe"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="bg-white/50"
+                      className="glass-input"
                     />
                   </div>
                 )}
@@ -139,7 +168,7 @@ export default function LoginPage() {
                       placeholder="you@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 bg-white/50"
+                      className="pl-10 glass-input"
                       required
                     />
                   </div>
@@ -155,7 +184,7 @@ export default function LoginPage() {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 bg-white/50"
+                      className="pl-10 glass-input"
                       required
                     />
                   </div>
@@ -173,7 +202,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-noodeia-primary hover:bg-noodeia-primary/90 text-white"
+                  className="w-full"
                   disabled={loading}
                 >
                   {loading ? (
@@ -202,7 +231,7 @@ export default function LoginPage() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full mt-4"
+                  className="w-full mt-4 glass-icon-button"
                   onClick={() => {
                     setIsSignUp(!isSignUp)
                     setError("")

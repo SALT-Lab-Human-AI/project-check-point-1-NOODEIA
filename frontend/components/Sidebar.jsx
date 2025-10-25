@@ -62,7 +62,7 @@ export default function Sidebar({
               {!collapsed && <ThemeToggle theme={theme} setTheme={setTheme} />}
               <button
                 onClick={() => setCollapsed(!collapsed)}
-                className="hidden rounded-lg p-2 hover:bg-sidebar-cream/80 dark:hover:bg-sidebar-dark/80 lg:block"
+                className="hidden rounded-xl p-2 glass-icon-button lg:block"
                 title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
                 {collapsed ? (
@@ -73,7 +73,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={onClose}
-                className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 lg:hidden"
+                className="rounded-xl p-2 glass-icon-button lg:hidden"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -100,7 +100,7 @@ export default function Sidebar({
                         />
                         <button
                           onClick={handleSaveEdit}
-                          className="rounded p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                          className="rounded-lg p-1 glass-icon-button"
                         >
                           <Check className="h-4 w-4" />
                         </button>
@@ -133,7 +133,7 @@ export default function Sidebar({
                         <div className="absolute right-2 flex gap-1 opacity-0 group-hover:opacity-100">
                           <button
                             onClick={() => handleStartEdit(conversation)}
-                            className="rounded p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            className="rounded-lg p-1 glass-icon-button"
                             title="Rename conversation"
                           >
                             <Edit2 className="h-3 w-3" />
@@ -144,7 +144,7 @@ export default function Sidebar({
                                 onDeleteConversation(conversation.id)
                               }
                             }}
-                            className="rounded p-1 hover:bg-red-100 dark:hover:bg-red-900/20"
+                            className="rounded-lg p-1 glass-icon-button"
                             title="Delete conversation"
                           >
                             <Trash2 className="h-3 w-3 text-red-500" />
@@ -168,7 +168,7 @@ export default function Sidebar({
             <div className="px-4 py-2">
               <button
                 onClick={createNewChat}
-                className={`flex h-10 w-full items-center gap-2 rounded-lg bg-zinc-900 px-4 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 ${
+                className={`flex h-10 w-full items-center gap-2 rounded-xl glass-button glass-button-primary px-4 ${
                   collapsed ? "justify-center" : "justify-center"
                 }`}
                 title={collapsed ? "New Chat" : undefined}
@@ -180,7 +180,7 @@ export default function Sidebar({
             <div className="px-4 pb-2">
               <button
                 onClick={() => router.push('/groupchat')}
-                className={`flex h-10 w-full items-center gap-2 rounded-lg bg-indigo-600 px-4 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 ${
+                className={`flex h-10 w-full items-center gap-2 rounded-xl glass-button glass-button-light px-4 ${
                   collapsed ? "justify-center" : "justify-center"
                 }`}
                 title={collapsed ? "New Group Chat" : undefined}

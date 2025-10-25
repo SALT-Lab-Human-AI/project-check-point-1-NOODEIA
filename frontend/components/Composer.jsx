@@ -59,14 +59,14 @@ export default function Composer({ onSend, busy }) {
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             disabled={busy || sending}
-            className="min-h-[40px] max-h-[160px] flex-1 resize-none rounded-lg border bg-white px-3 py-2 text-sm sm:text-base focus:border-zinc-400 focus:outline-none disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-500"
+            className="min-h-[40px] max-h-[160px] flex-1 resize-none rounded-xl glass-input px-3 py-2 text-sm sm:text-base disabled:opacity-50"
             rows={1}
             style={{ WebkitAppearance: 'none', appearance: 'none' }}
           />
           <button
             type="submit"
             disabled={disabled}
-            className="rounded-lg bg-zinc-900 p-2 text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="rounded-xl p-2 glass-button glass-button-primary text-white transition-all disabled:opacity-50"
           >
             {sending ? (
               <Loader2 className="h-5 w-5 animate-spin" />

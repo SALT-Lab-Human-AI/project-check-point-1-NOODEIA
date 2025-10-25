@@ -194,7 +194,7 @@ export default function HomePage() {
                 <Button
                   onClick={handleStartLearning}
                   size="lg"
-                  className="bg-noodeia-primary hover:bg-noodeia-primary/90 text-white px-8 py-3 text-lg transform hover:scale-105 transition-all duration-200"
+                  className="px-8 py-3 text-lg"
                 >
                   Start Learning <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -202,7 +202,7 @@ export default function HomePage() {
                   variant="outline"
                   size="lg"
                   asChild
-                  className="border-noodeia-primary text-noodeia-primary hover:bg-noodeia-primary hover:text-white px-8 py-3 text-lg transform hover:scale-105 transition-all duration-200"
+                  className="px-8 py-3 text-lg"
                 >
                   <Link href="#features">Explore Features</Link>
                 </Button>
@@ -311,7 +311,8 @@ export default function HomePage() {
               <Button
                 onClick={handleStartLearning}
                 size="lg"
-                className="bg-white text-noodeia-primary hover:bg-white/90 px-8 py-3 text-lg font-medium transform hover:scale-105 transition-all duration-200"
+                variant="secondary"
+                className="px-8 py-3 text-lg font-medium"
               >
                 Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
               </Button>

@@ -10,7 +10,7 @@ export default function Header({ onMenuClick, currentUser, onLogout, onMarkdownC
       <div className="flex items-center gap-2 sm:gap-3">
         <button
           onClick={onMenuClick}
-          className="rounded-lg p-1.5 sm:p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 lg:hidden flex-shrink-0"
+          className="rounded-xl p-1.5 sm:p-2 glass-icon-button lg:hidden flex-shrink-0"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
@@ -26,7 +26,7 @@ export default function Header({ onMenuClick, currentUser, onLogout, onMarkdownC
         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           <button
             onClick={onSettingsClick}
-            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 glass-button glass-button-light rounded-xl transition-all"
             title="User settings"
           >
             <UserAvatar user={currentUser} size="sm" />
@@ -37,7 +37,7 @@ export default function Header({ onMenuClick, currentUser, onLogout, onMarkdownC
           </button>
           <button
             onClick={onMarkdownClick}
-            className="rounded-lg p-1.5 sm:p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+            className="rounded-xl p-1.5 sm:p-2 glass-button-primary glass-button text-indigo-600 dark:text-indigo-400 transition-all"
             title="Open markdown notes panel"
             aria-label="Notes"
           >
@@ -45,7 +45,7 @@ export default function Header({ onMenuClick, currentUser, onLogout, onMarkdownC
           </button>
           <button
             onClick={onLogout}
-            className="rounded-lg p-1.5 sm:p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="rounded-xl p-1.5 sm:p-2 glass-icon-button transition-all"
             title="Sign out"
             aria-label="Sign out"
           >
