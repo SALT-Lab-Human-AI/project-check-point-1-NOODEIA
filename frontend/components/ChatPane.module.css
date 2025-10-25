@@ -1,0 +1,122 @@
+/* ChatPane scrolling styles for production compatibility */
+.scrollContainer {
+  flex: 1 1 0%;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0.75rem;
+  min-height: 0 !important;
+  height: 100%;
+  max-height: 100%;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+
+  /* iOS-specific fixes - CRITICAL for production */
+  -webkit-overflow-scrolling: touch !important;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: scroll-position;
+  -webkit-scroll-behavior: smooth;
+
+  /* Fix for iOS momentum scrolling */
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+
+  /* Additional iOS optimizations for production */
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+}
+
+@media (min-width: 640px) {
+  .scrollContainer {
+    padding: 1rem;
+  }
+}
+
+/* Ensure these styles are applied in production */
+.scrollContainer::-webkit-scrollbar {
+  width: 3px;
+}
+
+.scrollContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+:global(.dark) .scrollContainer::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.scrollButton {
+  position: fixed;
+  bottom: 6rem;
+  right: 1rem;
+  z-index: 10;
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgb(228, 228, 231);
+  transition: all 200ms;
+}
+
+.scrollButton:hover {
+  background-color: rgb(250, 250, 250);
+}
+
+:global(.dark) .scrollButton {
+  background-color: rgb(39, 39, 42);
+  border-color: rgb(63, 63, 70);
+}
+
+:global(.dark) .scrollButton:hover {
+  background-color: rgb(63, 63, 70);
+}
+
+@media (min-width: 640px) {
+  .scrollButton {
+    position: absolute;
+    bottom: 5rem;
+  }
+}
+
+/* Safe area handling for iOS */
+@supports (padding: max(0px)) {
+  .scrollButton {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    margin-bottom: max(0px, env(safe-area-inset-bottom, 0));
+  }
+}
+
+/* Touch device specific optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .scrollContainer {
+    scroll-snap-type: y proximity;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    touch-action: pan-y;
+  }
+}
+
+/* Force scrollbar visibility on all platforms in production */
+.scrollContainer {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* Ensure proper height calculation in production */
+@supports (height: 100dvh) {
+  .scrollContainer {
+    max-height: calc(100dvh - 10rem);
+  }
+}
