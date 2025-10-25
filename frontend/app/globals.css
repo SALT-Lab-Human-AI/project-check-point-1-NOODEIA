@@ -96,6 +96,7 @@
   body {
     @apply text-foreground;
     background-color: #FDFBD4;
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   /* Apply fixed positioning only to chat interfaces */

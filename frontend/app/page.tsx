@@ -119,9 +119,8 @@ export default function HomePage() {
   ]
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-app-bg via-yellow-50/20 to-orange-50/20 relative">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-app-bg via-yellow-50/20 to-orange-50/20 relative font-body">
       <AnimatedBackground />
-      <FloatingElements />
 
       {/* Header */}
       <header className="px-4 lg:px-6 h-16 flex items-center border-b border-gray-200/20 backdrop-blur-sm bg-white/80 relative z-10">
@@ -144,8 +143,8 @@ export default function HomePage() {
         </nav>
       </header>
 
-      {/* Hero Section */}
-      <section className="w-full py-12 md:py-16 lg:py-20 xl:py-24 relative z-10">
+      {/* Hero Section - Full height first page */}
+      <section className="w-full min-h-screen flex items-center py-12 md:py-16 lg:py-20 xl:py-24 relative z-10">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col items-center">
             {/* Text content - centered */}
@@ -177,7 +176,7 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
-                  className="max-w-[600px] text-gray-600 text-lg md:text-xl font-light leading-relaxed mx-auto"
+                  className="max-w-[600px] text-gray-600 text-lg md:text-xl font-body font-light leading-relaxed mx-auto"
                 >
                   Your personalized AI tutor that helps you learn through guided questions,
                   collaborative group study, and intelligent note-taking. Available 24/7
@@ -194,7 +193,7 @@ export default function HomePage() {
                 <Button
                   onClick={handleStartLearning}
                   size="lg"
-                  className="px-8 py-3 text-lg"
+                  className="px-8 py-3 text-lg font-body"
                 >
                   Start Learning <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -202,7 +201,7 @@ export default function HomePage() {
                   variant="outline"
                   size="lg"
                   asChild
-                  className="px-8 py-3 text-lg"
+                  className="px-8 py-3 text-lg font-body"
                 >
                   <Link href="#features">Explore Features</Link>
                 </Button>
@@ -230,11 +229,22 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Logo Carousel - Moved higher, inside hero section */}
-        <div className="mt-12 pb-8">
-          <LogoCarousel />
+      {/* Logo Carousel - Partnered Institutions Section (Smaller height) */}
+      <section className="w-full py-12 md:py-16 lg:py-20 bg-white/30 relative z-10 overflow-hidden">
+        <div className="absolute inset-0">
+          <FloatingElements />
         </div>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true, amount: 0.3 }}
+          className="container mx-auto px-4 md:px-6 relative z-10"
+        >
+          <LogoCarousel />
+        </motion.div>
       </section>
 
       {/* Features Section */}
@@ -251,7 +261,7 @@ export default function HomePage() {
               <h2 className="text-3xl font-display font-bold tracking-tight sm:text-4xl md:text-5xl text-noodeia-dark">
                 AI-Powered Learning Tools
               </h2>
-              <p className="max-w-[900px] text-gray-600 text-lg md:text-xl font-light leading-relaxed">
+              <p className="max-w-[900px] text-gray-600 text-lg md:text-xl font-body font-light leading-relaxed">
                 Everything you need to excel in your studies with the power of artificial intelligence.
               </p>
             </div>
@@ -277,7 +287,7 @@ export default function HomePage() {
                       <feature.icon className="h-8 w-8 text-white" />
                     </motion.div>
                     <CardTitle className="text-xl font-display text-noodeia-dark">{feature.title}</CardTitle>
-                    <CardDescription className="text-gray-600 leading-relaxed">
+                    <CardDescription className="text-gray-600 font-body leading-relaxed">
                       {feature.description}
                     </CardDescription>
                   </CardHeader>
@@ -302,7 +312,7 @@ export default function HomePage() {
               <h2 className="text-3xl font-display font-bold tracking-tight sm:text-4xl md:text-5xl text-white">
                 Ready to Transform Your Learning?
               </h2>
-              <p className="max-w-[600px] mx-auto text-white/90 text-lg md:text-xl font-light leading-relaxed">
+              <p className="max-w-[600px] mx-auto text-white/90 text-lg md:text-xl font-body font-light leading-relaxed">
                 Join thousands of students who are already learning smarter with Noodeia's AI-powered tutoring.
               </p>
             </div>
@@ -312,7 +322,7 @@ export default function HomePage() {
                 onClick={handleStartLearning}
                 size="lg"
                 variant="secondary"
-                className="px-8 py-3 text-lg font-medium"
+                className="px-8 py-3 text-lg font-body font-medium"
               >
                 Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -328,13 +338,13 @@ export default function HomePage() {
           <div className="flex flex-col gap-2 sm:flex-row items-center">
             <div className="flex items-center gap-4">
               <NoodeiaLogo size="sm" />
-              <p className="text-sm text-gray-600">© 2024 Noodeia. All rights reserved.</p>
+              <p className="text-sm text-gray-600 font-body">© 2024 Noodeia. All rights reserved.</p>
             </div>
             <nav className="sm:ml-auto flex gap-6">
-              <Link className="text-sm hover:text-noodeia-primary transition-colors" href="#">
+              <Link className="text-sm font-body hover:text-noodeia-primary transition-colors" href="#">
                 Terms of Service
               </Link>
-              <Link className="text-sm hover:text-noodeia-primary transition-colors" href="#">
+              <Link className="text-sm font-body hover:text-noodeia-primary transition-colors" href="#">
                 Privacy
               </Link>
             </nav>

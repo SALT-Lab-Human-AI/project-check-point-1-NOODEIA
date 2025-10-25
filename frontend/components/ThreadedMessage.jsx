@@ -90,7 +90,7 @@ export default function ThreadedMessage({
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full rounded-lg border border-zinc-200 p-2 dark:border-zinc-700 dark:bg-zinc-800"
+                className="w-full rounded-lg border border-zinc-200 p-2 dark:border-zinc-700 bg-white/50 dark:bg-black/20"
                 rows={3}
                 autoFocus
               />

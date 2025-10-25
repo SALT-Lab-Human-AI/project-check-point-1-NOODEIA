@@ -5,18 +5,18 @@ export function FloatingElements() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {/* Floating geometric shapes with yellow/orange/green colors */}
-      {[...Array(25)].map((_, i) => {
+      {[...Array(12)].map((_, i) => {
         const colors = [
-          "from-yellow-400/50 to-orange-400/50",
-          "from-orange-400/50 to-red-400/50",
-          "from-green-400/50 to-emerald-400/50",
-          "from-lime-400/50 to-green-400/50",
-          "from-amber-400/50 to-yellow-400/50",
-          "from-emerald-400/50 to-teal-400/50",
-          "from-indigo-400/50 to-purple-400/50",
-          "from-pink-400/50 to-rose-400/50",
-          "from-blue-400/50 to-cyan-400/50",
-          "from-violet-400/50 to-fuchsia-400/50",
+          "from-yellow-400/20 to-orange-400/20",
+          "from-orange-400/20 to-red-400/20",
+          "from-green-400/20 to-emerald-400/20",
+          "from-lime-400/20 to-green-400/20",
+          "from-amber-400/20 to-yellow-400/20",
+          "from-emerald-400/20 to-teal-400/20",
+          "from-indigo-400/20 to-purple-400/20",
+          "from-pink-400/20 to-rose-400/20",
+          "from-blue-400/20 to-cyan-400/20",
+          "from-violet-400/20 to-fuchsia-400/20",
         ]
 
         // Mix of circles (rounded-full), squares (rounded-lg), and triangles
@@ -25,33 +25,20 @@ export function FloatingElements() {
 
         const sizes = ["w-6 h-6", "w-8 h-8", "w-10 h-10", "w-12 h-12", "w-14 h-14", "w-16 h-16", "w-20 h-20"]
 
-        // More distributed positions for better coverage
+        // More distributed positions for better coverage in a smaller section
         const positions = [
-          { x: "5%", y: "10%" },
-          { x: "15%", y: "25%" },
-          { x: "85%", y: "15%" },
-          { x: "75%", y: "30%" },
+          { x: "5%", y: "15%" },
+          { x: "15%", y: "70%" },
+          { x: "85%", y: "20%" },
+          { x: "75%", y: "60%" },
           { x: "10%", y: "45%" },
           { x: "90%", y: "40%" },
-          { x: "25%", y: "20%" },
-          { x: "65%", y: "50%" },
-          { x: "45%", y: "10%" },
-          { x: "35%", y: "35%" },
-          { x: "55%", y: "25%" },
-          { x: "20%", y: "60%" },
-          { x: "80%", y: "55%" },
-          { x: "95%", y: "70%" },
-          { x: "5%", y: "75%" },
-          { x: "30%", y: "50%" },
-          { x: "70%", y: "65%" },
-          { x: "50%", y: "45%" },
-          { x: "40%", y: "70%" },
-          { x: "60%", y: "80%" },
-          { x: "15%", y: "85%" },
-          { x: "85%", y: "85%" },
-          { x: "25%", y: "75%" },
-          { x: "75%", y: "10%" },
-          { x: "95%", y: "25%" },
+          { x: "25%", y: "25%" },
+          { x: "65%", y: "75%" },
+          { x: "45%", y: "15%" },
+          { x: "35%", y: "55%" },
+          { x: "55%", y: "35%" },
+          { x: "20%", y: "80%" },
         ]
 
         // For triangles, we'll use a different approach
@@ -67,7 +54,7 @@ export function FloatingElements() {
                 height: 0,
                 borderLeft: "15px solid transparent",
                 borderRight: "15px solid transparent",
-                borderBottom: `25px solid rgba(${i % 2 === 0 ? '251, 191, 36' : i % 3 === 0 ? '34, 197, 94' : '249, 115, 22'}, 0.5)`,
+                borderBottom: `25px solid rgba(${i % 2 === 0 ? '251, 191, 36' : i % 3 === 0 ? '34, 197, 94' : '249, 115, 22'}, 0.2)`,
               }}
               initial={{
                 rotate: 0,
@@ -77,7 +64,7 @@ export function FloatingElements() {
               animate={{
                 rotate: [0, 360],
                 scale: [0.5, 1, 0.8, 1.2, 0.5],
-                opacity: [0.4, 0.6, 0.8, 0.6, 0.4],
+                opacity: [0.15, 0.25, 0.35, 0.25, 0.15],
               }}
               transition={{
                 duration: 8 + (i * 0.5),
@@ -108,7 +95,7 @@ export function FloatingElements() {
             animate={{
               rotate: [0, 360],
               scale: [0.5, 1, 0.8, 1.2, 0.5],
-              opacity: [0.4, 0.6, 0.8, 0.6, 0.4],
+              opacity: [0.15, 0.25, 0.35, 0.25, 0.15],
             }}
             transition={{
               duration: 8 + (i * 0.5),

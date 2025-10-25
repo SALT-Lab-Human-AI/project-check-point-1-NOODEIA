@@ -116,8 +116,10 @@ const config: Config = {
       },
       fontFamily: {
         patrick: ['"Patrick Hand"'],
-        sans: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-        display: ["Georgia", "Times New Roman", "Times", "serif"],
+        sans: ['"IBM Plex Sans"', "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        display: ['"DM Serif Display"', "Georgia", "Times New Roman", "Times", "serif"],
+        serif: ['"DM Serif Display"', "Georgia", "Times New Roman", "Times", "serif"],
+        body: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
         mono: ["Consolas", "Monaco", "Courier New", "monospace"],
       },
     },

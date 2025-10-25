@@ -329,7 +329,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
   }
 
   return (
-    <div className="flex h-full flex-col bg-white dark:bg-zinc-950">
+    <div className="flex h-full flex-col bg-app-bg dark:bg-app-bg-dark">
       {/* Header */}
       <div className="flex h-14 items-center justify-between border-b px-4 sm:px-6 dark:border-zinc-800">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -412,7 +412,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
             }}
             placeholder="Type a message..."
             disabled={sending}
-            className="flex-1 rounded-lg border border-zinc-200 px-3 sm:px-4 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900"
+            className="flex-1 rounded-lg border border-zinc-200 px-3 sm:px-4 py-2 text-base dark:border-zinc-700 bg-white/50 dark:bg-black/20"
           />
           <button
             onClick={sendMessage}

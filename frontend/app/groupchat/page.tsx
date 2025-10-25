@@ -173,15 +173,15 @@ export default function GroupChatPage() {
 
   if (!user) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white dark:bg-zinc-950">
+      <div className="flex h-screen items-center justify-center bg-app-bg dark:bg-app-bg-dark">
         <div className="text-zinc-600 dark:text-zinc-400">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      <div className="w-80 border-r bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex h-screen bg-app-bg text-zinc-900 dark:bg-app-bg-dark dark:text-zinc-50">
+      <div className="w-80 border-r bg-app-bg dark:border-zinc-800 dark:bg-app-bg-dark">
         <div className="flex h-full flex-col">
           <div className="flex h-14 items-center justify-between border-b px-4 dark:border-zinc-800">
             <h2 className="text-lg font-semibold">Group Chats</h2>
