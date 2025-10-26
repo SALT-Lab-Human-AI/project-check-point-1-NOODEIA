@@ -99,16 +99,18 @@ export default function Composer({ onSend, busy, xpGain }) {
                   animate={{ opacity: 1, y: -20, scale: 1 }}
                   exit={{ opacity: 0, y: -40, scale: 0.3 }}
                   transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none z-10"
+                  className="absolute pointer-events-none z-10
+                    -top-6 -left-2
+                    sm:-top-8 sm:left-1/2 sm:-translate-x-1/2"
                 >
                   <div
-                    className="flex items-center gap-1 px-2 py-1 text-white rounded-full shadow-lg"
+                    className="flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-1 text-white rounded-full shadow-lg"
                     style={{
                       background: 'linear-gradient(to right, #F6B3DC, #F8C8E2)',
-                      fontSize: '12px'
+                      fontSize: '11px'
                     }}
                   >
-                    <TrendingUp className="w-3 h-3" />
+                    <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     <span className="font-bold">+{xpAmount.toFixed(2)}</span>
                   </div>
                 </motion.div>
