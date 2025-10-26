@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Trophy, Sparkles, TrendingUp, Award } from "lucide-react"
+import { Trophy, Sparkles, Award } from "lucide-react"
 import {
   getLevelFromXP,
   getLevelProgress,
@@ -13,15 +13,12 @@ import {
 export default function GamificationBar({ currentUser, xpGain, onLevelUp }) {
   const [xp, setXp] = useState(currentUser?.xp || 0)
   const [level, setLevel] = useState(getLevelFromXP(currentUser?.xp || 0))
-  const [showXpGain, setShowXpGain] = useState(false)
-  const [gainAmount, setGainAmount] = useState(0)
+  // XP animation moved to send button in Composer component
   const [isAnimating, setIsAnimating] = useState(false)
 
-  // Handle XP gain animation
+  // Handle XP updates and level changes
   useEffect(() => {
     if (xpGain > 0) {
-      setGainAmount(xpGain)
-      setShowXpGain(true)
       setIsAnimating(true)
 
       const newXp = xp + xpGain
@@ -43,9 +40,8 @@ export default function GamificationBar({ currentUser, xpGain, onLevelUp }) {
         }
       }, 300)
 
-      // Hide XP gain display
+      // Reset animation state
       setTimeout(() => {
-        setShowXpGain(false)
         setIsAnimating(false)
       }, 2000)
     }
@@ -147,27 +143,7 @@ export default function GamificationBar({ currentUser, xpGain, onLevelUp }) {
           </div>
         </div>
 
-        {/* XP Gain Animation */}
-        <AnimatePresence>
-          {showXpGain && (
-            <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.8 }}
-              animate={{ opacity: 1, y: -10, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.6 }}
-              transition={{ type: "spring", stiffness: 200 }}
-              className="absolute right-2 top-0"
-            >
-              <div className="flex items-center gap-1 px-1.5 py-0.5 text-white rounded-full shadow-md"
-                style={{
-                  background: 'linear-gradient(to right, #F6B3DC, #F8C8E2)'
-                }}
-              >
-                <TrendingUp className="w-2.5 h-2.5" />
-                <span className="text-xs font-bold">+{gainAmount.toFixed(1)}</span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* XP Gain Animation moved to send button */}
       </div>
 
       {/* CSS for shimmer animation */}
