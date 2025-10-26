@@ -5,6 +5,7 @@ import { Plus, X, PanelLeftClose, PanelLeftOpen, Edit2, Check, MessageSquare, Us
 import { useRouter } from "next/navigation"
 import ConversationRow from "./ConversationRow"
 import ThemeToggle from "./ThemeToggle"
+import GamificationBar from "./GamificationBar"
 
 export default function Sidebar({
   open,
@@ -17,6 +18,10 @@ export default function Sidebar({
   createNewChat,
   onRenameConversation,
   onDeleteConversation,
+  currentUser,
+  xpGain,
+  triggerXpUpdate,
+  onLevelUp,
 }) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
@@ -165,6 +170,18 @@ export default function Sidebar({
           </div>
 
           <div className="border-t dark:border-zinc-800">
+            {/* Gamification Bar */}
+            {!collapsed && currentUser && (
+              <div className="px-4 py-3">
+                <GamificationBar
+                  currentUser={currentUser}
+                  xpGain={xpGain}
+                  key={triggerXpUpdate}
+                  onLevelUp={onLevelUp}
+                />
+              </div>
+            )}
+
             <div className="px-4 py-2">
               <button
                 onClick={createNewChat}

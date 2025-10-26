@@ -11,6 +11,8 @@ class Neo4jDataService {
           id: $id,
           email: $email,
           name: $name,
+          xp: 0,
+          level: 1,
           created_at: datetime(),
           updated_at: datetime()
         })

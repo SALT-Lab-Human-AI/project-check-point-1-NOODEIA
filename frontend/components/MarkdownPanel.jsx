@@ -52,6 +52,11 @@ export default function MarkdownPanel({
   }, [markdown])
 
   const loadMarkdownContent = async () => {
+    if (!conversationId) {
+      console.log("No conversation selected for markdown")
+      return
+    }
+
     try {
       const response = await fetch(`/api/markdown/${conversationId}`, {
         headers: {

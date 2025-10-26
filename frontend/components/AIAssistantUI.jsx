@@ -51,6 +51,8 @@ export default function AIAssistantUI() {
   const [markdownPanelOpen, setMarkdownPanelOpen] = useState(false)
   const [currentMarkdown, setCurrentMarkdown] = useState("")
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
+  const [xpGain, setXpGain] = useState(0)
+  const [triggerXpUpdate, setTriggerXpUpdate] = useState(0)
 
   useEffect(() => {
     // Add chat-interface class to html and body for proper styling
@@ -138,7 +140,26 @@ export default function AIAssistantUI() {
   }
 
   async function handleAuthSuccess(userData) {
-    setCurrentUser(userData)
+    // Fetch user's XP and level
+    let xp = userData.xp || 0
+    let level = userData.level || 1
+
+    try {
+      const xpResponse = await fetch(`/api/user/xp?userId=${userData.id}`)
+      if (xpResponse.ok) {
+        const xpData = await xpResponse.json()
+        xp = xpData.xp || 0
+        level = xpData.level || 1
+      }
+    } catch (error) {
+      console.error('Failed to fetch XP data:', error)
+    }
+
+    setCurrentUser({
+      ...userData,
+      xp,
+      level
+    })
     setUserId(userData.id)
     setIsAuthenticated(true)
     setIsLoading(false)
@@ -157,7 +178,11 @@ export default function AIAssistantUI() {
   }
 
   async function handleUpdateUser(updatedUser) {
-    setCurrentUser(updatedUser)
+    setCurrentUser(prev => ({
+      ...updatedUser,
+      xp: prev.xp,
+      level: prev.level
+    }))
   }
 
   async function loadConversations(uid) {
@@ -224,8 +249,46 @@ export default function AIAssistantUI() {
     }
   }
 
+  // Function to handle XP gains
+  async function handleXpGain() {
+    if (!userId) return
+
+    // Generate random XP between 1.01 and 1.75
+    const xpEarned = Math.random() * 0.74 + 1.01
+
+    try {
+      const response = await fetch('/api/user/xp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userId,
+          xpGained: xpEarned
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Update current user with new XP and level
+        setCurrentUser(prev => ({
+          ...prev,
+          xp: data.xp,
+          level: data.level
+        }))
+        // Trigger XP gain animation
+        setXpGain(xpEarned)
+        setTriggerXpUpdate(prev => prev + 1)
+      }
+    } catch (error) {
+      console.error('Failed to update XP:', error)
+    }
+  }
+
   async function sendMessage(convId, content) {
     if (!content.trim()) return
+    if (!convId) {
+      console.error('No conversation ID provided')
+      return
+    }
 
     const conversation = conversations.find(c => c.id === convId)
     const isFirstMessage = !conversation?.messages || conversation.messages.length === 0
@@ -237,6 +300,9 @@ export default function AIAssistantUI() {
       content,
       created_at: now
     }
+
+    // Award XP for sending a message (don't wait for it to complete)
+    handleXpGain().catch(err => console.error('XP update failed:', err))
 
     // If this is the first message, auto-rename the conversation
     if (isFirstMessage) {
@@ -262,17 +328,19 @@ export default function AIAssistantUI() {
       const savedMsg = await databaseAdapter.createChat(convId, 'user', content)
 
       // Replace temp message with saved one
-      setConversations(prev =>
-        prev.map(conv => {
-          if (conv.id !== convId) return conv
-          const messages = conv.messages.map(m =>
-            m.id === tempUserMsg.id ? savedMsg : m
-          )
-          // Update title if first message
-          const title = conv.messages.length === 0 ? content.slice(0, 30) + "..." : conv.title
-          return { ...conv, messages, title }
-        })
-      )
+      if (savedMsg) {
+        setConversations(prev =>
+          prev.map(conv => {
+            if (conv.id !== convId) return conv
+            const messages = conv.messages.map(m =>
+              m.id === tempUserMsg.id ? savedMsg : m
+            )
+            // Update title if first message
+            const title = conv.messages.length === 0 ? content.slice(0, 30) + "..." : conv.title
+            return { ...conv, messages, title }
+          })
+        )
+      }
 
       // Get AI response
       setIsThinking(true)
@@ -350,6 +418,16 @@ export default function AIAssistantUI() {
       }
     } catch (error) {
       console.error('Failed to send message:', error)
+      console.error('Error details:', {
+        conversationId: convId,
+        messageContent: content,
+        errorMessage: error.message,
+        errorStack: error.stack
+      })
+
+      // Show user-friendly error
+      alert('Failed to send message. Please try again.')
+      setIsThinking(false)
     }
   }
 
@@ -625,6 +703,13 @@ export default function AIAssistantUI() {
         createNewChat={createNewChat}
         onRenameConversation={renameConversation}
         onDeleteConversation={deleteConversation}
+        currentUser={currentUser}
+        xpGain={xpGain}
+        triggerXpUpdate={triggerXpUpdate}
+        onLevelUp={(newLevel, oldLevel) => {
+          console.log(`Level up! ${oldLevel} → ${newLevel}`)
+          // You can add a level up celebration modal here
+        }}
       />
 
       <div className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: '#FDFBD4' }}>
@@ -632,7 +717,13 @@ export default function AIAssistantUI() {
           onMenuClick={() => setSidebarOpen(true)}
           currentUser={currentUser}
           onLogout={handleLogout}
-          onMarkdownClick={() => setMarkdownPanelOpen(true)}
+          onMarkdownClick={() => {
+            if (!selectedId) {
+              alert('Please select or create a conversation first')
+              return
+            }
+            setMarkdownPanelOpen(true)
+          }}
           onSettingsClick={() => setSettingsModalOpen(true)}
         />
         <main className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: '#FDFBD4' }}>
