@@ -27,17 +27,18 @@
 ---
 
 ## 📑 Table of Contents
-1. [Problem Statement and Why It Matters](#-problem-statement-and-why-it-matters)  
-2. [Target Users and Core Tasks](#-target-users-and-core-tasks)  
+1. [Problem Statement and Why It Matters](#-problem-statement-and-why-it-matters)
+2. [Target Users and Core Tasks](#-target-users-and-core-tasks)
 3. [Competitive Landscape and AI Limitations](#-competitive-landscape-and-ai-limitations)
 4. [Literature Review](#-literature-review)
-5. [Initial Concept and Value Proposition](#-initial-concept-and-value-proposition)  
-6. [Frontend Application](#-frontend-application)
-7. [Contributions](#-contributions)
-8. [Quick Start](#-quick-start)  
-9. [Feedback Overview](#-feedback-overview)
-10. [Inspiration and Disclosures](#-inspiration-and-disclosures)
-11. [License](#-license)  
+5. [Initial Concept and Value Proposition](#-initial-concept-and-value-proposition)
+6. [Team Contributions](#-team-contributions)
+7. [Quick Start](#-quick-start)
+8. [Feedback Overview](#-feedback-overview)
+9. [Inspiration and Disclosures](#-inspiration-and-disclosures)
+10. [License](#-license)
+
+> **💡 Tip:** All links in this table of contents are clickable! Click any item to jump to that section.  
 
 ---
 
@@ -80,7 +81,7 @@ Copilot did a better job matching our instructions, but sometimes gave answers t
 
  Perplexity solved most problems correctly, but assumed certain parts about the user’s background knowledge in its answers. This sometimes led to answers being made more complicated than necessary. There were also lots of links given which adds noise and may distract students.
 
-## 📚 Literature Review Highlights
+## 📚 Literature Review
 
 ### Qiran Hu
 
@@ -135,9 +136,9 @@ The primary value proposition emerges from the system's ability to provide genui
 
 ### Proposed Muti-Agent Workflow
 
-This is our proposed muti-agent workflow 
+This is our proposed muti-agent workflow
 
-<img width = "850px" alt = "Proposed workflow" src = "./inProgress/workflow.png">
+<img width = "850px" alt = "Proposed workflow" src = "./docs/architecture/architecture.png">
 
 #### Workflow Overview
 
@@ -225,7 +226,7 @@ Upcoming tasks
 
 ---
 
-### Quick Start
+## ⚡ Quick Start
 
 **📚 For detailed setup instructions, see [`setup/README.rst`](setup/README.rst)**
 
@@ -334,13 +335,13 @@ The frontend is configured for deployment to Vercel with zero configuration.
 
 ---
 
-## Feedback Log
+## 📋 Feedback Overview
 
 Check out [`feedback/README.rst`](feedback/README.rst) to see how we address each issue. Please provide us more feedback
 
 ---
 
-## Inspiration and Disclosures
+## 💡 Inspiration and Disclosures
 
 The logo image is inspired by [FREEP!K](https://www.freepik.com/premium-vector/tree-with-lines-dots-vector-design-ai-generate_328598955.htm) and referenced by similar generated images. 
 
@@ -350,7 +351,28 @@ We also incorporated AI generated images for demonstration purpose for our propo
 
 We draft task descriptions and example prompts for the three scenarios and ask AI to suggest a standardized protocol structure to ensure consistency across tools.  
 
-All AI-generated content was **critically reviewed, edited, and adapted by human team members** before inclusion.  
+All AI-generated content was **critically reviewed, edited, and adapted by human team members** before inclusion.
+
+---
+
+## 📚 Documentation & Resources
+
+### Getting Started
+- 🚀 [Quick Start Guide](#-quick-start) - Jump to setup instructions above
+- 📖 [Complete Setup Guide](setup/README.rst) - Comprehensive setup instructions
+- 🗄️ [Neo4j Database Setup](setup/NEO4J_SETUP.md) - Graph database configuration
+- 📋 [Feedback & Issues](feedback/README.rst) - How we address issues
+
+### Deployment Options
+- 🚂 [Railway Deployment](RAILWAY_DEPLOYMENT.md) - Deploy to Railway platform
+- 🎨 [Render Deployment](RENDER_DEPLOYMENT.md) - Deploy to Render platform
+
+### Project Resources
+- 📊 [Architecture Diagram](docs/architecture/architecture.png) - System architecture overview
+- 🏠 [Landing Page](/) - Visit the application
+- 👨‍💻 [GitHub Repository](https://github.com/SALT-Lab-Human-AI/project-check-point-1-NOODEIA) - Source code and issues
+
+---
 
 ## 📝 License
 
