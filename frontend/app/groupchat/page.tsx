@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Users } from 'lucide-react'
+import { ArrowLeft, Plus, Users, Home } from 'lucide-react'
 import GroupChatList from '@/components/GroupChatList'
 import GroupChat from '@/components/GroupChat'
 import GroupChatAccessModal from '@/components/GroupChatAccessModal'
@@ -186,11 +186,11 @@ export default function GroupChatPage() {
           <div className="flex h-14 items-center justify-between border-b px-4 dark:border-zinc-800">
             <h2 className="text-lg font-semibold">Group Chats</h2>
             <button
-              onClick={() => router.push('/ai')}
+              onClick={() => router.push('/home')}
               className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              title="Back to AI Tutor"
+              title="Homepage"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <Home className="h-5 w-5" />
             </button>
           </div>
 
@@ -205,20 +205,20 @@ export default function GroupChatPage() {
           <div className="border-t dark:border-zinc-800">
             <div className="px-4 py-2">
               <button
-                onClick={() => router.push('/ai')}
-                className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-zinc-100 px-4 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to AI Tutor
-              </button>
-            </div>
-            <div className="px-4 pb-2">
-              <button
                 onClick={() => setShowAccessModal(true)}
                 className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
               >
                 <Plus className="h-4 w-4" />
                 Join or Create Group
+              </button>
+            </div>
+            <div className="px-4 pb-2">
+              <button
+                onClick={() => router.push('/home')}
+                className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-zinc-100 px-4 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+              >
+                <Home className="h-4 w-4" />
+                Homepage
               </button>
             </div>
           </div>

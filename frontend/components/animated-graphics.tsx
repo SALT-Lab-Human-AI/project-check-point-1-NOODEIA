@@ -25,7 +25,6 @@ export function FloatingElements() {
 
         const sizes = ["w-6 h-6", "w-8 h-8", "w-10 h-10", "w-12 h-12", "w-14 h-14", "w-16 h-16", "w-20 h-20"]
 
-        // More distributed positions for better coverage in a smaller section
         const positions = [
           { x: "5%", y: "15%" },
           { x: "15%", y: "70%" },
@@ -52,9 +51,9 @@ export function FloatingElements() {
                 top: positions[i].y,
                 width: 0,
                 height: 0,
-                borderLeft: "15px solid transparent",
-                borderRight: "15px solid transparent",
-                borderBottom: `25px solid rgba(${i % 2 === 0 ? '251, 191, 36' : i % 3 === 0 ? '34, 197, 94' : '249, 115, 22'}, 0.2)`,
+                borderLeft: "18px solid transparent",
+                borderRight: "18px solid transparent",
+                borderBottom: `30px solid rgba(${i % 2 === 0 ? '251, 191, 36' : i % 3 === 0 ? '34, 197, 94' : '249, 115, 22'}, 0.7)`,
               }}
               initial={{
                 rotate: 0,
@@ -63,14 +62,14 @@ export function FloatingElements() {
               }}
               animate={{
                 rotate: [0, 360],
-                scale: [0.5, 1, 0.8, 1.2, 0.5],
-                opacity: [0.15, 0.25, 0.35, 0.25, 0.15],
+                scale: [0.6, 1.1, 0.9, 1.3, 0.6],
+                opacity: [0.5, 0.7, 0.9, 0.7, 0.5],
               }}
               transition={{
-                duration: 8 + (i * 0.5),
+                duration: 8 + (i * 1),
                 repeat: Number.POSITIVE_INFINITY,
                 ease: "easeInOut",
-                delay: i * 0.1,
+                delay: i * 0.2,
               }}
             />
           )
@@ -94,14 +93,121 @@ export function FloatingElements() {
             }}
             animate={{
               rotate: [0, 360],
-              scale: [0.5, 1, 0.8, 1.2, 0.5],
-              opacity: [0.15, 0.25, 0.35, 0.25, 0.15],
+              scale: [0.6, 1.1, 0.9, 1.3, 0.6],
+              opacity: [0.5, 0.7, 0.9, 0.7, 0.5],
             }}
             transition={{
-              duration: 8 + (i * 0.5),
+              duration: 8 + (i * 1),
               repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut",
-              delay: i * 0.1,
+              delay: i * 0.2,
+            }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+// Floating elements for logo section - only left and center positions (no right side)
+export function FloatingElementsLeftCenter() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Floating geometric shapes - left and center only */}
+      {[...Array(12)].map((_, i) => {
+        const colors = [
+          "from-yellow-400/20 to-orange-400/20",
+          "from-orange-400/20 to-red-400/20",
+          "from-green-400/20 to-emerald-400/20",
+          "from-lime-400/20 to-green-400/20",
+          "from-amber-400/20 to-yellow-400/20",
+          "from-emerald-400/20 to-teal-400/20",
+          "from-indigo-400/20 to-purple-400/20",
+          "from-pink-400/20 to-rose-400/20",
+          "from-blue-400/20 to-cyan-400/20",
+          "from-violet-400/20 to-fuchsia-400/20",
+        ]
+
+        const shapeTypes = ["circle", "square", "triangle", "circle", "square"]
+        const currentShape = shapeTypes[i % shapeTypes.length]
+
+        const sizes = ["w-6 h-6", "w-8 h-8", "w-10 h-10", "w-12 h-12", "w-14 h-14", "w-16 h-16", "w-20 h-20"]
+
+        // Only left (5%-25%) and center (30%-50%) positions - NO right side
+        const positions = [
+          { x: "5%", y: "15%" },
+          { x: "15%", y: "70%" },
+          { x: "10%", y: "45%" },
+          { x: "25%", y: "25%" },
+          { x: "45%", y: "15%" },
+          { x: "35%", y: "55%" },
+          { x: "20%", y: "80%" },
+          { x: "40%", y: "65%" },
+          { x: "30%", y: "35%" },
+          { x: "12%", y: "55%" },
+          { x: "50%", y: "75%" },
+          { x: "8%", y: "30%" },
+        ]
+
+        if (currentShape === "triangle") {
+          return (
+            <motion.div
+              key={i}
+              className="absolute"
+              style={{
+                left: positions[i].x,
+                top: positions[i].y,
+                width: 0,
+                height: 0,
+                borderLeft: "15px solid transparent",
+                borderRight: "15px solid transparent",
+                borderBottom: `25px solid rgba(${i % 2 === 0 ? '251, 191, 36' : i % 3 === 0 ? '34, 197, 94' : '249, 115, 22'}, 0.5)`,
+              }}
+              initial={{
+                rotate: 0,
+                scale: 0,
+                opacity: 0,
+              }}
+              animate={{
+                rotate: [0, 360],
+                scale: [0.5, 1, 0.8, 1.2, 0.5],
+                opacity: [0.3, 0.5, 0.7, 0.5, 0.3],
+              }}
+              transition={{
+                duration: 8 + (i * 1),
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+                delay: i * 0.2,
+              }}
+            />
+          )
+        }
+
+        const shapeClass = currentShape === "circle" ? "rounded-full" : "rounded-lg"
+
+        return (
+          <motion.div
+            key={i}
+            className={`absolute ${sizes[i % sizes.length]} bg-gradient-to-br ${colors[i % colors.length]} ${shapeClass}`}
+            style={{
+              left: positions[i].x,
+              top: positions[i].y,
+            }}
+            initial={{
+              rotate: 0,
+              scale: 0,
+              opacity: 0,
+            }}
+            animate={{
+              rotate: [0, 360],
+              scale: [0.5, 1, 0.8, 1.2, 0.5],
+              opacity: [0.3, 0.5, 0.7, 0.5, 0.3],
+            }}
+            transition={{
+              duration: 8 + (i * 1),
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "easeInOut",
+              delay: i * 0.2,
             }}
           />
         )
@@ -169,41 +275,59 @@ export function ThinkingBubbles({ className = "" }: { className?: string }) {
 
 export function AnimatedBackground() {
   return (
-    <div className="fixed inset-0 -z-20">
-      {/* Animated gradient blobs */}
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      {/* Animated gradient blobs with increased visibility */}
       <div className="absolute inset-0">
         <motion.div
-          className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-gradient-to-r from-yellow-400/30 to-orange-400/30 blur-3xl"
+          className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-yellow-400/50 to-orange-400/50 blur-[100px]"
+          initial={{
+            x: -100,
+            y: -100,
+            scale: 1,
+          }}
           animate={{
-            x: [0, 30, 0],
+            x: [-100, -50, -100],
+            y: [-100, -50, -100],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute top-20 right-0 w-[600px] h-[600px] rounded-full bg-gradient-to-r from-green-400/50 to-lime-400/50 blur-[120px]"
+          initial={{
+            x: 100,
+            y: 0,
+            scale: 1,
+          }}
+          animate={{
+            x: [100, 50, 100],
             y: [0, 50, 0],
+            scale: [1, 1.3, 1],
           }}
           transition={{
-            duration: 15,
+            duration: 18,
             repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
         />
         <motion.div
-          className="absolute top-40 right-10 w-80 h-80 rounded-full bg-gradient-to-r from-green-400/30 to-lime-400/30 blur-3xl"
+          className="absolute bottom-0 left-1/3 w-[550px] h-[550px] rounded-full bg-gradient-to-r from-orange-400/50 to-red-400/50 blur-[110px]"
+          initial={{
+            x: 0,
+            y: 100,
+            scale: 1,
+          }}
           animate={{
-            x: [0, -40, 0],
-            y: [0, 30, 0],
+            x: [0, 60, 0],
+            y: [100, 50, 100],
+            scale: [1, 1.25, 1],
           }}
           transition={{
-            duration: 12,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-20 left-40 w-72 h-72 rounded-full bg-gradient-to-r from-orange-400/30 to-red-400/30 blur-3xl"
-          animate={{
-            x: [0, 50, 0],
-            y: [0, -40, 0],
-          }}
-          transition={{
-            duration: 10,
+            duration: 16,
             repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}

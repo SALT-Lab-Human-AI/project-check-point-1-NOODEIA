@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, X, PanelLeftClose, PanelLeftOpen, Edit2, Check, MessageSquare, Users, Trash2 } from "lucide-react"
+import { Plus, X, PanelLeftClose, PanelLeftOpen, Edit2, Check, MessageSquare, Users, Trash2, Home } from "lucide-react"
 import { useRouter } from "next/navigation"
 import ConversationRow from "./ConversationRow"
 import ThemeToggle from "./ThemeToggle"
@@ -196,14 +196,14 @@ export default function Sidebar({
             </div>
             <div className="px-4 pb-2">
               <button
-                onClick={() => router.push('/groupchat')}
+                onClick={() => router.push('/home')}
                 className={`flex h-10 w-full items-center gap-2 rounded-xl glass-button glass-button-light px-4 ${
                   collapsed ? "justify-center" : "justify-center"
                 }`}
-                title={collapsed ? "New Group Chat" : undefined}
+                title={collapsed ? "Homepage" : undefined}
               >
-                <Users className="h-4 w-4" />
-                {!collapsed && "Group Chat"}
+                <Home className="h-4 w-4" />
+                {!collapsed && "Homepage"}
               </button>
             </div>
           </div>

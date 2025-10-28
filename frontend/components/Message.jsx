@@ -23,29 +23,33 @@ export default function Message({ role, children, currentUser }) {
         )}
 <div
   className={cls(
-    "relative max-w-[80%] rounded-2xl px-3 py-2 text-lg font-patrick shadow-sm",
-
+    "relative max-w-[80%] rounded-2xl px-3 py-2 text-lg font-patrick overflow-hidden",
+    // Glass morphism styling matching GamificationBar
+    "bg-white/10 backdrop-blur-lg shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/20",
     isUser
       ? [
-          "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900",
+          "text-zinc-900 dark:text-white",
           "after:content-[''] after:absolute after:top-3 after:-right-2",
           "after:border-y-[8px] after:border-y-transparent after:border-l-[10px]",
-          "after:border-l-zinc-900 dark:after:border-l-white",
+          "after:border-l-white/10",
         ].join(" ")
       : [
-
-          "bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800",
-
+          "text-zinc-900 dark:text-zinc-100",
           "before:content-[''] before:absolute before:top-3 before:-left-[11px]",
           "before:border-y-[9px] before:border-y-transparent before:border-r-[11px]",
-          "before:border-r-zinc-200 dark:before:border-r-zinc-800",
+          "before:border-r-white/20",
 
           "after:content-[''] after:absolute after:top-3 after:-left-[10px]",
           "after:border-y-[8px] after:border-y-transparent after:border-r-[10px]",
-          "after:border-r-white dark:after:border-r-zinc-900",
+          "after:border-r-white/10",
         ].join(" ")
       )}
         >
+        {/* Glass overlay - matching GamificationBar */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+
+        {/* Content wrapper with relative positioning */}
+        <div className="relative">
           {hasActions ? (
             // User message with edit/resend actions - render as is
             children
@@ -76,6 +80,7 @@ export default function Message({ role, children, currentUser }) {
               )}
             </>
           )}
+        </div>
         </div>
         {isUser && (
           <UserAvatar

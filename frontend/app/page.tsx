@@ -22,6 +22,7 @@ import { NoodeiaLogo } from "@/components/noodeia-logo"
 import {
   AnimatedBackground,
   FloatingElements,
+  FloatingElementsLeftCenter,
   ThinkingBubbles,
 } from "@/components/animated-graphics"
 import { LogoCarousel } from "@/components/LogoCarousel"
@@ -68,7 +69,7 @@ export default function HomePage() {
 
   const handleStartLearning = () => {
     if (isAuthenticated) {
-      router.push("/ai")
+      router.push("/home")
     } else {
       router.push("/login")
     }
@@ -144,7 +145,8 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section - Full height first page */}
-      <section className="w-full min-h-screen flex items-center py-12 md:py-16 lg:py-20 xl:py-24 relative z-10">
+      <section className="w-full min-h-screen flex items-center py-12 md:py-16 lg:py-20 xl:py-24 relative z-10 overflow-hidden">
+        <FloatingElements />
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col items-center">
             {/* Text content - centered */}
@@ -234,7 +236,7 @@ export default function HomePage() {
       {/* Logo Carousel - Partnered Institutions Section (Smaller height) */}
       <section className="w-full py-12 md:py-16 lg:py-20 bg-white/30 relative z-10 overflow-hidden">
         <div className="absolute inset-0">
-          <FloatingElements />
+          <FloatingElementsLeftCenter />
         </div>
         <motion.div
           initial={{ opacity: 0, y: 30 }}

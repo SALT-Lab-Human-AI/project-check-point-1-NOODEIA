@@ -28,8 +28,8 @@ export default function LoginPage() {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
-          // User is already logged in, redirect to AI interface
-          router.push("/ai")
+          // User is already logged in, redirect to home dashboard
+          router.push("/home")
         }
       } catch (error) {
         console.error("Error checking auth:", error)
@@ -62,8 +62,8 @@ export default function LoginPage() {
         if (error) throw error
 
         if (data.user) {
-          // Redirect to AI tutor after successful signup
-          router.push("/ai")
+          // Redirect to home dashboard after successful signup
+          router.push("/home")
         }
       } else {
         // Sign in
@@ -75,8 +75,8 @@ export default function LoginPage() {
         if (error) throw error
 
         if (data.user) {
-          // Redirect to AI tutor after successful login
-          router.push("/ai")
+          // Redirect to home dashboard after successful login
+          router.push("/home")
         }
       }
     } catch (err: any) {

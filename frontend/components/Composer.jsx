@@ -64,8 +64,11 @@ export default function Composer({ onSend, busy, xpGain }) {
   const disabled = busy || sending || !value.trim()
 
   return (
-    <form onSubmit={handleSubmit} className="border-t p-3 sm:p-4 dark:border-zinc-800 flex-shrink-0">
-      <div className="mx-auto max-w-3xl">
+    <form onSubmit={handleSubmit} className="relative p-3 sm:p-4 flex-shrink-0 bg-white/10 backdrop-blur-lg shadow-[0_4px_12px_rgba(0,0,0,0.1)] border-t border-white/20 overflow-hidden">
+      {/* Glass overlay - matching GamificationBar */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+
+      <div className="relative mx-auto max-w-3xl">
         <div className="flex items-end gap-2">
           <textarea
             ref={inputRef}
