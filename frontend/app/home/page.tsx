@@ -22,7 +22,6 @@ import {
   Trophy,
   Home,
   LayoutGrid,
-  Bell,
   User,
   Settings
 } from 'lucide-react';
@@ -352,15 +351,15 @@ export default function HomePage() {
                 <span className="text-[9px] font-medium text-gray-500">Menu</span>
               </button>
 
-              {/* Notifications */}
+              {/* Achievements */}
               <button
+                onClick={() => router.push('/achievements')}
                 className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
               >
                 <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">
-                  <Bell size={18} className="text-gray-500 group-active:text-gray-700 transition-colors" />
-                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-gradient-to-br from-pink-500 to-red-500 rounded-full shadow-lg animate-pulse" />
+                  <Trophy size={18} className="text-gray-500 group-active:text-gray-700 transition-colors" />
                 </div>
-                <span className="text-[9px] font-medium text-gray-500">Alerts</span>
+                <span className="text-[9px] font-medium text-gray-500">Rewards</span>
               </button>
 
               {/* Profile */}
