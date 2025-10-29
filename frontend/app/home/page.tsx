@@ -359,7 +359,7 @@ export default function HomePage() {
                 <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">
                   <Trophy size={18} className="text-gray-500 group-active:text-gray-700 transition-colors" />
                 </div>
-                <span className="text-[9px] font-medium text-gray-500">Rewards</span>
+                <span className="text-[9px] font-medium text-gray-500">Achievements</span>
               </button>
 
               {/* Profile */}

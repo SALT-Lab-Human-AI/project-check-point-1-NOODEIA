@@ -124,7 +124,7 @@ export default function AchievementsPage() {
           <PuffyCard color="yellow" size="sm" onClick={undefined}>
             <div className="text-center">
               <Zap className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
-              <div className="text-3xl font-black text-yellow-900">{stats?.currentXP || 0}</div>
+              <div className="text-3xl font-black text-yellow-900">{Math.round(stats?.currentXP || 0)}</div>
               <div className="text-xs font-bold text-yellow-700">Total XP</div>
             </div>
           </PuffyCard>
