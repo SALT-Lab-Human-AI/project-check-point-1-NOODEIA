@@ -203,7 +203,7 @@ export default function HomePage() {
 
               {/* Title */}
               <h3 className="text-lg font-black text-purple-900 mb-1">
-                AI Tutor
+                Ask Noodeia
               </h3>
 
               {/* Progress Text */}
