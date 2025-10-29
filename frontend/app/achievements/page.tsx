@@ -4,7 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { PuffyCard } from '@/components/PuffyComponents';
-import { ArrowLeft, Trophy, Flame, Zap, Award, Target, Star } from 'lucide-react';
+import { Trophy, Flame, Zap, Award, Target, Star, Home, LayoutGrid, User, Settings } from 'lucide-react';
+import UserAvatar from '@/components/UserAvatar';
+import UserSettingsModal from '@/components/UserSettingsModal';
 
 interface QuizStats {
   totalQuizzes: number;
@@ -33,9 +35,32 @@ export default function AchievementsPage() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<QuizStats | null>(null);
   const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
+  const [showNavBar, setShowNavBar] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   useEffect(() => {
     checkAuth();
+  }, []);
+
+  // Scroll detection for bottom nav bar
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight;
+      const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+
+      // Only show nav bar if there's scrollable content AND user is at the very bottom
+      const hasScrollableContent = scrollHeight > clientHeight;
+      const isAtBottom = distanceFromBottom < 5;
+
+      setShowNavBar(hasScrollableContent && isAtBottom);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const checkAuth = async () => {
@@ -47,12 +72,34 @@ export default function AchievementsPage() {
       }
       setUser(session.user);
       await fetchAchievements(session.user.id);
+      await fetchUserProfile(session.user.id);
     } catch (error) {
       console.error('Auth error:', error);
       router.push('/login');
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/user/profile?userId=${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentUser(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+    }
+  };
+
+  const handleUpdateUser = async (updatedUser: any) => {
+    setCurrentUser((prev: any) => ({
+      ...prev,
+      ...updatedUser,
+      xp: prev?.xp,
+      level: prev?.level
+    }));
   };
 
   const fetchAchievements = async (userId: string) => {
@@ -89,24 +136,14 @@ export default function AchievementsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 p-6 pb-24">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <button
-            onClick={() => router.push('/home')}
-            className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-lg rounded-full shadow-md hover:shadow-lg transition-all"
-          >
-            <ArrowLeft size={20} />
-            <span className="font-semibold">Back</span>
-          </button>
-
+        <div className="flex items-center justify-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent flex items-center gap-2">
             <Trophy className="w-8 h-8 text-yellow-600" />
             Achievements
           </h1>
-
-          <div className="w-20" />
         </div>
 
         {/* Stats Cards Grid */}
@@ -245,6 +282,77 @@ export default function AchievementsPage() {
           </PuffyCard>
         )}
       </div>
+
+      {/* Bottom Navigation Bar - Animated Liquid Glass (appears on scroll to bottom) */}
+      <div
+        className={`fixed bottom-0 left-0 right-0 pb-safe transition-all duration-300 ${
+          showNavBar ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+        }`}
+      >
+        <div className="max-w-md mx-auto px-4 pb-4">
+          <div className="relative bg-white/15 backdrop-blur-2xl rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.12),inset_0_1px_2px_rgba(255,255,255,0.3)] border border-white/20 overflow-hidden">
+            {/* Glass morphism overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-white/5 pointer-events-none" />
+
+            <div className="relative flex items-center justify-around px-4 py-2.5">
+              {/* Home */}
+              <button
+                onClick={() => router.push('/home')}
+                className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
+              >
+                <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">
+                  <Home size={18} className="text-gray-500 group-active:text-gray-700 transition-colors" />
+                </div>
+                <span className="text-[9px] font-medium text-gray-500">Home</span>
+              </button>
+
+              {/* Grid/Dashboard */}
+              <button
+                onClick={() => router.push('/home')}
+                className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
+              >
+                <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">
+                  <LayoutGrid size={18} className="text-gray-500 group-active:text-gray-700 transition-colors" />
+                </div>
+                <span className="text-[9px] font-medium text-gray-500">Menu</span>
+              </button>
+
+              {/* Achievements - Active State */}
+              <button
+                onClick={() => router.push('/achievements')}
+                className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
+              >
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/40 to-orange-200/40 rounded-xl blur-md opacity-50 group-active:opacity-70 transition-opacity" />
+                  <div className="relative bg-gradient-to-br from-yellow-100/60 to-orange-200/60 p-2 rounded-xl shadow-md transform group-active:scale-95 transition-transform backdrop-blur-sm">
+                    <Trophy size={18} className="text-orange-400" strokeWidth={2.5} />
+                  </div>
+                </div>
+                <span className="text-[9px] font-bold text-orange-400">Achievements</span>
+              </button>
+
+              {/* Profile */}
+              <button
+                onClick={() => setSettingsModalOpen(true)}
+                className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
+              >
+                <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">
+                  <User size={18} className="text-gray-500 group-active:text-gray-700 transition-colors" />
+                </div>
+                <span className="text-[9px] font-medium text-gray-500">Profile</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* User Settings Modal */}
+      <UserSettingsModal
+        isOpen={settingsModalOpen}
+        onClose={() => setSettingsModalOpen(false)}
+        currentUser={currentUser}
+        onUpdateUser={handleUpdateUser}
+      />
     </div>
   );
 }

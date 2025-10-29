@@ -432,15 +432,17 @@ export default function QuizPage() {
     }
 
     // Move to next question or end quiz
-    setTimeout(() => {
-      if (currentQuestionIndex < questions.length - 1) {
+    if (currentQuestionIndex < questions.length - 1) {
+      // Delay before next question (for answer feedback)
+      setTimeout(() => {
         setCurrentQuestionIndex(prev => prev + 1);
         setSelectedAnswer(null);
         setIsCorrect(null);
-      } else {
-        endQuiz();
-      }
-    }, 1500);
+      }, 1500);
+    } else {
+      // Immediately jump to result page on last question
+      endQuiz();
+    }
   };
 
   const endQuiz = async () => {
