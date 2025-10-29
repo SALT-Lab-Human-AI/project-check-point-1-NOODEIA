@@ -4,9 +4,9 @@ import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'NOODIEA',
+  title: 'NOODEIA',
   description: 'AI Tutor',
-  generator: 'NOODIEA',
+  generator: 'NOODEIA',
 }
 
 export const viewport: Viewport = {

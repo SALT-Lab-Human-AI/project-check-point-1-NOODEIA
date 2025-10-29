@@ -1,4 +1,4 @@
-# Get Familiar With NOODIEA AI 
+# Get Familiar With NOODEIA AI 
 Our project has a simple and bright user interface, designed for kids to be able to use and understand. It starts with the teacher, who can easily log into the screens and set up the computers for the students. From here, there are a number of options students can choose from, including starting a new chat, creating a group chat, and using scratch paper.
 
 We chose a darker theme to make the words stand out against the background. Words are large to make them easier for kids to read. AI outputs are simple and easy to understand.
@@ -15,18 +15,18 @@ For logging back in after making an account, the user only needs their name and 
 For logging out, we implemented a button in the top right corner. This button uses a common logging out symbol, which may already be familiar to kids. The button quickly and automatically logs the user out.
 ![Log Out Demonstration](../inProgress/demo3.gif)
 
-## NOODIEA AI Tutor Demonstration
+## NOODEIA AI Tutor Demonstration
 In the bottom left hand corner after logging in there’s a white button labeled “New Chat”. This button stands out against the background and when it’s pressed, it pops open a chat window with the AI tutor.
 
 From here, users can ask a wide range of questions to our specially-crafted chatbot. In this example, we tell the AI that we’re stuck on a problem, and it offers help — without giving away the answer. Many chatbots we tested simply gave away the answer when prompted, whereas ours is designed to teach and guide the user step-by-step. 
 
 In our demonstrated example, the user asks whether the answer they give is correct, and the AI asks for a more specific reasoning as to how the user arrived at that answer.
 
-![NOODIEA AI Tutor](../inProgress/demo4.gif)
+![NOODEIA AI Tutor](../inProgress/demo4.gif)
 
-## NOODIEA AI Tutor In Group Chat Demonstration
+## NOODEIA AI Tutor In Group Chat Demonstration
 While in a group chat, students can tag the AI tutor and ask it to answer any questions they may have. 
-![NOODIEA AI Tutor In Group Chat](../inProgress/demo7.gif)
+![NOODEIA AI Tutor In Group Chat](../inProgress/demo7.gif)
 
 ## Scratch Paper Extension Demonstration
 Our website has a built-in scratch paper tool. Students can use this tool to write, draw, or calculate whatever they need to in order to solve the problem at hand. The AI tutor will have access to the scratch paper, and use it to assess students’ work in learning how they got to their answer. This way, AI will be more personalized for each student.

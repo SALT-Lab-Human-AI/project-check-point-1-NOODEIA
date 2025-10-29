@@ -1,4 +1,4 @@
-# Explore NOODIEA Interface
+# Explore NOODEIA Interface
 
 ## Create Group Chat 
 With the group chat button, users are able to seamlessly create a new chat to discuss and solve specific homework problems or assignments together. This feature makes homework for interactive, and allows shared learning. Peers can exchange information, ways to solve the problem, and tutor each other. 
