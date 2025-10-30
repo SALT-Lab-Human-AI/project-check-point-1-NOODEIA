@@ -9,22 +9,16 @@ const supabase = createClient(
 
 export async function GET(request) {
   try {
-    // Get auth header
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader) {
-      return NextResponse.json({ error: 'No authorization header' }, { status: 401 })
-    }
+    // Get userId from query params
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('userId')
 
-    // Verify the session
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error } = await supabase.auth.getUser(token)
-
-    if (error || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
     // Get user profile from Neo4j
-    const userProfile = await neo4jDataService.getUserById(user.id)
+    const userProfile = await neo4jDataService.getUserById(userId)
 
     if (!userProfile) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })

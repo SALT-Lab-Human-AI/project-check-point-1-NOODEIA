@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabase';
 import { PuffyCard } from '@/components/PuffyComponents';
 import { Trophy, Flame, Zap, Award, Target, Star, Home, LayoutGrid, User, Settings } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
-import UserSettingsModal from '@/components/UserSettingsModal';
 
 interface QuizStats {
   totalQuizzes: number;
@@ -36,8 +35,6 @@ export default function AchievementsPage() {
   const [stats, setStats] = useState<QuizStats | null>(null);
   const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
   const [showNavBar, setShowNavBar] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -72,34 +69,12 @@ export default function AchievementsPage() {
       }
       setUser(session.user);
       await fetchAchievements(session.user.id);
-      await fetchUserProfile(session.user.id);
     } catch (error) {
       console.error('Auth error:', error);
       router.push('/login');
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const response = await fetch(`/api/user/profile?userId=${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentUser(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-    }
-  };
-
-  const handleUpdateUser = async (updatedUser: any) => {
-    setCurrentUser((prev: any) => ({
-      ...prev,
-      ...updatedUser,
-      xp: prev?.xp,
-      level: prev?.level
-    }));
   };
 
   const fetchAchievements = async (userId: string) => {
@@ -138,14 +113,6 @@ export default function AchievementsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 p-6 pb-24">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent flex items-center gap-2">
-            <Trophy className="w-8 h-8 text-yellow-600" />
-            Achievements
-          </h1>
-        </div>
-
         {/* Stats Cards Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {/* Level */}
@@ -333,7 +300,7 @@ export default function AchievementsPage() {
 
               {/* Profile */}
               <button
-                onClick={() => setSettingsModalOpen(true)}
+                onClick={() => router.push('/settings')}
                 className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
               >
                 <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">
@@ -345,14 +312,6 @@ export default function AchievementsPage() {
           </div>
         </div>
       </div>
-
-      {/* User Settings Modal */}
-      <UserSettingsModal
-        isOpen={settingsModalOpen}
-        onClose={() => setSettingsModalOpen(false)}
-        currentUser={currentUser}
-        onUpdateUser={handleUpdateUser}
-      />
     </div>
   );
 }

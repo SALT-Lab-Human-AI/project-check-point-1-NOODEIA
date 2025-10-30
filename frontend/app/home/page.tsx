@@ -3,8 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import UserAvatar from '@/components/UserAvatar';
-import UserSettingsModal from '@/components/UserSettingsModal';
 import {
   PuffyCard,
   PuffyButton,
@@ -22,18 +20,15 @@ import {
   Trophy,
   Home,
   LayoutGrid,
-  User,
-  Settings
+  User
 } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [userLevel, setUserLevel] = useState(1);
   const [userXP, setUserXP] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [showNavBar, setShowNavBar] = useState(false);
 
   useEffect(() => {
@@ -72,9 +67,6 @@ export default function HomePage() {
 
       // Fetch user's XP and level
       await fetchUserStats(session.user.id);
-
-      // Fetch user profile with icon preferences
-      await fetchUserProfile(session.user.id);
     } catch (error) {
       console.error('Auth error:', error);
       router.push('/login');
@@ -96,26 +88,6 @@ export default function HomePage() {
     }
   };
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const response = await fetch(`/api/user/profile?userId=${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentUser(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-    }
-  };
-
-  const handleUpdateUser = async (updatedUser: any) => {
-    setCurrentUser((prev: any) => ({
-      ...prev,
-      ...updatedUser,
-      xp: prev?.xp,
-      level: prev?.level
-    }));
-  };
 
   if (loading) {
     return (
@@ -129,22 +101,11 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 pb-24">
       {/* Header */}
       <div className="max-w-md mx-auto px-6 pt-8 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="w-8" />
-          {currentUser && (
-            <button
-              onClick={() => setSettingsModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-white/80 backdrop-blur-lg rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all hover:shadow-[0_6px_16px_rgba(0,0,0,0.15)] hover:scale-105"
-            >
-              <UserAvatar user={currentUser} size="sm" />
-              <Settings size={16} className="text-gray-600" />
-            </button>
-          )}
-        </div>
         <div className="pl-4">
           <p className="font-semibold mb-1" style={{ color: '#E48B41' }}>Hello {user?.user_metadata?.name || user?.email?.split('@')[0] || 'there'},</p>
-          <h1 className="text-4xl font-black text-white mb-6" style={{
-            textShadow: '0 4px 8px rgba(0,0,0,0.1)'
+          <h1 className="text-4xl font-black mb-6" style={{
+            color: 'rgba(255, 255, 255, 0.85)',
+            textShadow: '0 4px 12px rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.2)'
           }}>
             Continue Learning!
           </h1>
@@ -364,7 +325,7 @@ export default function HomePage() {
 
               {/* Profile */}
               <button
-                onClick={() => setSettingsModalOpen(true)}
+                onClick={() => router.push('/settings')}
                 className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
               >
                 <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">
@@ -376,14 +337,6 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-
-      {/* User Settings Modal */}
-      <UserSettingsModal
-        isOpen={settingsModalOpen}
-        onClose={() => setSettingsModalOpen(false)}
-        currentUser={currentUser}
-        onUpdateUser={handleUpdateUser}
-      />
     </div>
   );
 }

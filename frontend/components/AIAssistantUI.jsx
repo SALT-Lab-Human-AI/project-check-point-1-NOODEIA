@@ -6,7 +6,6 @@ import Sidebar from "./Sidebar"
 import Header from "./Header"
 import ChatPane from "./ChatPane"
 import MarkdownPanel from "./MarkdownPanel"
-import UserSettingsModal from "./UserSettingsModal"
 import { supabase } from "../lib/supabase"
 import { databaseAdapter } from "../lib/database-adapter"
 
@@ -50,7 +49,6 @@ export default function AIAssistantUI() {
   const [isThinking, setIsThinking] = useState(false)
   const [markdownPanelOpen, setMarkdownPanelOpen] = useState(false)
   const [currentMarkdown, setCurrentMarkdown] = useState("")
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [xpGain, setXpGain] = useState(0)
   const [triggerXpUpdate, setTriggerXpUpdate] = useState(0)
 
@@ -715,16 +713,6 @@ export default function AIAssistantUI() {
       <div className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: '#FDFBD4' }}>
         <Header
           onMenuClick={() => setSidebarOpen(true)}
-          currentUser={currentUser}
-          onLogout={handleLogout}
-          onMarkdownClick={() => {
-            if (!selectedId) {
-              alert('Please select or create a conversation first')
-              return
-            }
-            setMarkdownPanelOpen(true)
-          }}
-          onSettingsClick={() => setSettingsModalOpen(true)}
         />
         <main className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: '#FDFBD4' }}>
           <ChatPane
@@ -747,14 +735,6 @@ export default function AIAssistantUI() {
         userId={userId}
         initialContent={currentMarkdown}
         onSave={(content) => setCurrentMarkdown(content)}
-      />
-
-      {/* User Settings Modal */}
-      <UserSettingsModal
-        isOpen={settingsModalOpen}
-        onClose={() => setSettingsModalOpen(false)}
-        currentUser={currentUser}
-        onUpdateUser={handleUpdateUser}
       />
     </div>
   )
