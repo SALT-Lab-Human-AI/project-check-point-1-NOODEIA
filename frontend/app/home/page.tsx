@@ -268,12 +268,12 @@ export default function HomePage() {
 
               {/* Title */}
               <h3 className="text-lg font-black text-blue-900 mb-1">
-                Quiz
+                Quiz Time
               </h3>
 
               {/* Progress Text */}
               <p className="text-xs font-bold text-blue-700">
-                Coming soon
+                Test yourself
               </p>
             </div>
           </PuffyCard>

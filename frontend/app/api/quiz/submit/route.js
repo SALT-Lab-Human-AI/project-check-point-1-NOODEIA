@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { neo4jService } from '@/lib/neo4j'
 
+// FORCE RELOAD: 2025-01-30-01:35
 // POST /api/quiz/submit
 // Body: { userId, sessionId, score, totalQuestions, streak, answers }
 // Response: { canOpen, nodeType, xpEarned, oldXP, newXP, currentLevel, xpInLevel, newXpInLevel, percentage }
@@ -21,13 +22,25 @@ export async function POST(request) {
     // Calculate percentage
     const percentage = (score / totalQuestions) * 100
 
+    // Debug: Check types and values
+    console.log('🔍 LEGENDARY NODE DEBUG:')
+    console.log('  score:', score, '| type:', typeof score)
+    console.log('  totalQuestions:', totalQuestions, '| type:', typeof totalQuestions)
+    console.log('  score === totalQuestions?', score === totalQuestions)
+    console.log('  score == totalQuestions?', score == totalQuestions)
+
     // Determine node type based on performance
+    // Check exact 100% first (score === totalQuestions) to avoid any floating point issues
     let nodeType = 'common'
-    if (percentage >= 100) {
+    if (score === totalQuestions) {
+      // Perfect score - 100% accuracy
       nodeType = 'legendary'
+      console.log('  ✅ LEGENDARY assigned!')
     } else if (percentage >= 80) {
+      // 80-99% accuracy
       nodeType = 'rare'
     } else if (percentage >= 30) {
+      // 30-79% accuracy
       nodeType = 'common'
     } else {
       // Less than 30%, no node earned

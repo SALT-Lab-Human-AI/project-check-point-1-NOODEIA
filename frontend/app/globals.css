@@ -241,8 +241,7 @@
   /* Prevent page from jumping when keyboard appears */
   .chat-interface {
     min-height: 100vh;
-    min-height: -webkit-fill-available;
-    min-height: fill-available;
+    min-height: stretch;
   }
 
   /* Ensure inputs maintain proper size */
