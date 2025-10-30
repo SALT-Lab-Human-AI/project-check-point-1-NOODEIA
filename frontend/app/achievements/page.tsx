@@ -48,14 +48,16 @@ export default function AchievementsPage() {
       const clientHeight = document.documentElement.clientHeight;
       const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
 
-      // Only show nav bar if there's scrollable content AND user is at the very bottom
       const hasScrollableContent = scrollHeight > clientHeight;
       const isAtBottom = distanceFromBottom < 5;
 
-      setShowNavBar(hasScrollableContent && isAtBottom);
+      // Show nav bar if: no scrollable content OR user is at/near bottom
+      setShowNavBar(!hasScrollableContent || isAtBottom);
     };
 
     window.addEventListener('scroll', handleScroll);
+    // Check initial position immediately
+    handleScroll();
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
