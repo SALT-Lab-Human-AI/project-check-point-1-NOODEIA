@@ -43,18 +43,24 @@ export default function HomePage() {
       const clientHeight = document.documentElement.clientHeight;
       const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
 
-      const hasScrollableContent = scrollHeight > clientHeight;
-      const isAtBottom = distanceFromBottom < 5;
+      const hasScrollableContent = scrollHeight - clientHeight > 10; // More strict threshold
+      const isAtBottom = distanceFromBottom < 2; // Tighter threshold for bottom detection
 
-      // Show nav bar if: no scrollable content OR user is at/near bottom
-      setShowNavBar(!hasScrollableContent || isAtBottom);
+      // Show nav bar ONLY when at the very bottom (if scrollable) or if no scrollable content
+      setShowNavBar(!hasScrollableContent || (hasScrollableContent && isAtBottom));
     };
 
     window.addEventListener('scroll', handleScroll);
-    // Check initial position immediately
-    handleScroll();
+    window.addEventListener('resize', handleScroll);
 
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Check after a short delay to ensure proper layout calculation
+    const timer = setTimeout(handleScroll, 100);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+      clearTimeout(timer);
+    };
   }, []);
 
   const checkAuth = async () => {
