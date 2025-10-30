@@ -40,31 +40,39 @@ export default function AchievementsPage() {
     checkAuth();
   }, []);
 
-  // Scroll detection for bottom nav bar
+  // Strict scroll detection - only show at EXACT bottom when user scrolls
   useEffect(() => {
     const handleScroll = () => {
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const scrollHeight = document.documentElement.scrollHeight;
-      const clientHeight = document.documentElement.clientHeight;
+      const doc = document.documentElement;
+      const body = document.body;
+
+      // Get scroll values (different browsers use different properties)
+      const scrollTop = Math.ceil(window.scrollY ?? window.pageYOffset ?? doc.scrollTop ?? body.scrollTop ?? 0);
+      const scrollHeight = Math.max(doc.scrollHeight, body.scrollHeight);
+      const clientHeight = doc.clientHeight || window.innerHeight;
+
+      // Check if page has scrollable content (needs more than 20px to be considered scrollable)
+      const isScrollable = scrollHeight > clientHeight + 20;
+
+      // Calculate distance from bottom
       const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
 
-      const hasScrollableContent = scrollHeight - clientHeight > 10; // More strict threshold
-      const isAtBottom = distanceFromBottom < 2; // Tighter threshold for bottom detection
-
-      // Show nav bar ONLY when at the very bottom (if scrollable) or if no scrollable content
-      setShowNavBar(!hasScrollableContent || (hasScrollableContent && isAtBottom));
+      // Only show nav bar if:
+      // 1. Page is scrollable (has content that requires scrolling)
+      // 2. User is within 1px of bottom
+      setShowNavBar(isScrollable && Math.abs(distanceFromBottom) <= 1);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    // Add listeners
+    window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll);
 
-    // Check after a short delay to ensure proper layout calculation
-    const timer = setTimeout(handleScroll, 100);
+    // Don't check immediately - wait for user to scroll
+    // This prevents nav bar from showing on initial page load
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
-      clearTimeout(timer);
     };
   }, []);
 
@@ -260,7 +268,7 @@ export default function AchievementsPage() {
 
       {/* Bottom Navigation Bar - Animated Liquid Glass (appears on scroll to bottom) */}
       <div
-        className={`fixed bottom-0 left-0 right-0 pb-safe transition-all duration-300 ${
+        className={`fixed bottom-0 left-0 right-0 pb-safe z-50 transition-all duration-300 ${
           showNavBar ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
         }`}
       >

@@ -72,8 +72,8 @@ export async function POST(request) {
       )
     }
 
-    // Generate 10 questions
-    const questions = Array.from({ length: 10 }, () => generateQuestion())
+    // Generate 5 questions
+    const questions = Array.from({ length: 5 }, () => generateQuestion())
 
     // Create session ID
     const sessionId = uuidv4()

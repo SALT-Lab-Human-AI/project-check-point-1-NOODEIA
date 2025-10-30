@@ -70,31 +70,39 @@ export default function SettingsPage() {
     checkAuth()
   }, [])
 
-  // Scroll detection for bottom nav bar
+  // Strict scroll detection - only show at EXACT bottom when user scrolls
   useEffect(() => {
     const handleScroll = () => {
-      const scrollTop = window.scrollY || document.documentElement.scrollTop
-      const scrollHeight = document.documentElement.scrollHeight
-      const clientHeight = document.documentElement.clientHeight
+      const doc = document.documentElement
+      const body = document.body
+
+      // Get scroll values (different browsers use different properties)
+      const scrollTop = Math.ceil(window.scrollY ?? window.pageYOffset ?? doc.scrollTop ?? body.scrollTop ?? 0)
+      const scrollHeight = Math.max(doc.scrollHeight, body.scrollHeight)
+      const clientHeight = doc.clientHeight || window.innerHeight
+
+      // Check if page has scrollable content (needs more than 20px to be considered scrollable)
+      const isScrollable = scrollHeight > clientHeight + 20
+
+      // Calculate distance from bottom
       const distanceFromBottom = scrollHeight - (scrollTop + clientHeight)
 
-      const hasScrollableContent = scrollHeight - clientHeight > 10 // More strict threshold
-      const isAtBottom = distanceFromBottom < 2 // Tighter threshold for bottom detection
-
-      // Show nav bar ONLY when at the very bottom (if scrollable) or if no scrollable content
-      setShowNavBar(!hasScrollableContent || (hasScrollableContent && isAtBottom))
+      // Only show nav bar if:
+      // 1. Page is scrollable (has content that requires scrolling)
+      // 2. User is within 1px of bottom
+      setShowNavBar(isScrollable && Math.abs(distanceFromBottom) <= 1)
     }
 
-    window.addEventListener('scroll', handleScroll)
+    // Add listeners
+    window.addEventListener('scroll', handleScroll, { passive: true })
     window.addEventListener('resize', handleScroll)
 
-    // Check after a short delay to ensure proper layout calculation
-    const timer = setTimeout(handleScroll, 100)
+    // Don't check immediately - wait for user to scroll
+    // This prevents nav bar from showing on initial page load
 
     return () => {
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
-      clearTimeout(timer)
     }
   }, [])
 
@@ -235,16 +243,16 @@ export default function SettingsPage() {
                 <p className="text-sm text-gray-600 mt-1">
                   Level {currentUser.level} • {formatXP(currentUser.xp || 0)} XP
                 </p>
-                <div className="flex gap-2 mt-3">
+                <div className="flex flex-wrap gap-3 mt-3">
                   <button
                     onClick={() => setIsEditingAvatar(!isEditingAvatar)}
-                    className="px-4 py-2 rounded-xl glass-button glass-button-primary text-gray-800 font-medium backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300"
+                    className="h-12 px-5 rounded-lg glass-button glass-button-primary text-gray-800 font-medium backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300"
                   >
                     {isEditingAvatar ? 'Cancel' : 'Customize Avatar'}
                   </button>
                   <button
                     onClick={handleSignOut}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/80 hover:bg-red-600/80 text-white font-medium backdrop-blur-sm border border-red-400/30 transition-all duration-300"
+                    className="h-12 px-5 rounded-lg bg-red-500/80 hover:bg-red-600/80 text-white font-medium backdrop-blur-sm border border-red-400/30 transition-all duration-300 flex items-center gap-2"
                   >
                     <LogOut className="w-4 h-4" />
                     Sign Out
@@ -470,7 +478,7 @@ export default function SettingsPage() {
 
       {/* Bottom Navigation Bar - Animated Liquid Glass (appears on scroll to bottom) */}
       <div
-        className={`fixed bottom-0 left-0 right-0 pb-safe transition-all duration-300 ${
+        className={`fixed bottom-0 left-0 right-0 pb-safe z-50 transition-all duration-300 ${
           showNavBar ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
         }`}
       >
@@ -579,17 +587,25 @@ interface SettingsItemProps {
 
 function SettingsItem({ icon: Icon, label, value }: SettingsItemProps) {
   return (
-    <button className="w-full flex items-center justify-between p-3 sm:p-4 rounded-3xl hover:bg-white/10 transition-all duration-300 group backdrop-blur-sm">
+    <button
+      className="w-full rounded-lg bg-white/20 backdrop-blur-sm border border-white/30
+                 transition-all duration-300 hover:bg-white/30
+                 h-16 px-4 flex items-center justify-between group"
+    >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-all duration-300 backdrop-blur-sm border border-white/20">
-          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-800 drop-shadow-md" />
+        <div className="w-11 h-11 rounded-full bg-white/25 border border-white/30
+                        flex items-center justify-center">
+          <Icon className="w-5 h-5 text-gray-800 drop-shadow" />
         </div>
         <div className="text-left">
-          <span className="font-medium text-gray-800 drop-shadow-md block text-sm sm:text-base">{label}</span>
-          {value && <span className="text-xs sm:text-sm text-gray-600">{value}</span>}
+          <span className="block text-sm sm:text-base font-medium text-gray-800">{label}</span>
+          {value && <span className="block text-xs sm:text-sm text-gray-600">{value}</span>}
         </div>
       </div>
-      <ChevronLeft className="w-5 h-5 text-gray-600 group-hover:text-gray-800 group-hover:-translate-x-1 transition-all duration-300 drop-shadow-md rotate-180" />
+
+      <ChevronLeft
+        className="w-5 h-5 text-gray-500 rotate-180 group-hover:text-gray-700 transition-colors"
+      />
     </button>
   )
 }

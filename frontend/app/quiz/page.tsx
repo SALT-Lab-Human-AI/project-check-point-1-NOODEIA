@@ -443,7 +443,7 @@ export default function QuizPage() {
             <PuffyCard color="blue" size="lg" className="mb-6" onClick={undefined}>
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-black text-blue-900 mb-3">Earn Your Rewards</h2>
-                <p className="text-blue-700 text-lg mb-4">Answer 10 math questions and earn rewards based on your performance!</p>
+                <p className="text-blue-700 text-lg mb-4">Answer 5 math questions and earn rewards based on your performance!</p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto mb-8" style={{ perspective: '1500px' }}>
                   {/* Common Node Card */}
@@ -568,6 +568,20 @@ export default function QuizPage() {
             className="max-w-2xl mx-auto"
           >
             <PuffyCard color="blue" size="lg" onClick={undefined}>
+              {/* Back Button */}
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to exit? Your progress will be saved.')) {
+                    saveQuizProgress();
+                    setGameState('menu');
+                  }
+                }}
+                className="mb-4 flex items-center gap-2 px-4 py-2 rounded-lg glass-button glass-button-light text-gray-700 font-medium hover:bg-white/30 transition-all duration-300"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                Back to Menu
+              </button>
+
               {/* Progress Header */}
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-4">
