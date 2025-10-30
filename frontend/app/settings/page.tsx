@@ -209,7 +209,7 @@ export default function SettingsPage() {
         transition={{ duration: 0.4 }}
       >
         {/* Main Content */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-8 pb-12 space-y-6">
+        <div className="max-w-md mx-auto px-6 pt-8 pb-12 space-y-6">
 
           {/* Profile Card */}
           <motion.div

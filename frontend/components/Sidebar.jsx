@@ -4,14 +4,14 @@ import { useState } from "react"
 import { Plus, X, PanelLeftClose, PanelLeftOpen, Edit2, Check, MessageSquare, Users, Trash2, Home } from "lucide-react"
 import { useRouter } from "next/navigation"
 import ConversationRow from "./ConversationRow"
-import ThemeToggle from "./ThemeToggle"
+import ThemeCycleButton from "./ThemeCycleButton"
 import GamificationBar from "./GamificationBar"
 
 export default function Sidebar({
   open,
   onClose,
-  theme,
-  setTheme,
+  themeName,        // "cream" | "lilac" | "rose" | "sky"
+  setThemeName,
   conversations = [],
   selectedId,
   onSelect,
@@ -54,7 +54,7 @@ export default function Sidebar({
       )}
 
       <div
-        className={`fixed inset-y-0 left-0 z-50 transform bg-sidebar-cream transition-all duration-300 ease-in-out dark:bg-sidebar-dark lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 transform bg-[var(--surface-2)] border-r border-[var(--surface-2-border)] transition-all duration-300 ease-in-out lg:relative lg:translate-x-0 ${
           collapsed ? "lg:w-16" : "lg:w-80"
         } ${
           open ? "translate-x-0 w-80" : "-translate-x-full"
@@ -64,7 +64,12 @@ export default function Sidebar({
           <div className="flex h-14 items-center justify-between border-b px-4 dark:border-zinc-800">
             {!collapsed && <h2 className="text-lg font-semibold">Chats</h2>}
             <div className="flex items-center gap-2">
-              {!collapsed && <ThemeToggle theme={theme} setTheme={setTheme} />}
+              {!collapsed && (
+                <ThemeCycleButton
+                  currentTheme={themeName}
+                  onThemeChange={setThemeName}
+                />
+              )}
               <button
                 onClick={() => setCollapsed(!collapsed)}
                 className="hidden rounded-xl p-2 glass-icon-button lg:block"

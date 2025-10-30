@@ -11,37 +11,32 @@ import { databaseAdapter } from "../lib/database-adapter"
 
 export default function AIAssistantUI() {
   const router = useRouter()
-  const [theme, setTheme] = useState("light")
+  const [themeName, setThemeName] = useState("cream")   // "cream" | "lilac" | "rose" | "sky"
   const [isClient, setIsClient] = useState(false)
   const [userId, setUserId] = useState(null)
   const [currentUser, setCurrentUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
+
   useEffect(() => {
     setIsClient(true)
-    const saved = localStorage.getItem("theme")
-    if (saved) {
-      setTheme(saved)
-    } else {
-      // Always default to light mode to show cream background
-      setTheme("light")
-    }
+    const savedName = localStorage.getItem("themeName")
+    setThemeName(savedName || "cream")
   }, [])
 
   useEffect(() => {
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-    document.documentElement.setAttribute("data-theme", theme)
-    document.documentElement.style.colorScheme = theme
+    // Remove dark mode class (we only use light mode)
+    document.documentElement.classList.remove("dark")
+
+    // Apply color theme (key for CSS variables)
+    document.documentElement.setAttribute("data-theme", themeName)
+    document.documentElement.style.colorScheme = "light"
 
     if (isClient) {
-      localStorage.setItem("theme", theme)
+      localStorage.setItem("themeName", themeName)
     }
-  }, [theme, isClient])
+  }, [themeName, isClient])
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [conversations, setConversations] = useState([])
@@ -674,7 +669,7 @@ export default function AIAssistantUI() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center" style={{ backgroundColor: '#FDFBD4' }}>
+      <div className="flex h-screen items-center justify-center" style={{ backgroundColor: 'var(--app-bg)' }}>
         <div className="text-zinc-600">Loading...</div>
       </div>
     )
@@ -682,19 +677,19 @@ export default function AIAssistantUI() {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex h-screen items-center justify-center" style={{ backgroundColor: '#FDFBD4' }}>
+      <div className="flex h-screen items-center justify-center" style={{ backgroundColor: 'var(--app-bg)' }}>
         <div className="text-zinc-600">Redirecting to login...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen text-zinc-900" style={{ backgroundColor: '#FDFBD4' }}>
+    <div className="flex h-screen text-zinc-900" style={{ backgroundColor: 'var(--app-bg)' }}>
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        theme={theme}
-        setTheme={setTheme}
+        themeName={themeName}
+        setThemeName={setThemeName}
         conversations={conversations}
         selectedId={selectedId}
         onSelect={setSelectedId}
@@ -710,11 +705,11 @@ export default function AIAssistantUI() {
         }}
       />
 
-      <div className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: '#FDFBD4' }}>
+      <div className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: 'var(--app-bg)' }}>
         <Header
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: '#FDFBD4' }}>
+        <main className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: 'var(--app-bg)' }}>
           <ChatPane
             conversation={selectedConversation}
             currentUser={currentUser}

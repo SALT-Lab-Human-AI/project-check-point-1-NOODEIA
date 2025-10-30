@@ -213,7 +213,7 @@ export default function MarkdownPanel({
 
       {/* Main panel */}
       <div
-        className={`fixed ${isFullscreen ? 'inset-0' : 'top-0 right-0 h-full w-96'} bg-sidebar-cream dark:bg-sidebar-dark shadow-2xl z-50 flex flex-col transition-all duration-300 transform ${
+        className={`fixed ${isFullscreen ? 'inset-0' : 'top-0 right-0 h-full w-96'} bg-[var(--surface-2)] border-l border-[var(--surface-2-border)] shadow-2xl z-50 flex flex-col transition-all duration-300 transform ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

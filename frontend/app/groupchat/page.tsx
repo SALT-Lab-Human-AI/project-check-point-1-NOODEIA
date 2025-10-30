@@ -6,6 +6,7 @@ import { ArrowLeft, Plus, Users, Home } from 'lucide-react'
 import GroupChatList from '@/components/GroupChatList'
 import GroupChat from '@/components/GroupChat'
 import GroupChatAccessModal from '@/components/GroupChatAccessModal'
+import ThemeCycleButton from '@/components/ThemeCycleButton'
 import { supabase } from '@/lib/supabase'
 
 export default function GroupChatPage() {
@@ -15,29 +16,24 @@ export default function GroupChatPage() {
   const [groups, setGroups] = useState([])
   const [selectedGroupData, setSelectedGroupData] = useState<any>(null)
   const [authToken, setAuthToken] = useState<string>('')
-  const [theme, setTheme] = useState('light')
+  const [themeName, setThemeName] = useState('cream')  // Color theme: cream, lilac, rose, sky
   const router = useRouter()
 
   useEffect(() => {
     // Load theme from localStorage
-    const savedTheme = localStorage.getItem('theme')
+    const savedTheme = localStorage.getItem('themeName')
     if (savedTheme) {
-      setTheme(savedTheme)
-    } else if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
-      setTheme('dark')
+      setThemeName(savedTheme)
     }
   }, [])
 
   useEffect(() => {
-    // Apply theme to document
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-    document.documentElement.setAttribute('data-theme', theme)
-    document.documentElement.style.colorScheme = theme
-  }, [theme])
+    // Apply theme to document (always light mode, just different colors)
+    document.documentElement.classList.remove('dark')
+    document.documentElement.setAttribute('data-theme', themeName)
+    document.documentElement.style.colorScheme = 'light'
+    localStorage.setItem('themeName', themeName)
+  }, [themeName])
 
   useEffect(() => {
     // Add chat-interface class to html and body for proper styling
@@ -173,25 +169,31 @@ export default function GroupChatPage() {
 
   if (!user) {
     return (
-      <div className="flex h-screen items-center justify-center bg-app-bg dark:bg-app-bg-dark">
+      <div className="flex h-screen items-center justify-center bg-[var(--surface-0)]">
         <div className="text-zinc-600 dark:text-zinc-400">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-app-bg text-zinc-900 dark:bg-app-bg-dark dark:text-zinc-50">
-      <div className="w-80 border-r bg-app-bg dark:border-zinc-800 dark:bg-app-bg-dark">
+    <div className="flex h-screen bg-[var(--surface-0)] text-zinc-900">
+      <div className="w-80 border-r border-[var(--surface-2-border)] bg-[var(--surface-2)]">
         <div className="flex h-full flex-col">
-          <div className="flex h-14 items-center justify-between border-b px-4 dark:border-zinc-800">
+          <div className="flex h-14 items-center justify-between border-b border-[var(--surface-2-border)] px-4">
             <h2 className="text-lg font-semibold">Group Chats</h2>
-            <button
-              onClick={() => router.push('/home')}
-              className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              title="Homepage"
-            >
-              <Home className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <ThemeCycleButton
+                currentTheme={themeName}
+                onThemeChange={setThemeName}
+              />
+              <button
+                onClick={() => router.push('/home')}
+                className="rounded-lg p-2 hover:bg-black/10"
+                title="Homepage"
+              >
+                <Home className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-2">
@@ -202,11 +204,11 @@ export default function GroupChatPage() {
             />
           </div>
 
-          <div className="border-t dark:border-zinc-800">
+          <div className="border-t border-[var(--surface-2-border)]">
             <div className="px-4 py-2">
               <button
                 onClick={() => setShowAccessModal(true)}
-                className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 text-white hover:bg-zinc-800"
               >
                 <Plus className="h-4 w-4" />
                 Join or Create Group
@@ -215,7 +217,7 @@ export default function GroupChatPage() {
             <div className="px-4 pb-2">
               <button
                 onClick={() => router.push('/home')}
-                className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-zinc-100 px-4 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-zinc-100 px-4 text-zinc-900 hover:bg-zinc-200"
               >
                 <Home className="h-4 w-4" />
                 Homepage
@@ -235,9 +237,9 @@ export default function GroupChatPage() {
             onLeaveGroup={handleLeaveGroup}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-zinc-500 dark:text-zinc-400">
+          <div className="flex items-center justify-center h-full text-zinc-500">
             <div className="text-center">
-              <Users className="mx-auto h-12 w-12 mb-4 text-zinc-300 dark:text-zinc-600" />
+              <Users className="mx-auto h-12 w-12 mb-4 text-zinc-300" />
               <p>Select a group chat or create a new one</p>
             </div>
           </div>

@@ -111,8 +111,8 @@ export default function AchievementsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 p-6 pb-24">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 pb-24">
+      <div className="max-w-md mx-auto px-6 pt-6">
         {/* Stats Cards Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {/* Level */}

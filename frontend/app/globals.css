@@ -10,22 +10,23 @@
 }
 
 @layer base {
+  /* ===== Base tokens (fallback defaults) ===== */
   :root {
     --font-sans: var(--font-geist-sans);
     --font-mono: var(--font-geist-mono);
-    --background: 54 87% 91%;  /* #FDFBD4 - light cream */
+    --background: 54 87% 91%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
+    --primary: 0 62% 28%;
     --primary-foreground: 0 0% 98%;
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96.1%;
     --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
+    --accent: 310 25% 52%;
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -38,48 +39,152 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: 54 87% 91%;  /* Same as main background - #FDFBD4 */
+
+    /* Custom app colors */
+    --app-bg: #FDFBD4;
+    --sidebar-background: 54 87% 91%;
     --sidebar-foreground: 0 0% 3.9%;
-    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary: 0 62% 28%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 54 87% 85%;  /* Slightly darker for hover states */
+    --sidebar-accent: 54 87% 85%;
     --sidebar-accent-foreground: 0 0% 3.9%;
     --sidebar-border: 54 20% 80%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 0 62% 28%;
   }
-  .dark {
-    --background: 36 44% 71%;  /* #DECC9C - light beige/cream for dark mode */
+
+  /* ===== Theme: Cream/Yellow (Matches Yellow/Notes card #FEFCE8) ===== */
+  :root[data-theme="cream"] {
+    --background: 54 96% 96%;  /* #FEFCE8 - matches yellow-50 */
     --foreground: 0 0% 10%;
-    --card: 36 44% 75%;  /* Slightly lighter than background */
-    --card-foreground: 0 0% 10%;
-    --popover: 36 44% 75%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 0 0% 20%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 36 44% 65%;
-    --secondary-foreground: 0 0% 10%;
-    --muted: 36 44% 65%;
-    --muted-foreground: 0 0% 35%;
-    --accent: 36 44% 65%;
+    --primary: 0 62% 28%;  /* Deep burgundy */
+    --primary-foreground: 0 0% 100%;
+    --accent: 42 96% 50%;  /* Yellow accent */
     --accent-foreground: 0 0% 10%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 36 44% 71%;  /* Same as main background - #DECC9C */
+
+    /* App-specific colors */
+    --app-bg: #FEFCE8;  /* Yellow-50 - chat area */
+    --sidebar-background: 54 96% 92%;  /* Slightly darker */
     --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 36 44% 65%;  /* Slightly darker for hover states */
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 36 30% 60%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 54 96% 88%;
+    --sidebar-border: 54 50% 80%;
+
+    /* Surface hierarchy */
+    --surface-0: #FEFCE8;  /* Background (lightest) */
+    --surface-1: color-mix(in oklab, #FEFCE8 100%, black 6%);  /* Chat bubbles */
+    --surface-2: color-mix(in oklab, #FEFCE8 100%, black 10%);  /* Side panels */
+    --surface-2-border: color-mix(in oklab, #FEFCE8 100%, black 14%);  /* Borders */
+  }
+
+  /* ===== Theme: Lilac/Purple (More vibrant purple) ===== */
+  :root[data-theme="lilac"] {
+    --background: 270 100% 94%;  /* #EAD9FF - more vibrant purple */
+    --foreground: 260 18% 18%;
+    --primary: 265 85% 58%;  /* Purple */
+    --primary-foreground: 0 0% 100%;
+    --accent: 270 60% 72%;  /* Light purple */
+    --accent-foreground: 260 18% 18%;
+
+    /* App-specific colors */
+    --app-bg: #EAD9FF;  /* More vibrant purple - chat area */
+    --sidebar-background: 270 100% 90%;  /* Slightly darker */
+    --sidebar-foreground: 260 18% 18%;
+    --sidebar-accent: 270 100% 86%;
+    --sidebar-border: 270 50% 78%;
+
+    /* Surface hierarchy */
+    --surface-0: #EAD9FF;  /* Background (lightest) */
+    --surface-1: color-mix(in oklab, #EAD9FF 100%, black 6%);  /* Chat bubbles */
+    --surface-2: color-mix(in oklab, #EAD9FF 100%, black 10%);  /* Side panels */
+    --surface-2-border: color-mix(in oklab, #EAD9FF 100%, black 14%);  /* Borders */
+  }
+
+  /* ===== Theme: Rose/Pink (More vibrant pink) ===== */
+  :root[data-theme="rose"] {
+    --background: 322 100% 92%;  /* #FAD1E8 - more vibrant pink */
+    --foreground: 350 16% 18%;
+    --primary: 345 82% 51%;  /* Rose red */
+    --primary-foreground: 0 0% 100%;
+    --accent: 351 95% 71%;  /* Pink */
+    --accent-foreground: 350 16% 18%;
+
+    /* App-specific colors */
+    --app-bg: #FAD1E8;  /* More vibrant pink - chat area */
+    --sidebar-background: 322 100% 88%;  /* Slightly darker */
+    --sidebar-foreground: 350 16% 18%;
+    --sidebar-accent: 322 100% 84%;
+    --sidebar-border: 322 50% 78%;
+
+    /* Surface hierarchy */
+    --surface-0: #FAD1E8;  /* Background (lightest) */
+    --surface-1: color-mix(in oklab, #FAD1E8 100%, black 6%);  /* Chat bubbles */
+    --surface-2: color-mix(in oklab, #FAD1E8 100%, black 10%);  /* Side panels */
+    --surface-2-border: color-mix(in oklab, #FAD1E8 100%, black 14%);  /* Borders */
+  }
+
+  /* ===== Theme: Sky/Blue (More blue theme) ===== */
+  :root[data-theme="sky"] {
+    --background: 214 100% 96%;  /* #E6F0FF - more true blue */
+    --foreground: 210 16% 18%;
+    --primary: 214 89% 48%;  /* Blue */
+    --primary-foreground: 0 0% 100%;
+    --accent: 214 95% 61%;  /* Light blue */
+    --accent-foreground: 210 16% 18%;
+
+    /* App-specific colors */
+    --app-bg: #E6F0FF;  /* More blue - chat area */
+    --sidebar-background: 214 100% 92%;  /* Slightly darker */
+    --sidebar-foreground: 210 16% 18%;
+    --sidebar-accent: 214 100% 88%;
+    --sidebar-border: 214 50% 82%;
+
+    /* Surface hierarchy */
+    --surface-0: #E6F0FF;  /* Background (lightest) */
+    --surface-1: color-mix(in oklab, #E6F0FF 100%, black 6%);  /* Chat bubbles */
+    --surface-2: color-mix(in oklab, #E6F0FF 100%, black 10%);  /* Side panels */
+    --surface-2-border: color-mix(in oklab, #E6F0FF 100%, black 14%);  /* Borders */
+  }
+
+  /* ===== Dark mode overrides (applied on top of any theme) ===== */
+  .dark {
+    --foreground: 0 0% 96%;
+    --card: 240 6% 12%;
+    --card-foreground: 0 0% 96%;
+    --popover: 240 6% 12%;
+    --popover-foreground: 0 0% 96%;
+    --secondary: 240 5% 20%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 240 5% 20%;
+    --muted-foreground: 0 0% 75%;
+    --border: 240 5% 26%;
+    --input: 240 5% 26%;
+  }
+
+  /* Dark mode + Cream theme */
+  .dark[data-theme="cream"] {
+    --background: 36 44% 71%;  /* #DECC9C */
+    --app-bg: #DECC9C;
+    --sidebar-background: 36 44% 65%;
+  }
+
+  /* Dark mode + Lilac theme */
+  .dark[data-theme="lilac"] {
+    --background: 265 30% 25%;  /* Dark purple */
+    --app-bg: #3D2554;
+    --sidebar-background: 265 30% 20%;
+  }
+
+  /* Dark mode + Rose theme */
+  .dark[data-theme="rose"] {
+    --background: 345 30% 25%;  /* Dark rose */
+    --app-bg: #54232E;
+    --sidebar-background: 345 30% 20%;
+  }
+
+  /* Dark mode + Sky theme */
+  .dark[data-theme="sky"] {
+    --background: 200 30% 25%;  /* Dark blue */
+    --app-bg: #1F3A54;
+    --sidebar-background: 200 30% 20%;
   }
 }
 

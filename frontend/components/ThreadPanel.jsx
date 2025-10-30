@@ -152,7 +152,7 @@ export default function ThreadPanel({
       {/* Mobile backdrop */}
       <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden" onClick={onClose} />
 
-      <div className="fixed right-0 top-0 z-50 flex h-screen w-full sm:w-96 flex-col border-l bg-sidebar-cream dark:border-zinc-800 dark:bg-sidebar-dark">
+      <div className="fixed right-0 top-0 z-50 flex h-screen w-full sm:w-96 flex-col border-l border-[var(--surface-2-border)] bg-[var(--surface-2)]">
         {/* Header */}
         <div className="flex h-14 items-center justify-between border-b px-4 dark:border-zinc-800">
           <h3 className="text-sm font-semibold">Thread</h3>

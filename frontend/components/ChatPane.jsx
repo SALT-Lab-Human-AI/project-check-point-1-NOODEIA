@@ -93,7 +93,7 @@ export default function ChatPane({
 
   if (!conversation) {
     return (
-      <div className="flex flex-1 flex-col" style={{ backgroundColor: '#FDFBD4' }}>
+      <div className="flex flex-1 flex-col" style={{ backgroundColor: 'var(--app-bg)' }}>
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
             <h2 className="text-xl font-semibold text-zinc-900">
@@ -109,11 +109,11 @@ export default function ChatPane({
   }
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 relative overflow-hidden" style={{ backgroundColor: '#FDFBD4' }}>
+    <div className="flex flex-1 flex-col min-h-0 relative overflow-hidden" style={{ backgroundColor: 'var(--app-bg)' }}>
       <div
         ref={scrollRef}
         className={styles.scrollContainer}
-        style={{ backgroundColor: '#FDFBD4' }}>
+        style={{ backgroundColor: 'var(--app-bg)' }}>
         <div className="mx-auto max-w-3xl space-y-3 sm:space-y-4">
           {messages.length === 0 ? (
             <div className="flex h-full items-center justify-center py-12">

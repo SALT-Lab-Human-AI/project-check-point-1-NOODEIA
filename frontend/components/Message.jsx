@@ -24,29 +24,41 @@ export default function Message({ role, children, currentUser }) {
 <div
   className={cls(
     "relative max-w-[80%] rounded-2xl px-3 py-2 text-lg font-patrick overflow-hidden",
-    // Glass morphism styling matching GamificationBar
-    "bg-white/10 backdrop-blur-lg shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/20",
+    "transition-all duration-300 ease-out group/bubble",
+    // Theme-aware surface with subtle glass effect
+    "bg-[var(--surface-1)]",
+    "shadow-[0_8px_32px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.05)]",
+    "border border-[var(--surface-2-border)]",
+    // Hover effects - lift and intensify shadows
+    "hover:shadow-[0_12px_40px_rgba(0,0,0,0.12),0_4px_16px_rgba(0,0,0,0.08)]",
+    "hover:-translate-y-[2px]",
     isUser
       ? [
           "text-zinc-900 dark:text-white",
+          // Speech bubble tail for user (right side)
           "after:content-[''] after:absolute after:top-3 after:-right-2",
           "after:border-y-[8px] after:border-y-transparent after:border-l-[10px]",
-          "after:border-l-white/10",
+          "after:border-l-[var(--surface-1)]",
         ].join(" ")
       : [
           "text-zinc-900 dark:text-zinc-100",
+          // Speech bubble tail for AI (left side - double layer for depth)
           "before:content-[''] before:absolute before:top-3 before:-left-[11px]",
           "before:border-y-[9px] before:border-y-transparent before:border-r-[11px]",
-          "before:border-r-white/20",
+          "before:border-r-[var(--surface-2-border)]",
 
           "after:content-[''] after:absolute after:top-3 after:-left-[10px]",
           "after:border-y-[8px] after:border-y-transparent after:border-r-[10px]",
-          "after:border-r-white/10",
+          "after:border-r-[var(--surface-1)]",
         ].join(" ")
       )}
         >
-        {/* Glass overlay - matching GamificationBar */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+        {/* Multi-layer glass overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/8 via-white/3 to-transparent pointer-events-none" />
+        {/* Shimmer highlight layer */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-transparent opacity-50 pointer-events-none" />
+        {/* Inset highlight for frosted glass effect */}
+        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
 
         {/* Content wrapper with relative positioning */}
         <div className="relative">
