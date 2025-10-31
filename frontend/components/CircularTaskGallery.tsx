@@ -56,8 +56,8 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
   // Generate a canvas-based image for each task card
   const generateTaskCardImage = async (task: Task): Promise<string> => {
     const canvas = document.createElement('canvas');
-    canvas.width = 400;
-    canvas.height = 560; // Portrait orientation
+    canvas.width = 900; // Changed to landscape/narrow format
+    canvas.height = 300; // Much narrower height for "long narrow and skinny" look
     const ctx = canvas.getContext('2d');
 
     if (!ctx) return '';
@@ -70,65 +70,64 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
     };
     const colors = gradients[task.priority] || { start: '#9ca3af', end: '#6b7280' };
 
-    // Create gradient background
-    const gradient = ctx.createLinearGradient(0, 0, 400, 560);
+    // Create gradient background - now horizontal
+    const gradient = ctx.createLinearGradient(0, 0, 900, 0);
     gradient.addColorStop(0, colors.start);
     gradient.addColorStop(1, colors.end);
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 400, 560);
+    ctx.fillRect(0, 0, 900, 300);
 
-    // Status emoji in top right
-    ctx.font = 'bold 48px Arial';
-    ctx.fillText(task.status === 'inprogress' ? '🔥' : '📝', 330, 60);
+    // Status emoji in top left
+    ctx.font = 'bold 40px Arial';
+    ctx.fillText(task.status === 'inprogress' ? '🔥' : '📝', 20, 50);
 
-    // Task title
+    // Task title - positioned after emoji, limited width to leave space for badges
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px Arial';
+    ctx.font = 'bold 28px Arial';
     ctx.textAlign = 'left';
-    const titleLines = wrapText(ctx, task.title, 360);
-    let y = 100;
+    const titleLines = wrapText(ctx, task.title, 500); // Narrower to fit horizontal layout
+    let y = 50;
     titleLines.forEach((line, i) => {
-      if (i < 3) { // Max 3 lines
-        ctx.fillText(line, 20, y);
-        y += 40;
+      if (i < 2) { // Max 2 lines for narrow card
+        ctx.fillText(line, 80, y);
+        y += 35;
       }
     });
 
-    // Task description
+    // Task description - below title, compact
     if (task.description) {
-      ctx.font = '24px Arial';
+      ctx.font = '20px Arial';
       ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      y += 20;
-      const descLines = wrapText(ctx, task.description, 360);
+      const descLines = wrapText(ctx, task.description, 500);
       descLines.forEach((line, i) => {
-        if (i < 4 && y < 420) { // Max 4 lines and stay in bounds
-          ctx.fillText(line, 20, y);
-          y += 32;
+        if (i < 2 && y < 150) { // Max 2 lines and stay in bounds
+          ctx.fillText(line, 80, y);
+          y += 28;
         }
       });
     }
 
-    // Priority badge (bottom section)
+    // Priority badge (bottom left)
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    roundRect(ctx, 20, 460, 160, 40, 20);
+    roundRect(ctx, 20, 240, 140, 35, 18);
     ctx.fill();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 20px Arial';
+    ctx.font = 'bold 18px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(`⚠️ ${task.priority.toUpperCase()}`, 100, 488);
+    ctx.fillText(`⚠️ ${task.priority.toUpperCase()}`, 90, 266);
 
-    // Due date badge
+    // Due date badge (bottom right)
     if (task.dueDate) {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-      roundRect(ctx, 20, 510, 200, 40, 20);
+      roundRect(ctx, 740, 240, 140, 35, 18);
       ctx.fill();
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 20px Arial';
+      ctx.font = 'bold 18px Arial';
       ctx.textAlign = 'center';
       const dueText = formatDueDate(task.dueDate);
-      ctx.fillText(`📅 ${dueText}`, 120, 538);
+      ctx.fillText(`📅 ${dueText}`, 810, 266);
     }
 
     return canvas.toDataURL('image/png');
@@ -231,8 +230,8 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
           </h3>
         </div>
 
-        {/* CircularGallery Container */}
-        <div style={{ height: '600px', position: 'relative' }}>
+        {/* CircularGallery Container - adjusted for narrow cards */}
+        <div style={{ height: '400px', position: 'relative' }}>
           <CircularGallery
             items={galleryItems}
             bend={3}

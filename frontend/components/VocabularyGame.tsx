@@ -145,7 +145,13 @@ interface MemoryCard {
   isMatched: boolean;
 }
 
-export default function VocabularyGame({ onBackToMenu }: { onBackToMenu?: () => void } = {}) {
+export default function VocabularyGame({
+  onBackToMenu,
+  onGameStateChange
+}: {
+  onBackToMenu?: () => void;
+  onGameStateChange?: (isActive: boolean) => void;
+} = {}) {
   // Game state
   const [gameMode, setGameMode] = useState<GameMode>('menu');
   const [showTryAgain, setShowTryAgain] = useState(false);
@@ -454,11 +460,13 @@ export default function VocabularyGame({ onBackToMenu }: { onBackToMenu?: () => 
   // Reset game
   const resetGame = () => {
     setGameMode('menu');
+    onGameStateChange?.(false); // Notify parent that game is not active
   };
 
   // Start game
   const startGame = (mode: GameMode) => {
     setGameMode(mode);
+    onGameStateChange?.(true); // Notify parent that game is active
 
     switch (mode) {
       case 'word-match':

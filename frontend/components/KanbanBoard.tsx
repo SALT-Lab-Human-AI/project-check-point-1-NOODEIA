@@ -8,7 +8,6 @@ import {
   GripVertical,
   Plus,
   Trash2,
-  ArrowLeft,
   Sparkles,
   TrendingUp,
   Calendar,
@@ -87,6 +86,28 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
   const [xpGain, setXpGain] = useState<number>(0);
   const [showXpAnimation, setShowXpAnimation] = useState(false);
   const [newlyCreatedTasks, setNewlyCreatedTasks] = useState<Set<string>>(new Set());
+
+  // Load newly created tasks from localStorage on mount
+  useEffect(() => {
+    if (userId) {
+      const savedNewlyCreated = localStorage.getItem(`newly_created_tasks_${userId}`);
+      if (savedNewlyCreated) {
+        try {
+          const taskIds = JSON.parse(savedNewlyCreated);
+          setNewlyCreatedTasks(new Set(taskIds));
+        } catch (error) {
+          console.error('Failed to load newly created tasks:', error);
+        }
+      }
+    }
+  }, [userId]);
+
+  // Save newly created tasks to localStorage whenever they change
+  useEffect(() => {
+    if (userId && newlyCreatedTasks.size >= 0) {
+      localStorage.setItem(`newly_created_tasks_${userId}`, JSON.stringify([...newlyCreatedTasks]));
+    }
+  }, [newlyCreatedTasks, userId]);
 
   // Load theme
   useEffect(() => {
@@ -226,6 +247,13 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
           body: JSON.stringify({ status: targetColumnId, userId })
         });
 
+        // Remove glow effect when task is moved to different column
+        setNewlyCreatedTasks(prev => {
+          const updated = new Set(prev);
+          updated.delete(taskId);
+          return updated;
+        });
+
         // Award XP if moved to done
         if (targetColumnId === 'done') {
           await handleTaskComplete();
@@ -277,6 +305,13 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
           : col
       )
     );
+
+    // Remove glow effect when task is deleted
+    setNewlyCreatedTasks(prev => {
+      const updated = new Set(prev);
+      updated.delete(taskId);
+      return updated;
+    });
 
     try {
       await fetch(`/api/kanban/tasks/${taskId}`, {
@@ -352,14 +387,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
           )
         );
 
-        // Remove glow after 3 seconds
-        setTimeout(() => {
-          setNewlyCreatedTasks(prev => {
-            const updated = new Set(prev);
-            updated.delete(task.id);
-            return updated;
-          });
-        }, 3000);
+        // Keep the glow effect - it will persist until task is moved or deleted
       }
     } catch (error) {
       console.error('Failed to create task:', error);
@@ -411,20 +439,12 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
       <div className="sticky top-0 z-40 bg-[var(--surface-2)] border-b border-[var(--surface-2-border)] backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push('/home')}
-                className="p-2 rounded-xl hover:bg-black/5 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2">
-                  <span className="text-2xl">✓</span>
-                  To Do List
-                </h1>
-                <p className="text-sm text-gray-600">Hey {userName}! Organize your day</p>
-              </div>
+            <div>
+              <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2">
+                <span className="text-2xl">✓</span>
+                To Do List
+              </h1>
+              <p className="text-sm text-gray-600">Hey {userName}! Organize your day</p>
             </div>
 
             <ThemeCycleButton

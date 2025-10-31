@@ -72,10 +72,7 @@ export default function SettingsPage() {
 
   // Scroll detection for bottom nav
   useEffect(() => {
-    let hasUserScrolled = false
-
     const handleScroll = () => {
-      hasUserScrolled = true
       const doc = document.documentElement
       const body = document.body
 
@@ -86,35 +83,14 @@ export default function SettingsPage() {
       const isScrollable = scrollHeight > clientHeight + 20
       const distanceFromBottom = scrollHeight - (scrollTop + clientHeight)
 
-      // Show nav bar if page is NOT scrollable (fits in viewport) OR if at bottom
-      if (!isScrollable) {
-        setShowNavBar(true) // Always show when no scrollbar
-      } else {
-        setShowNavBar(Math.abs(distanceFromBottom) <= 1) // Show only at bottom when scrollable
-      }
+      // Only show nav bar if page is scrollable AND user is at the bottom
+      setShowNavBar(isScrollable && Math.abs(distanceFromBottom) <= 1)
     }
-
-    // Delayed check to see if page is non-scrollable AFTER content loads
-    // But only if user hasn't scrolled yet
-    const checkTimer = setTimeout(() => {
-      if (!hasUserScrolled) {
-        const doc = document.documentElement
-        const scrollHeight = Math.max(doc.scrollHeight, document.body.scrollHeight)
-        const clientHeight = doc.clientHeight || window.innerHeight
-        const isScrollable = scrollHeight > clientHeight + 20
-
-        // Only show if truly not scrollable
-        if (!isScrollable) {
-          setShowNavBar(true)
-        }
-      }
-    }, 500) // Wait longer for content to render
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     window.addEventListener('resize', handleScroll)
 
     return () => {
-      clearTimeout(checkTimer)
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }

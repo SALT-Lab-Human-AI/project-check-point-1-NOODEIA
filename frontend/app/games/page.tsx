@@ -10,6 +10,7 @@ export default function GamesPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isGameActive, setIsGameActive] = useState(false); // Track if user is playing a game
 
   useEffect(() => {
     checkAuth();
@@ -49,7 +50,7 @@ export default function GamesPage() {
             className="glass-button glass-button-light flex items-center gap-2 px-4 py-2 rounded-full"
           >
             <Home size={20} />
-            <span className="font-semibold">Go back to game page</span>
+            <span className="font-semibold">{isGameActive ? 'Go back to the Game page' : 'Homepage'}</span>
           </button>
 
           <h1 className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -60,7 +61,7 @@ export default function GamesPage() {
         </div>
 
         {/* Games Content */}
-        <VocabularyGame />
+        <VocabularyGame onGameStateChange={setIsGameActive} />
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
   const [selectedThread, setSelectedThread] = useState(null)
   const [totalMessagesLoaded, setTotalMessagesLoaded] = useState(0) // Track total messages from DB
   const [xpGain, setXpGain] = useState(0)
+  const [xpTrigger, setXpTrigger] = useState(0) // Counter to trigger XP animation
   const [showXpAnimation, setShowXpAnimation] = useState(false)
   const messagesEndRef = useRef(null)
   const messagesContainerRef = useRef(null)
@@ -28,6 +29,17 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
   useEffect(() => {
     currentUserRef.current = currentUser
   }, [currentUser])
+
+  // Handle XP gain animation - triggered by xpTrigger counter to ensure it fires every time
+  useEffect(() => {
+    if (xpGain && xpGain > 0 && xpTrigger > 0) {
+      setShowXpAnimation(true)
+      const timer = setTimeout(() => {
+        setShowXpAnimation(false)
+      }, 2000) // Show for 2 seconds
+      return () => clearTimeout(timer)
+    }
+  }, [xpTrigger, xpGain])
 
   useEffect(() => {
     loadMessages()
@@ -211,12 +223,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     // Generate random XP between 1.01 and 1.75
     const xpEarned = Math.random() * 0.74 + 1.01
     setXpGain(xpEarned)
-    setShowXpAnimation(true)
-
-    // Hide animation after 2 seconds
-    setTimeout(() => {
-      setShowXpAnimation(false)
-    }, 2000)
+    setXpTrigger(prev => prev + 1) // Increment counter to trigger animation
 
     // Award XP to user (non-blocking)
     if (currentUser?.id) {
