@@ -36,10 +36,30 @@ export default function HomePage() {
 
   // Scroll detection for bottom nav
   useEffect(() => {
+    // Detect if user is on Mac
+    const detectPlatform = () => {
+      const userAgent = window.navigator.userAgent || '';
+      const platform = window.navigator.platform || '';
+      const isMacPlatform = /Mac|iPhone|iPod|iPad/i.test(platform);
+      const isMacUserAgent = /Mac OS X|macOS|Macintosh/i.test(userAgent);
+      const isMacVendor = window.navigator.vendor && /Apple/i.test(window.navigator.vendor);
+      const isIOS = /iPhone|iPad|iPod/i.test(userAgent) ||
+                    (platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+      return isMacPlatform || isMacUserAgent || isMacVendor || isIOS;
+    };
+
+    const isMac = detectPlatform();
     let hasUserScrolled = false;
+    let initialScrollPosition = window.scrollY || window.pageYOffset || 0;
 
     const handleScroll = () => {
-      hasUserScrolled = true;
+      const currentScrollPosition = window.scrollY || window.pageYOffset || 0;
+
+      // Only mark as user scrolled if they've actually moved from initial position
+      if (Math.abs(currentScrollPosition - initialScrollPosition) > 5) {
+        hasUserScrolled = true;
+      }
+
       const doc = document.documentElement;
       const body = document.body;
 
@@ -50,10 +70,21 @@ export default function HomePage() {
       const isScrollable = scrollHeight > clientHeight + 20;
       const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
 
-      // Only show nav bar if user has scrolled and either page is not scrollable or at bottom
-      if (hasUserScrolled) {
-        if (!isScrollable) {
+      if (isMac) {
+        // On Mac: Only show nav bar if user has actively scrolled AND is at bottom
+        if (hasUserScrolled && Math.abs(distanceFromBottom) <= 1) {
           setShowNavBar(true);
+        } else if (!hasUserScrolled) {
+          // Never show on initial load for Mac
+          setShowNavBar(false);
+        } else {
+          // Hide if not at bottom
+          setShowNavBar(false);
+        }
+      } else {
+        // On Windows/other: Show nav bar if page fits in viewport OR if at bottom
+        if (!isScrollable) {
+          setShowNavBar(true); // Always show when no scrollbar
         } else {
           setShowNavBar(Math.abs(distanceFromBottom) <= 1);
         }
@@ -62,15 +93,19 @@ export default function HomePage() {
 
     // Check after delay to allow content to fully render
     const timer = setTimeout(() => {
-      const doc = document.documentElement;
-      const scrollHeight = Math.max(doc.scrollHeight, document.body.scrollHeight);
-      const clientHeight = doc.clientHeight || window.innerHeight;
-      const isScrollable = scrollHeight > clientHeight + 20;
+      if (!isMac) {
+        // Only do initial check for non-Mac platforms
+        const doc = document.documentElement;
+        const scrollHeight = Math.max(doc.scrollHeight, document.body.scrollHeight);
+        const clientHeight = doc.clientHeight || window.innerHeight;
+        const isScrollable = scrollHeight > clientHeight + 20;
 
-      // If not scrollable and user has interacted, show nav bar
-      if (!isScrollable && hasUserScrolled) {
-        setShowNavBar(true);
+        // If not scrollable, show nav bar immediately for Windows users
+        if (!isScrollable) {
+          setShowNavBar(true);
+        }
       }
+      // On Mac: Never show nav bar on initial load
     }, 500);
 
     window.addEventListener('scroll', handleScroll, { passive: true });

@@ -92,6 +92,10 @@ export default function SettingsPage() {
 
     const isMac = detectPlatform()
 
+    // Track if user has actually scrolled
+    let hasUserScrolled = false
+    let initialScrollPosition = window.scrollY || window.pageYOffset || 0
+
     // Throttle scroll handler for better performance
     let scrollTimer = null
     const handleScroll = () => {
@@ -100,6 +104,13 @@ export default function SettingsPage() {
       }
 
       scrollTimer = setTimeout(() => {
+        const currentScrollPosition = window.scrollY || window.pageYOffset || 0
+
+        // Only mark as user scrolled if they've actually moved from initial position
+        if (Math.abs(currentScrollPosition - initialScrollPosition) > 5) {
+          hasUserScrolled = true
+        }
+
         const doc = document.documentElement
         const body = document.body
 
@@ -111,8 +122,16 @@ export default function SettingsPage() {
         const distanceFromBottom = scrollHeight - (scrollTop + clientHeight)
 
         if (isMac) {
-          // On Mac: Only show nav bar when scrolled to bottom (never show automatically)
-          setShowNavBar(Math.abs(distanceFromBottom) <= 1)
+          // On Mac: Only show nav bar if user has actively scrolled AND is at bottom
+          if (hasUserScrolled && Math.abs(distanceFromBottom) <= 1) {
+            setShowNavBar(true)
+          } else if (!hasUserScrolled) {
+            // Never show on initial load for Mac
+            setShowNavBar(false)
+          } else {
+            // Hide if not at bottom
+            setShowNavBar(false)
+          }
         } else {
           // On Windows/other: Show nav bar if page fits in viewport OR if at bottom
           if (!isScrollable) {
@@ -145,7 +164,10 @@ export default function SettingsPage() {
 
         const isScrollable = scrollHeight > clientHeight + 20
 
-        if (!isMac) {
+        if (isMac) {
+          // On Mac: Never show nav bar on initial load, regardless of scrollability
+          setShowNavBar(false)
+        } else {
           // On Windows/other: Show nav bar if page fits in viewport
           if (!isScrollable) {
             setShowNavBar(true)
@@ -156,7 +178,6 @@ export default function SettingsPage() {
             setShowNavBar(Math.abs(distanceFromBottom) <= 1)
           }
         }
-        // On Mac: Don't show nav bar on initial load
       })
     }
 

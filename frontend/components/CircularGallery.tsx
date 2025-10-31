@@ -139,6 +139,12 @@ interface Viewport {
   height: number;
 }
 
+interface GalleryItem {
+  image: string;
+  text: string;
+  payload?: unknown;
+}
+
 interface MediaProps {
   geometry: Plane;
   gl: GL;
@@ -154,7 +160,7 @@ interface MediaProps {
   textColor: string;
   borderRadius?: number;
   font?: string;
-  sizeFactor: number;
+  baseIndex: number;
 }
 
 class Media {
@@ -173,6 +179,7 @@ class Media {
   textColor: string;
   borderRadius: number;
   font?: string;
+  baseIndex: number;
   program!: Program;
   plane!: Mesh;
   title!: Title;
@@ -184,7 +191,6 @@ class Media {
   speed: number = 0;
   isBefore: boolean = false;
   isAfter: boolean = false;
-  sizeFactor: number;
 
   constructor({
     geometry,
@@ -201,7 +207,7 @@ class Media {
     textColor,
     borderRadius = 0,
     font,
-    sizeFactor
+    baseIndex
   }: MediaProps) {
     this.geometry = geometry;
     this.gl = gl;
@@ -217,7 +223,7 @@ class Media {
     this.textColor = textColor;
     this.borderRadius = borderRadius;
     this.font = font;
-    this.sizeFactor = sizeFactor;
+    this.baseIndex = baseIndex;
     this.createShader();
     this.createMesh();
     this.createTitle();
@@ -369,12 +375,10 @@ class Media {
       }
     }
     this.scale = this.screen.height / 1500;
-    const heightBase = 900 * this.sizeFactor;
-    const widthBase = 700 * this.sizeFactor;
-    this.plane.scale.y = (this.viewport.height * (heightBase * this.scale)) / this.screen.height;
-    this.plane.scale.x = (this.viewport.width * (widthBase * this.scale)) / this.screen.width;
+    this.plane.scale.y = (this.viewport.height * (900 * this.scale)) / this.screen.height;
+    this.plane.scale.x = (this.viewport.width * (700 * this.scale)) / this.screen.width;
     this.plane.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
-    this.padding = 1.5 * this.sizeFactor + 0.2;
+    this.padding = 2;
     this.width = this.plane.scale.x + this.padding;
     this.widthTotal = this.width * this.length;
     this.x = this.width * this.index;
@@ -382,14 +386,14 @@ class Media {
 }
 
 interface AppConfig {
-  items?: { image: string; text: string }[];
+  items?: GalleryItem[];
   bend?: number;
   textColor?: string;
   borderRadius?: number;
   font?: string;
   scrollSpeed?: number;
   scrollEase?: number;
-  sizeFactor?: number;
+  onSelect?: (item: GalleryItem, index: number) => void;
 }
 
 class App {
@@ -409,12 +413,15 @@ class App {
   scene!: Transform;
   planeGeometry!: Plane;
   medias: Media[] = [];
-  mediasImages: { image: string; text: string }[] = [];
+  mediasImages: GalleryItem[] = [];
+  baseItems: GalleryItem[] = [];
   screen!: { width: number; height: number };
   viewport!: { width: number; height: number };
   raf: number = 0;
-  sizeFactor: number;
   isHovered: boolean = false;
+  onSelect?: (item: GalleryItem, index: number) => void;
+  activeMedia: Media | null = null;
+  hasDrag: boolean = false;
 
   boundOnResize!: () => void;
   boundOnWheel!: (e: Event) => void;
@@ -437,21 +444,21 @@ class App {
       font = 'bold 30px Figtree',
       scrollSpeed = 2,
       scrollEase = 0.05,
-      sizeFactor = 1
+      onSelect
     }: AppConfig
   ) {
     document.documentElement.classList.remove('no-js');
     this.container = container;
     this.scrollSpeed = scrollSpeed;
-    this.sizeFactor = sizeFactor;
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
+    this.onSelect = onSelect;
     this.onCheckDebounce = debounce(this.onCheck.bind(this), 200);
     this.createRenderer();
     this.createCamera();
     this.createScene();
     this.onResize();
     this.createGeometry();
-    this.createMedias(items, bend, textColor, borderRadius, font, this.sizeFactor);
+    this.createMedias(items, bend, textColor, borderRadius, font);
     this.update();
     this.addEventListeners();
   }
@@ -485,14 +492,13 @@ class App {
   }
 
   createMedias(
-    items: { image: string; text: string }[] | undefined,
+    items: GalleryItem[] | undefined,
     bend: number = 1,
     textColor: string,
     borderRadius: number,
-    font: string,
-    sizeFactor: number = 1
+    font: string
   ) {
-    const defaultItems = [
+    const defaultItems: GalleryItem[] = [
       {
         image: `https://picsum.photos/seed/1/800/600?grayscale`,
         text: 'Bridge'
@@ -543,6 +549,7 @@ class App {
       }
     ];
     const galleryItems = items && items.length ? items : defaultItems;
+    this.baseItems = galleryItems;
     this.mediasImages = galleryItems.concat(galleryItems);
     this.medias = this.mediasImages.map((data, index) => {
       return new Media({
@@ -560,7 +567,7 @@ class App {
         textColor,
         borderRadius,
         font,
-        sizeFactor
+        baseIndex: index % galleryItems.length
       });
     });
   }
@@ -568,6 +575,7 @@ class App {
   onTouchDown(e: MouseEvent | TouchEvent) {
     this.isDown = true;
     this.isHovered = true;
+    this.hasDrag = false;
     this.scroll.position = this.scroll.current;
     this.start = 'touches' in e ? e.touches[0].clientX : e.clientX;
   }
@@ -581,6 +589,9 @@ class App {
     const x = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const distance = (this.start - x) * (this.scrollSpeed * 0.025);
     this.scroll.target = (this.scroll.position ?? 0) + distance;
+    if (Math.abs(distance) > 0.01) {
+      this.hasDrag = true;
+    }
   }
 
   onTouchUp(e?: MouseEvent | TouchEvent) {
@@ -588,6 +599,13 @@ class App {
     this.onCheck();
     if (e && 'touches' in e) {
       this.isHovered = false;
+    }
+    if (!this.hasDrag && this.onSelect && this.activeMedia) {
+      const baseIndex = this.activeMedia.baseIndex % this.baseItems.length;
+      const item = this.baseItems[baseIndex];
+      if (item) {
+        this.onSelect(item, baseIndex);
+      }
     }
   }
 
@@ -634,6 +652,16 @@ class App {
     const direction = this.scroll.current > this.scroll.last ? 'right' : 'left';
     if (this.medias) {
       this.medias.forEach(media => media.update(this.scroll, direction));
+      let closest: Media | null = null;
+      let minDistance = Infinity;
+      this.medias.forEach(media => {
+        const distance = Math.abs(media.plane.position.x);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closest = media;
+        }
+      });
+      this.activeMedia = closest;
     }
     this.renderer.render({ scene: this.scene, camera: this.camera });
     this.scroll.last = this.scroll.current;
@@ -686,14 +714,14 @@ class App {
 }
 
 interface CircularGalleryProps {
-  items?: { image: string; text: string }[];
+  items?: GalleryItem[];
   bend?: number;
   textColor?: string;
   borderRadius?: number;
   font?: string;
   scrollSpeed?: number;
   scrollEase?: number;
-  sizeFactor?: number;
+  onSelect?: (item: GalleryItem, index: number) => void;
 }
 
 export default function CircularGallery({
@@ -704,7 +732,7 @@ export default function CircularGallery({
   font = 'bold 30px Figtree',
   scrollSpeed = 2,
   scrollEase = 0.05,
-  sizeFactor = 0.65
+  onSelect
 }: CircularGalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -717,11 +745,12 @@ export default function CircularGallery({
       font,
       scrollSpeed,
       scrollEase,
-      sizeFactor
+      onSelect
     });
     return () => {
       app.destroy();
     };
-  }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase, sizeFactor]);
+  }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase, onSelect]);
   return <div className="w-full h-full overflow-hidden cursor-grab active:cursor-grabbing" ref={containerRef} />;
 }
+

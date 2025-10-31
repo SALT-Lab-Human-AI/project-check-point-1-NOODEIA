@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import CircularGallery from '@/components/CircularGallery';
@@ -17,10 +17,24 @@ interface ActiveTasksGalleryProps {
   userId: string;
 }
 
-const PRIORITY_GRADIENTS: Record<Task['priority'], { start: string; end: string; accent: string }> = {
-  high: { start: '#ff3d71', end: '#ff9a44', accent: '#ffe4d6' },
-  medium: { start: '#4facfe', end: '#00f2fe', accent: '#d6ecff' },
-  low: { start: '#43e97b', end: '#38f9d7', accent: '#d5fff1' }
+type TaskPriority = Task['priority'];
+
+const PRIORITY_THEMES: Record<TaskPriority, { gradient: [string, string]; accent: string; glow: string }> = {
+  high: {
+    gradient: ['#ff4d6d', '#ff9f68'],
+    accent: '#ffe3dd',
+    glow: 'rgba(255, 77, 109, 0.35)'
+  },
+  medium: {
+    gradient: ['#4facfe', '#00f2fe'],
+    accent: '#d6ecff',
+    glow: 'rgba(79, 172, 254, 0.35)'
+  },
+  low: {
+    gradient: ['#43e97b', '#38f9d7'],
+    accent: '#d4fff1',
+    glow: 'rgba(67, 233, 123, 0.35)'
+  }
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -28,11 +42,50 @@ const STATUS_LABELS: Record<string, string> = {
   inprogress: 'In Progress'
 };
 
+const FALLBACK_THEME: (typeof PRIORITY_THEMES)[TaskPriority] = PRIORITY_THEMES.medium;
+
 const textureCache = new Map<string, string>();
 
-const capitalize = (value: string) => {
-  if (!value) return '';
-  return value.charAt(0).toUpperCase() + value.slice(1);
+const clampLines = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  lineHeight: number,
+  maxLines: number
+) => {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return y;
+
+  const lines: string[] = [];
+  let current = '';
+
+  for (const word of words) {
+    const joined = current ? `${current} ${word}` : word;
+    if (ctx.measureText(joined).width > width && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = joined;
+    }
+  }
+  if (current) lines.push(current);
+
+  const limited = lines.slice(0, maxLines);
+  if (limited.length < lines.length) {
+    let last = limited[limited.length - 1];
+    while (ctx.measureText(`${last}…`).width > width && last.length > 0) {
+      last = last.slice(0, -1);
+    }
+    limited[limited.length - 1] = `${last}…`;
+  }
+
+  limited.forEach(line => {
+    ctx.fillText(line, x, y);
+    y += lineHeight;
+  });
+  return y;
 };
 
 const drawRoundedRect = (
@@ -65,86 +118,47 @@ const drawBadge = (
   background: string,
   color: string
 ) => {
-  const font = '600 26px "Figtree", "Segoe UI", sans-serif';
-  const paddingX = 24;
-  const badgeHeight = 50;
+  const font = '600 28px "Figtree", "Segoe UI", system-ui';
   ctx.font = font;
-  const textWidth = ctx.measureText(text).width;
-  const badgeWidth = textWidth + paddingX * 2;
-  drawRoundedRect(ctx, x, y, badgeWidth, badgeHeight, badgeHeight / 2);
+  const paddingX = 32;
+  const height = 60;
+  const width = ctx.measureText(text).width + paddingX * 2;
+
+  drawRoundedRect(ctx, x, y, width, height, height / 2);
   ctx.fillStyle = background;
   ctx.fill();
-  ctx.fillStyle = color;
-  const previousBaseline = ctx.textBaseline;
+
+  const prevBaseline = ctx.textBaseline;
   ctx.textBaseline = 'middle';
-  ctx.fillText(text, x + paddingX, y + badgeHeight / 2);
-  ctx.textBaseline = previousBaseline;
-  return badgeWidth;
+  ctx.fillStyle = color;
+  ctx.fillText(text, x + paddingX, y + height / 2);
+  ctx.textBaseline = prevBaseline;
+
+  return width;
 };
 
-const drawWrappedText = (
+const drawSoftCircle = (
   ctx: CanvasRenderingContext2D,
-  text: string,
   x: number,
   y: number,
-  maxWidth: number,
-  lineHeight: number,
-  maxLines: number
+  radius: number,
+  color: string
 ) => {
-  const previousBaseline = ctx.textBaseline;
-  ctx.textBaseline = 'alphabetic';
-  const words = text.trim().split(/\s+/).filter(Boolean);
-  if (!words.length) {
-    ctx.textBaseline = previousBaseline;
-    return y;
-  }
-
-  const lines: string[] = [];
-  let currentLine = '';
-
-  words.forEach(word => {
-    const candidate = currentLine ? `${currentLine} ${word}` : word;
-    if (ctx.measureText(candidate).width > maxWidth && currentLine) {
-      lines.push(currentLine);
-      currentLine = word;
-    } else {
-      currentLine = candidate;
-    }
-  });
-  if (currentLine) {
-    lines.push(currentLine);
-  }
-
-  let limited = lines;
-  if (lines.length > maxLines) {
-    limited = lines.slice(0, maxLines);
-    const lastIndex = limited.length - 1;
-    let lastLine = limited[lastIndex];
-    while (ctx.measureText(`${lastLine}…`).width > maxWidth && lastLine.length > 0) {
-      lastLine = lastLine.slice(0, -1);
-    }
-    limited[lastIndex] = `${lastLine}…`;
-  }
-
-  limited.forEach(line => {
-    ctx.fillText(line, x, y);
-    y += lineHeight;
-  });
-
-  ctx.textBaseline = previousBaseline;
-  return y;
+  const gradient = ctx.createRadialGradient(x, y, radius * 0.1, x, y, radius);
+  gradient.addColorStop(0, color);
+  gradient.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
 };
 
 const createTaskTexture = (task: Task, index: number): string => {
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return '';
-  }
+  if (typeof window === 'undefined' || typeof document === 'undefined') return '';
 
   const key = `${task.id ?? index}|${task.title ?? ''}|${task.description ?? ''}|${task.priority}|${task.status}`;
   const cached = textureCache.get(key);
-  if (cached) {
-    return cached;
-  }
+  if (cached) return cached;
 
   const canvas = document.createElement('canvas');
   const width = 800;
@@ -152,53 +166,71 @@ const createTaskTexture = (task: Task, index: number): string => {
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    return '';
-  }
+  if (!ctx) return '';
 
-  const gradientPreset = PRIORITY_GRADIENTS[task.priority] ?? PRIORITY_GRADIENTS.medium;
+  const theme = PRIORITY_THEMES[task.priority] ?? FALLBACK_THEME;
+
+  // Base gradient
   const gradient = ctx.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, gradientPreset.start);
-  gradient.addColorStop(1, gradientPreset.end);
+  gradient.addColorStop(0, theme.gradient[0]);
+  gradient.addColorStop(1, theme.gradient[1]);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
 
-  const overlay = ctx.createLinearGradient(0, 0, width, height);
-  overlay.addColorStop(0, 'rgba(10, 12, 28, 0.35)');
-  overlay.addColorStop(1, 'rgba(10, 12, 28, 0.55)');
-  ctx.fillStyle = overlay;
-  ctx.fillRect(0, 0, width, height);
+  // Overlay shapes for depth
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  drawSoftCircle(ctx, width * 0.2, height * 0.25, 220, theme.glow);
+  drawSoftCircle(ctx, width * 0.75, height * 0.35, 260, 'rgba(255,255,255,0.25)');
+  drawSoftCircle(ctx, width * 0.6, height * 0.75, 200, 'rgba(255,255,255,0.18)');
+  ctx.restore();
 
-  const padding = 60;
-  drawRoundedRect(ctx, padding, padding, width - padding * 2, height - padding * 2, 44);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+  // Frosted glass panel
+  const panelPadding = 48;
+  drawRoundedRect(ctx, panelPadding, panelPadding, width - panelPadding * 2, height - panelPadding * 2, 40);
+  ctx.fillStyle = 'rgba(15, 20, 40, 0.35)';
   ctx.fill();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
 
-  const innerX = padding + 36;
-  const usableWidth = width - innerX - padding;
-  const badgeY = padding + 36;
-  const statusLabel = STATUS_LABELS[task.status] ?? 'Task';
-  const priorityLabel = `Priority: ${capitalize(task.priority ?? '') || 'Unknown'}`;
+  const contentX = panelPadding + 36;
+  const contentWidth = width - contentX - panelPadding;
 
-  const statusBadgeWidth = drawBadge(ctx, statusLabel, innerX, badgeY, 'rgba(255, 255, 255, 0.92)', '#1a1a1a');
-  drawBadge(ctx, priorityLabel, innerX + statusBadgeWidth + 18, badgeY, gradientPreset.accent, '#1a1a1a');
+  // Badges
+  const badgeY = panelPadding + 36;
+  const statusText = STATUS_LABELS[task.status] ?? 'Task';
+  const priorityText = `Priority: ${task.priority.toUpperCase()}`;
 
-  let cursorY = badgeY + 90;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
-  ctx.font = '700 52px "Figtree", "Segoe UI", sans-serif';
-  cursorY = drawWrappedText(ctx, task.title || 'Untitled Task', innerX, cursorY, usableWidth, 60, 2);
+  const statusBadgeWidth = drawBadge(ctx, statusText, contentX, badgeY, 'rgba(255,255,255,0.9)', '#1a1a1a');
+  drawBadge(ctx, priorityText, contentX + statusBadgeWidth + 20, badgeY, theme.accent, '#1a1a1a');
 
-  if (task.description) {
-    cursorY += 16;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.font = '400 30px "Figtree", "Segoe UI", sans-serif';
-    cursorY = drawWrappedText(ctx, task.description, innerX, cursorY, usableWidth, 42, 3);
-  }
+  // Title
+  let cursorY = badgeY + 100;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 60px "Figtree", "Segoe UI", system-ui';
+  cursorY = clampLines(ctx, task.title || 'Untitled Task', contentX, cursorY, contentWidth, 68, 2);
 
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.font = '500 26px "Figtree", "Segoe UI", sans-serif';
-  const footerText = `Status: ${statusLabel}`;
-  ctx.fillText(footerText, innerX, height - padding - 24);
+  // Divider
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(contentX, cursorY + 20);
+  ctx.lineTo(contentX + contentWidth, cursorY + 20);
+  ctx.stroke();
+  cursorY += 50;
+
+  // Description
+  const description = task.description || 'No additional notes yet. Add more context in the Todo tab!';
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = '400 30px "Figtree", "Segoe UI", system-ui';
+  cursorY = clampLines(ctx, description, contentX, cursorY, contentWidth, 44, 3);
+
+  // Footer hint
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '600 26px "Figtree", "Segoe UI", system-ui';
+  const footer = 'Drag to explore • Click to manage in Todo list';
+  ctx.fillText(footer, contentX, height - panelPadding - 20);
 
   const dataUrl = canvas.toDataURL('image/png');
   textureCache.set(key, dataUrl);
@@ -208,7 +240,8 @@ const createTaskTexture = (task: Task, index: number): string => {
 const buildGalleryItems = (tasks: Task[]) =>
   tasks.map((task, index) => ({
     image: createTaskTexture(task, index),
-    text: task.title || 'Untitled Task'
+    text: task.title || 'Untitled Task',
+    payload: task
   }));
 
 export default function ActiveTasksGallery({ userId }: ActiveTasksGalleryProps) {
@@ -243,6 +276,9 @@ export default function ActiveTasksGallery({ userId }: ActiveTasksGalleryProps) 
   }, [userId]);
 
   const galleryItems = useMemo(() => buildGalleryItems(tasks), [tasks]);
+  const handleCardSelect = useCallback(() => {
+    router.push('/todo');
+  }, [router]);
 
   if (loading) {
     return (
@@ -282,14 +318,14 @@ export default function ActiveTasksGallery({ userId }: ActiveTasksGalleryProps) 
           </div>
         ) : (
           <div className="relative w-full">
-            <div className="h-[260px] w-full rounded-3xl overflow-hidden">
+            <div className="h-[320px] w-full rounded-3xl overflow-hidden">
               <CircularGallery
                 items={galleryItems}
-                bend={2.2}
-                textColor="#f5f5f5"
-                font="600 22px Figtree"
-                sizeFactor={0.5}
-                scrollSpeed={1.6}
+                bend={3}
+                textColor="#ffffff"
+                font="bold 30px Figtree"
+                scrollSpeed={2}
+                onSelect={handleCardSelect}
               />
             </div>
             <div className="mt-3 text-center text-xs text-gray-500">
