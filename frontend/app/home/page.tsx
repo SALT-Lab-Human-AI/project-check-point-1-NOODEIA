@@ -94,10 +94,21 @@ export default function HomePage() {
       // Use either detection method
       const isAtBottom = isAtBottomPixels || isAtBottomPercentage;
 
+      // CRITICAL FIX: Show nav bar in two cases:
+      // 1. If page is NOT scrollable (content fits in viewport) → ALWAYS show nav bar
+      // 2. If page IS scrollable → Show nav bar when at bottom
+      let shouldShowNav = false;
+      if (!hasScrollableContent) {
+        // Page fits in viewport - no scrolling needed, so show nav bar
+        shouldShowNav = true;
+      } else {
+        // Page is scrollable - show nav bar only when at bottom
+        shouldShowNav = isAtBottom;
+      }
+
       // Debug logging
       if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-        const shouldShow = hasScrollableContent && isAtBottom;
-        if (shouldShow !== showNavBar) {
+        if (shouldShowNav !== showNavBar) {
           console.log('[NAV DEBUG] Scroll state:', {
             scrollTop: Math.round(scrollTop),
             scrollHeight,
@@ -109,13 +120,14 @@ export default function HomePage() {
             isAtBottomPercentage,
             isAtBottom,
             bottomThreshold,
-            willShowNav: shouldShow
+            willShowNav: shouldShowNav,
+            reason: !hasScrollableContent ? 'Page not scrollable' : 'At bottom of page'
           });
         }
       }
 
-      // Show nav bar when at bottom of scrollable content
-      setShowNavBar(hasScrollableContent && isAtBottom);
+      // Show nav bar based on new logic
+      setShowNavBar(shouldShowNav);
     };
 
     // Check scroll position after a delay to handle page load
