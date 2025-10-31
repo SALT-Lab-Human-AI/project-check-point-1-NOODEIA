@@ -35,8 +35,19 @@ export default function HomePage() {
     checkAuth();
   }, []);
 
-  // Strict scroll detection - only show at EXACT bottom when user scrolls
+  // Adaptive scroll detection - platform-specific thresholds for cross-platform compatibility
   useEffect(() => {
+    // Platform detection
+    const isWindows = /Win/.test(navigator.platform) || /Windows/.test(navigator.userAgent);
+    const isMac = /Mac/.test(navigator.platform);
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+
+    // Platform-specific thresholds
+    // Windows needs more tolerance due to: scrollbar width (~15px), DPI scaling, browser zoom
+    // Mac uses overlay scrollbars, so 1px strict threshold works well
+    const bottomThreshold = isWindows ? 10 : 1; // Windows: 10px tolerance | Mac/Mobile: 1px strict
+    const scrollableThreshold = isWindows ? 50 : 20; // Windows needs more content to be considered scrollable
+
     const handleScroll = () => {
       const doc = document.documentElement;
       const body = document.body;
@@ -46,16 +57,16 @@ export default function HomePage() {
       const scrollHeight = Math.max(doc.scrollHeight, body.scrollHeight);
       const clientHeight = doc.clientHeight || window.innerHeight;
 
-      // Check if page has scrollable content (needs more than 20px to be considered scrollable)
-      const isScrollable = scrollHeight > clientHeight + 20;
+      // Check if page has scrollable content
+      const isScrollable = scrollHeight > clientHeight + scrollableThreshold;
 
       // Calculate distance from bottom
       const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
 
-      // Only show nav bar if:
+      // Show nav bar if:
       // 1. Page is scrollable (has content that requires scrolling)
-      // 2. User is within 1px of bottom
-      setShowNavBar(isScrollable && Math.abs(distanceFromBottom) <= 1);
+      // 2. User is within threshold distance of bottom (platform-specific)
+      setShowNavBar(isScrollable && Math.abs(distanceFromBottom) <= bottomThreshold);
     };
 
     // Add listeners
