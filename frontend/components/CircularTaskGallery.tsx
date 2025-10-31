@@ -35,14 +35,18 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
         const activeTasks = data.tasks.filter(
           (task: Task) => task.status === 'todo' || task.status === 'inprogress'
         );
+        console.log('🎨 CircularTaskGallery: Found', activeTasks.length, 'active tasks');
         setTasks(activeTasks);
 
-        // Generate gallery items
+        // Generate gallery items with color index
         const items = await Promise.all(
-          activeTasks.map(async (task: Task) => ({
-            image: await generateTaskCardImage(task),
-            text: task.title
-          }))
+          activeTasks.map(async (task: Task, index: number) => {
+            console.log(`🎨 Generating card ${index} for task:`, task.title, 'with color index:', index % 4);
+            return {
+              image: await generateTaskCardImage(task, index),
+              text: task.title
+            };
+          })
         );
         setGalleryItems(items);
       }
@@ -54,80 +58,129 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
   };
 
   // Generate a canvas-based image for each task card
-  const generateTaskCardImage = async (task: Task): Promise<string> => {
+  const generateTaskCardImage = async (task: Task, colorIndex: number): Promise<string> => {
     const canvas = document.createElement('canvas');
-    canvas.width = 900; // Changed to landscape/narrow format
-    canvas.height = 300; // Much narrower height for "long narrow and skinny" look
+    // Library expects 700x900 dimensions for proper scaling
+    canvas.width = 700;
+    canvas.height = 900;
     const ctx = canvas.getContext('2d');
 
     if (!ctx) return '';
 
-    // Get priority gradient colors
-    const gradients = {
-      high: { start: '#f87171', end: '#ef4444' },
-      medium: { start: '#fbbf24', end: '#f97316' },
-      low: { start: '#4ade80', end: '#10b981' },
-    };
-    const colors = gradients[task.priority] || { start: '#9ca3af', end: '#6b7280' };
+    // Color palette matching the 4 home page feature cards
+    const colorPalette = [
+      // Purple (AI Tutor Card)
+      { start: '#d8b4fe', middle: '#e9d5ff', end: '#f3e8ff', text: '#581c87' },
+      // Pink (Group Chat Card)
+      { start: '#fbcfe8', middle: '#fce7f3', end: '#fdf2f8', text: '#831843' },
+      // Blue (Quiz Card)
+      { start: '#bfdbfe', middle: '#dbeafe', end: '#eff6ff', text: '#1e3a8a' },
+      // Yellow (Games Card)
+      { start: '#fef08a', middle: '#fef9c3', end: '#fefce8', text: '#713f12' },
+    ];
 
-    // Create gradient background - now horizontal
-    const gradient = ctx.createLinearGradient(0, 0, 900, 0);
+    // Cycle through colors based on index
+    const colors = colorPalette[colorIndex % colorPalette.length];
+    console.log(`🎨 Card ${colorIndex}: Using color scheme`, ['Purple', 'Pink', 'Blue', 'Yellow'][colorIndex % 4], colors);
+
+    // Create gradient background - draw a horizontal card appearance within the vertical canvas
+    // Draw the "card" in the middle of the canvas to look horizontal
+    const cardY = 300;  // Position the horizontal card in middle of vertical canvas
+    const cardHeight = 300;  // Height of the visible card area
+
+    // Fill entire canvas with transparent/subtle background first
+    ctx.fillStyle = 'rgba(255, 255, 255, 0)';
+    ctx.fillRect(0, 0, 700, 900);
+
+    // Add subtle shadow for the card
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 10;
+
+    // Create rounded rectangle for card background
+    const cardMargin = 30;
+    ctx.beginPath();
+    ctx.roundRect(cardMargin, cardY, 700 - (cardMargin * 2), cardHeight, 25);
+    ctx.closePath();
+
+    // Create gradient for the main card area
+    const gradient = ctx.createLinearGradient(0, cardY, 0, cardY + cardHeight);
     gradient.addColorStop(0, colors.start);
+    gradient.addColorStop(0.5, colors.middle);
     gradient.addColorStop(1, colors.end);
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 900, 300);
+    ctx.fill();
 
-    // Status emoji in top left
-    ctx.font = 'bold 40px Arial';
-    ctx.fillText(task.status === 'inprogress' ? '🔥' : '📝', 20, 50);
+    // Reset shadow for text
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
 
-    // Task title - positioned after emoji, limited width to leave space for badges
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 28px Arial';
+    // Position all content within the horizontal card area (y: 300-600)
+    const contentY = cardY + 80; // Start content 80px from top of card
+
+    // Status emoji on the left
+    ctx.font = 'bold 70px Arial';
     ctx.textAlign = 'left';
-    const titleLines = wrapText(ctx, task.title, 500); // Narrower to fit horizontal layout
-    let y = 50;
+    ctx.fillText(task.status === 'inprogress' ? '🔥' : '📝', 50, contentY);
+
+    // Task title - centered in the card
+    ctx.fillStyle = colors.text;
+    ctx.font = 'bold 42px Arial';
+    ctx.textAlign = 'left';
+    const titleLines = wrapText(ctx, task.title, 480);
+    let textY = contentY - 10;
     titleLines.forEach((line, i) => {
-      if (i < 2) { // Max 2 lines for narrow card
-        ctx.fillText(line, 80, y);
-        y += 35;
+      if (i < 2) { // Max 2 lines for title
+        ctx.fillText(line, 150, textY);
+        textY += 50;
       }
     });
 
-    // Task description - below title, compact
+    // Task description - below title
     if (task.description) {
-      ctx.font = '20px Arial';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      const descLines = wrapText(ctx, task.description, 500);
+      ctx.font = '26px Arial';
+      ctx.fillStyle = colors.text;
+      ctx.globalAlpha = 0.85;
+      ctx.textAlign = 'left';
+      const descLines = wrapText(ctx, task.description, 480);
       descLines.forEach((line, i) => {
-        if (i < 2 && y < 150) { // Max 2 lines and stay in bounds
-          ctx.fillText(line, 80, y);
-          y += 28;
+        if (i < 2) { // Max 2 lines for description in horizontal layout
+          ctx.fillText(line, 150, textY);
+          textY += 35;
         }
       });
+      ctx.globalAlpha = 1.0;
     }
 
-    // Priority badge (bottom left)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    roundRect(ctx, 20, 240, 140, 35, 18);
+    // Priority badge - bottom right of card
+    const badgeX = 450;
+    const badgeY = cardY + cardHeight - 80;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    roundRect(ctx, badgeX, badgeY, 200, 45, 22);
     ctx.fill();
 
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 18px Arial';
+    ctx.fillStyle = colors.text;
+    ctx.font = 'bold 22px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(`⚠️ ${task.priority.toUpperCase()}`, 90, 266);
+    const priorityEmoji = task.priority === 'high' ? '🔴' : task.priority === 'medium' ? '🟡' : '🟢';
+    ctx.fillText(`${priorityEmoji} ${task.priority.toUpperCase()}`, badgeX + 100, badgeY + 30);
 
-    // Due date badge (bottom right)
+    // Due date badge if present - bottom left of card
     if (task.dueDate) {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-      roundRect(ctx, 740, 240, 140, 35, 18);
+      const dueDateX = 50;
+      const dueDateY = cardY + cardHeight - 80;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      roundRect(ctx, dueDateX, dueDateY, 180, 45, 22);
       ctx.fill();
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 18px Arial';
+      ctx.fillStyle = colors.text;
+      ctx.font = 'bold 20px Arial';
       ctx.textAlign = 'center';
       const dueText = formatDueDate(task.dueDate);
-      ctx.fillText(`📅 ${dueText}`, 810, 266);
+      ctx.fillText(`📅 ${dueText}`, dueDateX + 90, dueDateY + 30);
     }
 
     return canvas.toDataURL('image/png');
@@ -230,14 +283,15 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
           </h3>
         </div>
 
-        {/* CircularGallery Container - adjusted for narrow cards */}
-        <div style={{ height: '400px', position: 'relative' }}>
+        {/* CircularGallery Container - landscape cards with tilt scrolling */}
+        <div style={{ height: '300px', position: 'relative', width: '100%' }}>
           <CircularGallery
             items={galleryItems}
-            bend={3}
+            bend={2}
             textColor="#ffffff"
-            borderRadius={0.05}
-            scrollEase={0.02}
+            borderRadius={0.08}
+            scrollSpeed={3}
+            scrollEase={0.08}
           />
         </div>
 

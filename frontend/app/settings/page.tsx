@@ -72,6 +72,10 @@ export default function SettingsPage() {
 
   // Scroll detection for bottom nav
   useEffect(() => {
+    // Detect if user is on macOS
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
+                  navigator.userAgent.toUpperCase().indexOf('MAC') >= 0
+
     const handleScroll = () => {
       const doc = document.documentElement
       const body = document.body
@@ -83,14 +87,50 @@ export default function SettingsPage() {
       const isScrollable = scrollHeight > clientHeight + 20
       const distanceFromBottom = scrollHeight - (scrollTop + clientHeight)
 
-      // Only show nav bar if page is scrollable AND user is at the bottom
-      setShowNavBar(isScrollable && Math.abs(distanceFromBottom) <= 1)
+      if (isMac) {
+        // On Mac: Only show nav bar when scrolled to bottom (never show automatically)
+        setShowNavBar(Math.abs(distanceFromBottom) <= 1)
+      } else {
+        // On Windows/other: Show nav bar if page fits in viewport OR if at bottom
+        if (!isScrollable) {
+          setShowNavBar(true) // Always show when no scrollbar
+        } else {
+          setShowNavBar(Math.abs(distanceFromBottom) <= 1) // Show only at bottom when scrollable
+        }
+      }
     }
+
+    // Check immediately on mount (only for non-Mac)
+    const checkScrollability = () => {
+      if (!isMac) {
+        const doc = document.documentElement
+        const scrollHeight = Math.max(doc.scrollHeight, document.body.scrollHeight)
+        const clientHeight = doc.clientHeight || window.innerHeight
+        const isScrollable = scrollHeight > clientHeight + 20
+
+        // If not scrollable on Windows, show nav bar
+        if (!isScrollable) {
+          setShowNavBar(true)
+        }
+      }
+      // On Mac: Don't show nav bar on initial load
+    }
+
+    // Check immediately (only runs for Windows)
+    checkScrollability()
+
+    // Check again after content loads (for Chrome rendering delays on Windows)
+    const timer1 = setTimeout(checkScrollability, 100)
+    const timer2 = setTimeout(checkScrollability, 500)
+    const timer3 = setTimeout(checkScrollability, 1000)
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     window.addEventListener('resize', handleScroll)
 
     return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+      clearTimeout(timer3)
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }

@@ -50,35 +50,34 @@ export default function HomePage() {
       const isScrollable = scrollHeight > clientHeight + 20;
       const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
 
-      // Show nav bar if page is NOT scrollable (fits in viewport) OR if at bottom
-      if (!isScrollable) {
-        setShowNavBar(true); // Always show when no scrollbar
-      } else {
-        setShowNavBar(Math.abs(distanceFromBottom) <= 1); // Show only at bottom when scrollable
+      // Only show nav bar if user has scrolled and either page is not scrollable or at bottom
+      if (hasUserScrolled) {
+        if (!isScrollable) {
+          setShowNavBar(true);
+        } else {
+          setShowNavBar(Math.abs(distanceFromBottom) <= 1);
+        }
       }
     };
 
-    // Delayed check to see if page is non-scrollable AFTER content loads
-    // But only if user hasn't scrolled yet
-    const checkTimer = setTimeout(() => {
-      if (!hasUserScrolled) {
-        const doc = document.documentElement;
-        const scrollHeight = Math.max(doc.scrollHeight, document.body.scrollHeight);
-        const clientHeight = doc.clientHeight || window.innerHeight;
-        const isScrollable = scrollHeight > clientHeight + 20;
+    // Check after delay to allow content to fully render
+    const timer = setTimeout(() => {
+      const doc = document.documentElement;
+      const scrollHeight = Math.max(doc.scrollHeight, document.body.scrollHeight);
+      const clientHeight = doc.clientHeight || window.innerHeight;
+      const isScrollable = scrollHeight > clientHeight + 20;
 
-        // Only show if truly not scrollable
-        if (!isScrollable) {
-          setShowNavBar(true);
-        }
+      // If not scrollable and user has interacted, show nav bar
+      if (!isScrollable && hasUserScrolled) {
+        setShowNavBar(true);
       }
-    }, 500); // Wait longer for content to render
+    }, 500);
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll);
 
     return () => {
-      clearTimeout(checkTimer);
+      clearTimeout(timer);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };
