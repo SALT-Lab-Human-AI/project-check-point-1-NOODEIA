@@ -40,52 +40,115 @@ export default function AchievementsPage() {
     checkAuth();
   }, []);
 
-  // Adaptive scroll detection - platform-specific thresholds for cross-platform compatibility
+  // Enhanced scroll detection with Windows Chrome compatibility
   useEffect(() => {
-    // Platform detection
-    const isWindows = /Win/.test(navigator.platform) || /Windows/.test(navigator.userAgent);
-    const isMac = /Mac/.test(navigator.platform);
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+    // Platform and browser detection
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isWindows = /win/.test(userAgent) || /windows/.test(userAgent);
+    const isChrome = /chrome/.test(userAgent) && !/edg/.test(userAgent);
+    const isWindowsChrome = isWindows && isChrome;
 
-    // Platform-specific thresholds
-    // Windows needs more tolerance due to: scrollbar width (~15px), DPI scaling, browser zoom
-    // Mac uses overlay scrollbars, so 1px strict threshold works well
-    const bottomThreshold = isWindows ? 10 : 1; // Windows: 10px tolerance | Mac/Mobile: 1px strict
-    const scrollableThreshold = isWindows ? 50 : 20; // Windows needs more content to be considered scrollable
+    // Debug logging for development
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      console.log('[NAV DEBUG] Platform:', {
+        isWindows,
+        isChrome,
+        isWindowsChrome,
+        userAgent: userAgent.substring(0, 100)
+      });
+    }
 
     const handleScroll = () => {
-      const doc = document.documentElement;
-      const body = document.body;
+      // Use multiple methods to ensure accuracy across browsers
+      const scrollTop = Math.max(
+        window.pageYOffset || 0,
+        document.documentElement.scrollTop || 0,
+        document.body.scrollTop || 0
+      );
 
-      // Get scroll values (different browsers use different properties)
-      const scrollTop = Math.ceil(window.scrollY ?? window.pageYOffset ?? doc.scrollTop ?? body.scrollTop ?? 0);
-      const scrollHeight = Math.max(doc.scrollHeight, body.scrollHeight);
-      const clientHeight = doc.clientHeight || window.innerHeight;
+      const scrollHeight = Math.max(
+        document.documentElement.scrollHeight || 0,
+        document.body.scrollHeight || 0,
+        document.documentElement.offsetHeight || 0,
+        document.body.offsetHeight || 0
+      );
 
-      // Check if page has scrollable content
-      const isScrollable = scrollHeight > clientHeight + scrollableThreshold;
+      const clientHeight = window.innerHeight ||
+                          document.documentElement.clientHeight ||
+                          document.body.clientHeight;
 
-      // Calculate distance from bottom
-      const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+      // Calculate how much content is below the viewport
+      const remainingScroll = scrollHeight - (scrollTop + clientHeight);
 
-      // Show nav bar if:
-      // 1. Page is scrollable (has content that requires scrolling)
-      // 2. User is within threshold distance of bottom (platform-specific)
-      setShowNavBar(isScrollable && Math.abs(distanceFromBottom) <= bottomThreshold);
+      // Check if page has scrollable content (accounting for rounding errors)
+      const hasScrollableContent = scrollHeight > (clientHeight + 5);
+
+      // Windows Chrome specific: More generous bottom detection
+      // Account for: scrollbar (17px), rounding errors, zoom levels
+      const bottomThreshold = isWindowsChrome ? 25 : 2;
+
+      // Check if we're at the bottom using multiple methods
+      const isAtBottomPixels = remainingScroll <= bottomThreshold;
+
+      // Alternative: percentage-based detection for Windows Chrome
+      const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+      const isAtBottomPercentage = isWindowsChrome ?
+        scrollPercentage >= 0.97 : // Windows Chrome: 97% is considered "at bottom"
+        scrollPercentage >= 0.99;  // Others: 99% is considered "at bottom"
+
+      // Use either detection method
+      const isAtBottom = isAtBottomPixels || isAtBottomPercentage;
+
+      // Debug logging
+      if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+        const shouldShow = hasScrollableContent && isAtBottom;
+        if (shouldShow !== showNavBar) {
+          console.log('[NAV DEBUG] Scroll state:', {
+            scrollTop: Math.round(scrollTop),
+            scrollHeight,
+            clientHeight,
+            remainingScroll: Math.round(remainingScroll),
+            scrollPercentage: (scrollPercentage * 100).toFixed(1) + '%',
+            hasScrollableContent,
+            isAtBottomPixels,
+            isAtBottomPercentage,
+            isAtBottom,
+            bottomThreshold,
+            willShowNav: shouldShow
+          });
+        }
+      }
+
+      // Show nav bar when at bottom of scrollable content
+      setShowNavBar(hasScrollableContent && isAtBottom);
     };
 
-    // Add listeners
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleScroll);
+    // Check scroll position after a delay to handle page load
+    const initialCheckTimer = setTimeout(() => {
+      handleScroll();
+    }, 100);
 
-    // Don't check immediately - wait for user to scroll
-    // This prevents nav bar from showing on initial page load
+    // Add scroll listener
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
+
+    // Also check on content changes (for dynamic content)
+    const observer = new ResizeObserver(() => {
+      handleScroll();
+    });
+
+    // Observe body for size changes
+    if (document.body) {
+      observer.observe(document.body);
+    }
 
     return () => {
+      clearTimeout(initialCheckTimer);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
+      observer.disconnect();
     };
-  }, []);
+  }, [showNavBar]);
 
   const checkAuth = async () => {
     try {
