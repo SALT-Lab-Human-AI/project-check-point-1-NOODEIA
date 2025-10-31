@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { Calendar, AlertCircle } from 'lucide-react';
+import CircularGallery from './CircularGallery';
 
 interface Task {
   id: string;
@@ -20,7 +19,7 @@ interface CircularTaskGalleryProps {
 
 export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [galleryItems, setGalleryItems] = useState<{ image: string; text: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,6 +36,15 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
           (task: Task) => task.status === 'todo' || task.status === 'inprogress'
         );
         setTasks(activeTasks);
+
+        // Generate gallery items
+        const items = await Promise.all(
+          activeTasks.map(async (task: Task) => ({
+            image: await generateTaskCardImage(task),
+            text: task.title
+          }))
+        );
+        setGalleryItems(items);
       }
     } catch (error) {
       console.error('Failed to load tasks:', error);
@@ -45,28 +53,136 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
     }
   };
 
-  // Priority colors matching kanban board
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'from-red-400 to-red-500';
-      case 'medium':
-        return 'from-amber-400 to-orange-500';
-      case 'low':
-        return 'from-green-400 to-emerald-500';
-      default:
-        return 'from-gray-400 to-gray-500';
+  // Generate a canvas-based image for each task card
+  const generateTaskCardImage = async (task: Task): Promise<string> => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 560; // Portrait orientation
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) return '';
+
+    // Get priority gradient colors
+    const gradients = {
+      high: { start: '#f87171', end: '#ef4444' },
+      medium: { start: '#fbbf24', end: '#f97316' },
+      low: { start: '#4ade80', end: '#10b981' },
+    };
+    const colors = gradients[task.priority] || { start: '#9ca3af', end: '#6b7280' };
+
+    // Create gradient background
+    const gradient = ctx.createLinearGradient(0, 0, 400, 560);
+    gradient.addColorStop(0, colors.start);
+    gradient.addColorStop(1, colors.end);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 400, 560);
+
+    // Status emoji in top right
+    ctx.font = 'bold 48px Arial';
+    ctx.fillText(task.status === 'inprogress' ? '🔥' : '📝', 330, 60);
+
+    // Task title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'left';
+    const titleLines = wrapText(ctx, task.title, 360);
+    let y = 100;
+    titleLines.forEach((line, i) => {
+      if (i < 3) { // Max 3 lines
+        ctx.fillText(line, 20, y);
+        y += 40;
+      }
+    });
+
+    // Task description
+    if (task.description) {
+      ctx.font = '24px Arial';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      y += 20;
+      const descLines = wrapText(ctx, task.description, 360);
+      descLines.forEach((line, i) => {
+        if (i < 4 && y < 420) { // Max 4 lines and stay in bounds
+          ctx.fillText(line, 20, y);
+          y += 32;
+        }
+      });
     }
+
+    // Priority badge (bottom section)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    roundRect(ctx, 20, 460, 160, 40, 20);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`⚠️ ${task.priority.toUpperCase()}`, 100, 488);
+
+    // Due date badge
+    if (task.dueDate) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      roundRect(ctx, 20, 510, 200, 40, 20);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px Arial';
+      ctx.textAlign = 'center';
+      const dueText = formatDueDate(task.dueDate);
+      ctx.fillText(`📅 ${dueText}`, 120, 538);
+    }
+
+    return canvas.toDataURL('image/png');
   };
 
-  // Status indicator
-  const getStatusEmoji = (status: string) => {
-    return status === 'inprogress' ? '🔥' : '📝';
+  // Helper to wrap text
+  const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    words.forEach((word) => {
+      const testLine = currentLine + (currentLine ? ' ' : '') + word;
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    });
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    return lines;
+  };
+
+  // Helper to draw rounded rectangles
+  const roundRect = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number
+  ) => {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
   };
 
   // Format due date
   const formatDueDate = (dateString?: string) => {
-    if (!dateString) return null;
+    if (!dateString) return '';
     const date = new Date(dateString);
     const now = new Date();
     const diffTime = date.getTime() - now.getTime();
@@ -76,65 +192,6 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Tomorrow';
     return `${diffDays} days`;
-  };
-
-  // Rotate gallery
-  const handleRotate = (direction: 'left' | 'right') => {
-    if (tasks.length === 0) return;
-
-    if (direction === 'left') {
-      setSelectedIndex((prev) => (prev - 1 + tasks.length) % tasks.length);
-    } else {
-      setSelectedIndex((prev) => (prev + 1) % tasks.length);
-    }
-  };
-
-  // Handle swipe gestures
-  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const swipeThreshold = 50;
-
-    if (Math.abs(info.offset.x) > swipeThreshold) {
-      if (info.offset.x > 0) {
-        handleRotate('left');
-      } else {
-        handleRotate('right');
-      }
-    }
-  };
-
-  // Calculate card position and style based on index relative to selected
-  const getCardStyle = (index: number) => {
-    const diff = index - selectedIndex;
-    const absDiff = Math.abs(diff);
-
-    if (absDiff === 0) {
-      // Center card
-      return {
-        x: 0,
-        scale: 1,
-        rotateY: 0,
-        opacity: 1,
-        zIndex: 10,
-      };
-    } else if (absDiff === 1) {
-      // Adjacent cards
-      return {
-        x: diff * 220, // Horizontal spacing
-        scale: 0.85,
-        rotateY: diff * 25, // 3D rotation
-        opacity: 0.7,
-        zIndex: 5,
-      };
-    } else {
-      // Far cards (hidden)
-      return {
-        x: diff * 220,
-        scale: 0.7,
-        rotateY: diff * 35,
-        opacity: 0,
-        zIndex: 0,
-      };
-    }
   };
 
   if (loading) {
@@ -174,124 +231,21 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
           </h3>
         </div>
 
-        {/* 3D Card Carousel Container */}
-        <div className="relative overflow-hidden" style={{ height: '360px', perspective: '1000px' }}>
-          <div className="absolute inset-0 flex items-center justify-center">
-            {tasks.map((task, index) => {
-              const style = getCardStyle(index);
-              const isCenter = index === selectedIndex;
-
-              return (
-                <motion.div
-                  key={task.id}
-                  className="absolute"
-                  style={{
-                    transformStyle: 'preserve-3d',
-                  }}
-                  animate={{
-                    x: style.x,
-                    scale: style.scale,
-                    rotateY: style.rotateY,
-                    opacity: style.opacity,
-                    zIndex: style.zIndex,
-                  }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 260,
-                    damping: 20,
-                  }}
-                  drag={isCenter ? 'x' : false}
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.2}
-                  onDragEnd={handleDragEnd}
-                  onClick={() => !isCenter && setSelectedIndex(index)}
-                  whileHover={!isCenter ? { scale: style.scale * 1.05 } : {}}
-                  className={isCenter ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
-                >
-                  {/* Task Card - Taller and narrower */}
-                  <div
-                    className={`relative bg-gradient-to-br ${getPriorityColor(task.priority)} rounded-3xl shadow-2xl`}
-                    style={{
-                      width: '200px',  // Narrower
-                      height: '280px', // Taller (portrait orientation)
-                    }}
-                  >
-                    {/* Status badge */}
-                    <div className="absolute -top-2 -right-2 text-2xl z-10">
-                      {getStatusEmoji(task.status)}
-                    </div>
-
-                    {/* Card content */}
-                    <div className="p-5 h-full flex flex-col">
-                      {/* Task title */}
-                      <h4 className="text-base font-bold text-white mb-3 line-clamp-3">
-                        {task.title}
-                      </h4>
-
-                      {/* Task description */}
-                      {task.description && (
-                        <p className="text-xs text-white/90 mb-4 line-clamp-4 flex-grow">
-                          {task.description}
-                        </p>
-                      )}
-
-                      {/* Bottom section with priority and due date */}
-                      <div className="space-y-2 mt-auto">
-                        {/* Priority indicator */}
-                        <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                          <AlertCircle className="w-3 h-3 text-white" />
-                          <span className="text-xs font-bold text-white capitalize">
-                            {task.priority}
-                          </span>
-                        </div>
-
-                        {/* Due date */}
-                        {task.dueDate && (
-                          <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                            <Calendar className="w-3 h-3 text-white" />
-                            <span className="text-xs font-bold text-white">
-                              {formatDueDate(task.dueDate)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Navigation controls */}
-        <div className="flex items-center justify-center gap-4 mt-6">
-          <motion.button
-            onClick={() => handleRotate('left')}
-            className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all shadow-md"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span className="text-lg font-bold text-gray-700">←</span>
-          </motion.button>
-
-          <div className="text-xs font-bold text-gray-600">
-            {selectedIndex + 1} / {tasks.length}
-          </div>
-
-          <motion.button
-            onClick={() => handleRotate('right')}
-            className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all shadow-md"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span className="text-lg font-bold text-gray-700">→</span>
-          </motion.button>
+        {/* CircularGallery Container */}
+        <div style={{ height: '600px', position: 'relative' }}>
+          <CircularGallery
+            items={galleryItems}
+            bend={3}
+            textColor="#ffffff"
+            borderRadius={0.05}
+            scrollEase={0.02}
+          />
         </div>
 
         {/* Swipe hint text */}
         <div className="text-center mt-3">
           <p className="text-xs text-gray-500">
-            Swipe or click cards to navigate
+            Drag or scroll to browse tasks
           </p>
         </div>
       </div>

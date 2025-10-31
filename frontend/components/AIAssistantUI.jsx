@@ -719,6 +719,7 @@ export default function AIAssistantUI() {
             onResendMessage={resendMessage}
             isThinking={isThinking}
             xpGain={xpGain}
+            xpTrigger={triggerXpUpdate}
           />
         </main>
       </div>

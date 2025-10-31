@@ -4,16 +4,16 @@ import { useRef, useState, useEffect } from "react"
 import { Send, Loader2, TrendingUp, Sparkles } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
-export default function Composer({ onSend, busy, xpGain }) {
+export default function Composer({ onSend, busy, xpGain, xpTrigger }) {
   const [value, setValue] = useState("")
   const [sending, setSending] = useState(false)
   const [showXpAnimation, setShowXpAnimation] = useState(false)
   const [xpAmount, setXpAmount] = useState(0)
   const inputRef = useRef(null)
 
-  // Handle XP gain animation
+  // Handle XP gain animation - triggered by xpTrigger counter to ensure it fires every time
   useEffect(() => {
-    if (xpGain && xpGain > 0) {
+    if (xpGain && xpGain > 0 && xpTrigger > 0) {
       setXpAmount(xpGain)
       setShowXpAnimation(true)
       const timer = setTimeout(() => {
@@ -21,7 +21,7 @@ export default function Composer({ onSend, busy, xpGain }) {
       }, 2000) // Show for 2 seconds
       return () => clearTimeout(timer)
     }
-  }, [xpGain])
+  }, [xpTrigger, xpGain])
 
   useEffect(() => {
     if (inputRef.current) {

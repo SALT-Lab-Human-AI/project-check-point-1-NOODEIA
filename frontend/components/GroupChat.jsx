@@ -207,29 +207,27 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
 
     const messageContent = newMessage.trim()
 
-    // Check if message contains @ai and trigger XP animation
-    if (messageContent.includes('@ai')) {
-      // Generate random XP between 1.01 and 1.75
-      const xpEarned = Math.random() * 0.74 + 1.01
-      setXpGain(xpEarned)
-      setShowXpAnimation(true)
+    // Trigger XP animation for EVERY message sent
+    // Generate random XP between 1.01 and 1.75
+    const xpEarned = Math.random() * 0.74 + 1.01
+    setXpGain(xpEarned)
+    setShowXpAnimation(true)
 
-      // Hide animation after 2 seconds
-      setTimeout(() => {
-        setShowXpAnimation(false)
-      }, 2000)
+    // Hide animation after 2 seconds
+    setTimeout(() => {
+      setShowXpAnimation(false)
+    }, 2000)
 
-      // Award XP to user (non-blocking)
-      if (currentUser?.id) {
-        fetch('/api/user/xp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: currentUser.id,
-            xpGained: xpEarned
-          })
-        }).catch(err => console.error('Failed to update XP:', err))
-      }
+    // Award XP to user (non-blocking)
+    if (currentUser?.id) {
+      fetch('/api/user/xp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          xpGained: xpEarned
+        })
+      }).catch(err => console.error('Failed to update XP:', err))
     }
 
     setNewMessage('')

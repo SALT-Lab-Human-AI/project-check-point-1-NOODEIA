@@ -30,6 +30,7 @@ export default function ChatPane({
   onResendMessage,
   isThinking,
   xpGain,
+  xpTrigger,
 }) {
   const scrollRef = useRef(null)
   const [editingId, setEditingId] = useState(null)
@@ -201,7 +202,7 @@ export default function ChatPane({
         </button>
       )}
 
-      <Composer onSend={onSend} busy={isThinking} xpGain={xpGain} />
+      <Composer onSend={onSend} busy={isThinking} xpGain={xpGain} xpTrigger={xpTrigger} />
     </div>
   )
 }

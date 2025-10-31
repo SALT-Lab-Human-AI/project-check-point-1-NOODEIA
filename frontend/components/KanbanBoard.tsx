@@ -86,6 +86,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [xpGain, setXpGain] = useState<number>(0);
   const [showXpAnimation, setShowXpAnimation] = useState(false);
+  const [newlyCreatedTasks, setNewlyCreatedTasks] = useState<Set<string>>(new Set());
 
   // Load theme
   useEffect(() => {
@@ -301,6 +302,9 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
       createdAt: new Date().toISOString()
     };
 
+    // Mark as newly created for glowing effect
+    setNewlyCreatedTasks(prev => new Set(prev).add(tempId));
+
     // Optimistic add to "To Do" column
     setColumns(prevColumns =>
       prevColumns.map(col =>
@@ -330,6 +334,15 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
 
       if (response.ok) {
         const { task } = await response.json();
+
+        // Update the newly created set with the real task ID
+        setNewlyCreatedTasks(prev => {
+          const updated = new Set(prev);
+          updated.delete(tempId);
+          updated.add(task.id);
+          return updated;
+        });
+
         // Replace temp task with real task
         setColumns(prevColumns =>
           prevColumns.map(col =>
@@ -338,10 +351,24 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
               : col
           )
         );
+
+        // Remove glow after 3 seconds
+        setTimeout(() => {
+          setNewlyCreatedTasks(prev => {
+            const updated = new Set(prev);
+            updated.delete(task.id);
+            return updated;
+          });
+        }, 3000);
       }
     } catch (error) {
       console.error('Failed to create task:', error);
       // Remove temp task on error
+      setNewlyCreatedTasks(prev => {
+        const updated = new Set(prev);
+        updated.delete(tempId);
+        return updated;
+      });
       setColumns(prevColumns =>
         prevColumns.map(col =>
           col.id === 'todo'
@@ -577,11 +604,42 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                       const isDone = column.id === 'done';
                       const isDropTarget = dropTarget?.columnId === column.id && dropTarget?.index === taskIndex;
                       const isDragging = draggedItem?.taskId === task.id;
+                      const isNewlyCreated = newlyCreatedTasks.has(task.id);
 
                       return (
                         <div key={task.id} className="relative">
                           {/* Enhanced drop indicator with magnetic glow */}
                           {isDropTarget && (
+                            <motion.div
+                              initial={{ scaleX: 0, opacity: 0, y: -10 }}
+                              animate={{
+                                scaleX: 1,
+                                opacity: 1,
+                                y: 0,
+                                scale: [1, 1.1, 1],
+                              }}
+                              exit={{ scaleX: 0, opacity: 0, y: 10 }}
+                              transition={{
+                                type: 'spring',
+                                stiffness: 400,
+                                damping: 20,
+                                scale: {
+                                  repeat: Infinity,
+                                  duration: 0.8,
+                                  ease: "easeInOut"
+                                }
+                              }}
+                              className="absolute -top-2 left-0 right-0 h-1.5 rounded-full z-10"
+                              style={{
+                                background: 'linear-gradient(90deg, rgba(168,85,247,0.8) 0%, rgba(236,72,153,1) 50%, rgba(168,85,247,0.8) 100%)',
+                                boxShadow: '0 0 20px rgba(168, 85, 247, 0.8), 0 0 40px rgba(236, 72, 153, 0.6), 0 0 60px rgba(168, 85, 247, 0.4)',
+                                filter: 'blur(0.5px)'
+                              }}
+                            />
+                          )}
+
+                          {/* Glowing indicator for newly created tasks */}
+                          {isNewlyCreated && !isDropTarget && (
                             <motion.div
                               initial={{ scaleX: 0, opacity: 0, y: -10 }}
                               animate={{
