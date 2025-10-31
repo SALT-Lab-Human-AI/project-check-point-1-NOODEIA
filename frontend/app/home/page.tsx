@@ -255,12 +255,12 @@ export default function HomePage() {
           </PuffyCard>
         </div>
 
-        {/* Notes Card */}
+        {/* Games Card */}
         <div className="animate-float" style={{ animationDelay: '0.6s' }}>
           <PuffyCard
             color="yellow"
             size="md"
-            onClick={() => router.push('/notes')}
+            onClick={() => router.push('/games')}
             className="aspect-square"
           >
             <div className="flex flex-col items-center justify-center h-full">
@@ -277,12 +277,12 @@ export default function HomePage() {
 
               {/* Title */}
               <h3 className="text-lg font-black text-yellow-900 mb-1">
-                Notes
+                Games
               </h3>
 
               {/* Progress Text */}
               <p className="text-xs font-bold text-yellow-800">
-                Coming soon
+                Play & learn
               </p>
             </div>
           </PuffyCard>
@@ -316,15 +316,15 @@ export default function HomePage() {
                 <span className="text-[9px] font-bold text-pink-400">Home</span>
               </button>
 
-              {/* Grid/Dashboard */}
+              {/* To Do */}
               <button
-                onClick={() => router.push('/home')}
+                onClick={() => router.push('/todo')}
                 className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
               >
                 <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">
                   <LayoutGrid size={18} className="text-gray-500 group-active:text-gray-700 transition-colors" />
                 </div>
-                <span className="text-[9px] font-medium text-gray-500">Menu</span>
+                <span className="text-[9px] font-medium text-gray-500">To Do</span>
               </button>
 
               {/* Achievements */}
