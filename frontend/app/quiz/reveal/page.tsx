@@ -25,28 +25,28 @@ function OrbContent() {
   const [showReward, setShowReward] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
 
-  const orbColors = {
+  const cubeColors = {
     common: {
-      primary: '#E4B953',
-      secondary: '#F8EAC1',
+      gradient: 'linear-gradient(to bottom, hsl(45, 80%, 45%) 0%, hsl(45, 85%, 55%) 30%, hsl(45, 90%, 65%) 60%, hsl(45, 95%, 75%) 100%)',
       glow: 'rgba(228, 185, 83, 0.8)',
-      shadow: 'rgba(228, 185, 83, 0.6)'
+      shadow: 'rgba(228, 185, 83, 0.6)',
+      top: '#E4B953'
     },
     rare: {
-      primary: '#FAB9CA',
-      secondary: '#F8C8E2',
+      gradient: 'linear-gradient(to bottom, hsl(330, 60%, 60%) 0%, hsl(330, 70%, 70%) 30%, hsl(330, 80%, 80%) 60%, hsl(330, 90%, 90%) 100%)',
       glow: 'rgba(250, 185, 202, 0.8)',
-      shadow: 'rgba(250, 185, 202, 0.6)'
+      shadow: 'rgba(250, 185, 202, 0.6)',
+      top: '#FAB9CA'
     },
     legendary: {
-      primary: '#F58FA8',
-      secondary: '#FAB9CA',
+      gradient: 'linear-gradient(to bottom, hsl(330, 80%, 50%) 0%, hsl(300, 85%, 60%) 25%, hsl(270, 90%, 65%) 50%, hsl(240, 85%, 70%) 75%, hsl(210, 80%, 75%) 100%)',
       glow: 'rgba(245, 143, 168, 1)',
-      shadow: 'rgba(245, 143, 168, 0.8)'
+      shadow: 'rgba(245, 143, 168, 0.8)',
+      top: '#F58FA8'
     }
   };
 
-  const colors = orbColors[nodeType];
+  const colors = cubeColors[nodeType];
 
   const handleOrbClick = () => {
     if (isOrbClicked) return;
@@ -55,17 +55,28 @@ function OrbContent() {
 
     // Massive confetti explosion
     setTimeout(() => {
+      const particleCount = nodeType === 'legendary' ? 300 : 200;
+      const legendaryColors = ['#FFD700', '#FFA500', '#FF69B4', '#00CED1', '#9370DB', '#FF1493'];
+
       confetti({
-        particleCount: 200,
-        spread: 160,
+        particleCount,
+        spread: nodeType === 'legendary' ? 180 : 160,
         origin: { y: 0.5 },
-        colors: [colors.primary, colors.secondary, '#FFD700', '#FFA500']
+        colors: nodeType === 'legendary' ? legendaryColors : [colors.top, colors.glow, '#FFD700', '#FFA500']
       });
 
-      // Side bursts
+      // Side bursts (more dramatic for legendary)
       setTimeout(() => {
-        confetti({ particleCount: 100, angle: 60, spread: 55, origin: { x: 0 } });
-        confetti({ particleCount: 100, angle: 120, spread: 55, origin: { x: 1 } });
+        const sideBurstCount = nodeType === 'legendary' ? 150 : 100;
+        confetti({ particleCount: sideBurstCount, angle: 60, spread: 55, origin: { x: 0 } });
+        confetti({ particleCount: sideBurstCount, angle: 120, spread: 55, origin: { x: 1 } });
+
+        // Extra burst for legendary from top
+        if (nodeType === 'legendary') {
+          setTimeout(() => {
+            confetti({ particleCount: 100, angle: 90, spread: 100, origin: { y: 0 } });
+          }, 200);
+        }
       }, 300);
     }, 800);
 
@@ -133,13 +144,12 @@ function OrbContent() {
               Click to Reveal Your Reward!
             </motion.h1>
 
-            {/* Advanced 3D Orb */}
+            {/* Liquid Morphing Orb with SVG Mask */}
             <motion.div
-              className="relative cursor-pointer"
+              className="relative cursor-pointer flex items-center justify-center"
               style={{
                 width: '400px',
                 height: '400px',
-                perspective: '1500px',
               }}
               onClick={handleOrbClick}
               whileHover={{ scale: 1.05 }}
@@ -154,11 +164,20 @@ function OrbContent() {
                     background: `radial-gradient(circle, ${colors.glow}, transparent 70%)`,
                     filter: `blur(${30 + i * 10}px)`,
                   }}
-                  animate={{
+                  animate={isOrbClicked ? {
+                    // Dramatic expansion on click (like Genshin Impact)
+                    scale: [1, 3 + i * 0.5, 0],
+                    opacity: [0.6, 0.9, 0],
+                  } : {
+                    // Continuous pulse before click
                     scale: [1, 1.2 + i * 0.1, 1],
                     opacity: [0.3 - i * 0.05, 0.6 - i * 0.05, 0.3 - i * 0.05],
                   }}
-                  transition={{
+                  transition={isOrbClicked ? {
+                    duration: 1.5,
+                    delay: i * 0.05,
+                    ease: [0.6, 0.05, 0.2, 0.95],
+                  } : {
                     duration: 3 + i * 0.5,
                     repeat: Infinity,
                     delay: i * 0.2,
@@ -167,110 +186,144 @@ function OrbContent() {
                 />
               ))}
 
-              {/* Main Orb Sphere */}
+              {/* Liquid Morphing Orb */}
               <motion.div
-                className="absolute inset-0"
+                className="absolute"
                 style={{
-                  transformStyle: 'preserve-3d',
-                  transform: 'translateZ(0)',
+                  width: '300px',
+                  height: '300px',
+                  left: '50%',
+                  top: '50%',
+                  marginLeft: '-150px',
+                  marginTop: '-150px',
+                  borderRadius: '50%',
                 }}
                 animate={isOrbClicked ? {
                   scale: [1, 1.3, 0.5],
-                  rotateY: [0, 180, 360],
+                  rotate: [0, 180, 360],
                   opacity: [1, 1, 0],
+                  filter: ['hue-rotate(0deg)', 'hue-rotate(180deg)', 'hue-rotate(360deg)'],
                 } : {
-                  // Pokemon GO style shake - 3 shakes with decreasing intensity
-                  rotate: [
-                    0, -20, 20, -15, 15, -10, 10, -8, 8, -5, 5, 0
-                  ],
-                  x: [
-                    0, -10, 10, -8, 8, -6, 6, -4, 4, -2, 2, 0
-                  ],
-                  y: [
-                    0, 2, -2, 2, -2, 1, -1, 1, -1, 0.5, -0.5, 0
-                  ],
+                  filter: nodeType === 'legendary'
+                    ? ['hue-rotate(0deg)', 'hue-rotate(-30deg)', 'hue-rotate(-60deg)', 'hue-rotate(-45deg)', 'hue-rotate(0deg)']
+                    : 'hue-rotate(0deg)',
                 }}
                 transition={isOrbClicked ? {
                   duration: 1.5,
                   ease: [0.6, 0.05, 0.2, 0.95],
                 } : {
-                  duration: 3.5,
+                  duration: 6,
                   repeat: Infinity,
-                  repeatDelay: 0.8,
                   ease: 'easeInOut',
-                  times: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 1]
                 }}
               >
-                {/* Sphere with realistic lighting */}
-                <div
-                  className="w-full h-full rounded-full relative"
-                  style={{
-                    background: `radial-gradient(circle at 30% 30%, ${colors.secondary}, ${colors.primary})`,
-                    boxShadow: `
-                      0 0 60px ${colors.shadow},
-                      0 0 120px ${colors.glow},
-                      inset -30px -30px 60px rgba(0, 0, 0, 0.3),
-                      inset 30px 30px 60px rgba(255, 255, 255, 0.3)
-                    `,
-                  }}
-                >
-                  {/* Top highlight (light source) */}
+                {/* SVG Masking and Glowing Shadow */}
+                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                  {/* SVG with rotating polygon masks */}
+                  <svg width={300} height={300} viewBox="0 0 300 300" style={{ position: 'absolute', top: 0, left: 0 }}>
+                    <defs>
+                      <mask id={`clipping-${nodeType}`}>
+                        <polygon points="0,0 300,0 300,300 0,300" fill="black" />
+                        {/* Rotating triangles - these create the liquid morphing effect */}
+                        <motion.polygon
+                          points="75,75 225,75 150,225"
+                          fill="white"
+                          style={{ filter: 'blur(21px)', transformOrigin: '225px 75px' }}
+                          animate={{ rotate: 90 }}
+                          transition={{ duration: 0, ease: 'linear' }}
+                        />
+                        <motion.polygon
+                          points="150,75 225,225 75,225"
+                          fill="white"
+                          style={{ filter: 'blur(21px)', transformOrigin: '150px 150px' }}
+                          animate={{ rotate: [0, 360] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                        />
+                        <motion.polygon
+                          points="105,105 195,105 150,195"
+                          fill="white"
+                          style={{ filter: 'blur(21px)', transformOrigin: '150px 180px' }}
+                          animate={{ rotate: [0, 360] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: 'linear', delay: -0.667 }}
+                        />
+                        <motion.polygon
+                          points="105,105 195,105 150,195"
+                          fill="white"
+                          style={{ filter: 'blur(21px)', transformOrigin: '120px 120px' }}
+                          animate={{ rotate: [0, -360] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                        />
+                        <motion.polygon
+                          points="105,105 195,105 150,195"
+                          fill="white"
+                          style={{ filter: 'blur(21px)', transformOrigin: '120px 120px' }}
+                          animate={{ rotate: [0, -360] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: 'linear', delay: -1 }}
+                        />
+                        <motion.polygon
+                          points="105,105 195,105 150,195"
+                          fill="white"
+                          style={{ filter: 'blur(21px)', transformOrigin: '180px 120px' }}
+                          animate={{ rotate: [0, 360] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                        />
+                        <motion.polygon
+                          points="105,105 195,105 150,195"
+                          fill="white"
+                          style={{ filter: 'blur(21px)', transformOrigin: '180px 120px' }}
+                          animate={{ rotate: [0, 360] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: 'linear', delay: -0.75 }}
+                        />
+                      </mask>
+
+                      {/* Pulsing contrast animation for liquid effect */}
+                      <motion.filter
+                        id={`contrast-${nodeType}`}
+                        animate={{
+                          contrast: [15, 3, 3, 15, 15],
+                        }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: 'linear',
+                          times: [0, 0.2, 0.4, 0.6, 1],
+                        }}
+                      >
+                        <feColorMatrix type="saturate" values="1" />
+                      </motion.filter>
+                    </defs>
+                  </svg>
+
+                  {/* Background sphere with border and shadow */}
                   <div
                     className="absolute rounded-full"
                     style={{
-                      top: '10%',
-                      left: '25%',
-                      width: '40%',
-                      height: '40%',
-                      background: 'radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.4) 40%, transparent 70%)',
-                      filter: 'blur(25px)',
+                      width: '300px',
+                      height: '300px',
+                      borderRadius: '50%',
+                      borderTop: `solid 1px ${colors.top}`,
+                      borderBottom: `solid 1px ${colors.top}`,
+                      background: `linear-gradient(180deg, ${colors.glow}, ${colors.shadow})`,
+                      boxShadow: `
+                        0 0 25px 0 ${colors.glow},
+                        0 20px 50px 0 ${colors.shadow},
+                        inset 0 10px 10px 0 ${colors.glow},
+                        inset 0 -10px 10px 0 ${colors.shadow}
+                      `,
                     }}
                   />
 
-                  {/* Secondary highlight */}
+                  {/* Masked gradient box */}
                   <div
-                    className="absolute rounded-full"
                     style={{
-                      top: '20%',
-                      left: '35%',
-                      width: '25%',
-                      height: '25%',
-                      background: 'radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, transparent 60%)',
-                      filter: 'blur(15px)',
+                      width: '300px',
+                      height: '300px',
+                      background: colors.gradient,
+                      mask: `url(#clipping-${nodeType})`,
+                      WebkitMask: `url(#clipping-${nodeType})`,
+                      filter: `url(#contrast-${nodeType}) contrast(15)`,
                     }}
                   />
-
-                  {/* Bottom shadow (depth) */}
-                  <div
-                    className="absolute rounded-full"
-                    style={{
-                      bottom: '5%',
-                      right: '15%',
-                      width: '50%',
-                      height: '50%',
-                      background: 'radial-gradient(circle, rgba(0, 0, 0, 0.4) 0%, transparent 70%)',
-                      filter: 'blur(20px)',
-                    }}
-                  />
-
-                  {/* Shimmer effect */}
-                  <motion.div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background: `linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%)`,
-                      opacity: 0,
-                    }}
-                    animate={{
-                      opacity: [0, 0.6, 0],
-                      x: ['-100%', '100%'],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
-                  />
-
                 </div>
               </motion.div>
 
@@ -294,7 +347,7 @@ function OrbContent() {
                       style={{
                         width: '8px',
                         height: '8px',
-                        backgroundColor: colors.secondary,
+                        backgroundColor: colors.top,
                         left: '50%',
                         top: '50%',
                         transform: `translate(-50%, -50%) translate(${Math.cos((angle * Math.PI) / 180) * radius}px, ${Math.sin((angle * Math.PI) / 180) * radius}px)`,
@@ -315,40 +368,45 @@ function OrbContent() {
                 })}
               </motion.div>
 
-              {/* Burst particles when clicked */}
+              {/* Burst particles when clicked - Enhanced with rotation */}
               <AnimatePresence>
                 {isOrbClicked && (
                   <>
-                    {[...Array(32)].map((_, i) => {
-                      const angle = (i / 32) * 360;
-                      const distance = 250 + Math.random() * 100;
+                    {[...Array(40)].map((_, i) => {
+                      const angle = (i / 40) * 360;
+                      const distance = 250 + Math.random() * 120;
+                      const rotationDirection = i % 2 === 0 ? 1 : -1;
+                      const size = Math.random() * 14 + 8;
                       return (
                         <motion.div
                           key={`burst-${i}`}
                           className="absolute rounded-full"
                           style={{
-                            width: Math.random() * 12 + 6 + 'px',
-                            height: Math.random() * 12 + 6 + 'px',
-                            backgroundColor: colors.primary,
+                            width: size + 'px',
+                            height: size + 'px',
+                            backgroundColor: i % 3 === 0 ? colors.shadow : colors.top,
                             left: '50%',
                             top: '50%',
-                            boxShadow: `0 0 20px ${colors.glow}`,
+                            boxShadow: `0 0 25px ${colors.glow}`,
                           }}
                           initial={{
                             x: 0,
                             y: 0,
                             opacity: 1,
                             scale: 0,
+                            rotate: 0,
                           }}
                           animate={{
                             x: Math.cos((angle * Math.PI) / 180) * distance,
                             y: Math.sin((angle * Math.PI) / 180) * distance,
-                            opacity: 0,
-                            scale: [0, 2, 0],
+                            opacity: [1, 0.8, 0],
+                            scale: [0, 2.5, 0.5, 0],
+                            rotate: rotationDirection * 720,
                           }}
                           transition={{
-                            duration: 1.5,
-                            ease: 'easeOut',
+                            duration: 1.8,
+                            ease: [0.6, 0.05, 0.2, 0.95],
+                            times: [0, 0.4, 0.8, 1],
                           }}
                         />
                       );
@@ -393,7 +451,7 @@ function OrbContent() {
               {/* Animated Reward Icon */}
               <motion.div
                 className="relative mx-auto mb-8 flex items-center justify-center"
-                style={{ perspective: '1000px', width: '200px', height: '200px' }}
+                style={{ perspective: '1500px', width: '200px', height: '200px' }}
                 initial={{
                   rotateY: 0,
                   scale: 0.5,
@@ -401,8 +459,15 @@ function OrbContent() {
                 }}
                 animate={{
                   rotateY: isFlipping ? [0, 180, 360, 540, 720] : 0,
-                  scale: isFlipping ? [0.5, 1.2, 1.0, 1.15, 1.1] : 1,
+                  scale: isFlipping ? [0.5, 1.3, 0.9, 1.25, 1.1] : 1,
                   opacity: 1,
+                  filter: isFlipping ? [
+                    'brightness(1) saturate(1)',
+                    'brightness(1.5) saturate(1.3)',
+                    'brightness(1.2) saturate(1.1)',
+                    'brightness(1.7) saturate(1.4)',
+                    'brightness(1.3) saturate(1.2)',
+                  ] : 'brightness(1) saturate(1)',
                 }}
                 transition={{
                   duration: isFlipping ? 2.5 : 0.6,
@@ -411,6 +476,60 @@ function OrbContent() {
                 }}
               >
                 <RewardIcon type={nodeType} size="xl" animate={!isFlipping} />
+
+                {/* Radial glow effect during flip */}
+                {isFlipping && (
+                  <motion.div
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{
+                      background: `radial-gradient(circle, ${colors.glow}, transparent 70%)`,
+                    }}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{
+                      scale: [0, 2.5, 1.5, 3, 2],
+                      opacity: [0, 0.8, 0.4, 0.9, 0],
+                    }}
+                    transition={{
+                      duration: 2.5,
+                      ease: [0.6, 0.05, 0.2, 0.95],
+                      times: [0, 0.3, 0.5, 0.7, 1],
+                    }}
+                  />
+                )}
+
+                {/* Special legendary sparkles (Genshin Impact style) */}
+                {nodeType === 'legendary' && !isFlipping && (
+                  <>
+                    {[...Array(12)].map((_, i) => {
+                      const angle = (i / 12) * 360;
+                      const radius = 110 + Math.sin(i) * 20;
+                      return (
+                        <motion.div
+                          key={`sparkle-${i}`}
+                          className="absolute text-2xl"
+                          style={{
+                            left: '50%',
+                            top: '50%',
+                            transform: `translate(-50%, -50%) translate(${Math.cos((angle * Math.PI) / 180) * radius}px, ${Math.sin((angle * Math.PI) / 180) * radius}px)`,
+                          }}
+                          animate={{
+                            opacity: [0, 1, 0],
+                            scale: [0, 1.5, 0],
+                            rotate: [0, 360],
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            delay: i * 0.15,
+                            ease: 'easeInOut',
+                          }}
+                        >
+                          ✨
+                        </motion.div>
+                      );
+                    })}
+                  </>
+                )}
               </motion.div>
 
               {/* Score Display */}

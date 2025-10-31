@@ -379,7 +379,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--surface-0)] pb-24">
+    <div className={`min-h-screen bg-[var(--surface-0)] pb-24 ${draggedItem ? 'cursor-grabbing' : ''}`}>
       {/* Header */}
       <div className="sticky top-0 z-40 bg-[var(--surface-2)] border-b border-[var(--surface-2-border)] backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
@@ -421,7 +421,11 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
               className="flex-shrink-0 w-96"
             >
               {/* Column Container */}
-              <div className="flex flex-col h-[calc(100vh-320px)] bg-[var(--surface-1)] rounded-3xl shadow-lg border border-[var(--surface-2-border)] overflow-hidden">
+              <div className={`flex flex-col h-[calc(100vh-320px)] bg-[var(--surface-1)] rounded-3xl shadow-lg border overflow-hidden transition-all duration-300 ${
+                draggedItem && dropTarget?.columnId === column.id
+                  ? 'border-purple-400 shadow-[0_0_0_2px_rgba(168,85,247,0.3),0_8px_32px_rgba(168,85,247,0.2)] scale-[1.02]'
+                  : 'border-[var(--surface-2-border)]'
+              }`}>
                 {/* Column Header */}
                 <div className={`bg-gradient-to-r ${column.color} p-4 flex items-center justify-between`}>
                   <div className="flex items-center gap-3">
@@ -437,18 +441,40 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                 </div>
 
                 {/* Task List */}
-                <div className="flex-1 overflow-y-auto p-3">
+                <div
+                  className="flex-1 overflow-y-auto p-3"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    // If dragging over empty space, set drop target to end of list
+                    if (draggedItem) {
+                      setDropTarget({ columnId: column.id, index: column.tasks.length });
+                    }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handleDrop(column.id, column.tasks.length);
+                  }}
+                >
                   <AnimatePresence>
-                    {column.tasks.length === 0 && !draggedItem && (
+                    {/* Empty state with drop zone */}
+                    {column.tasks.length === 0 && (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="flex flex-col items-center justify-center py-12 text-gray-400"
+                        className={`flex flex-col items-center justify-center py-12 rounded-2xl border-2 border-dashed transition-all ${
+                          draggedItem && dropTarget?.columnId === column.id
+                            ? 'border-purple-400 bg-purple-50/50 scale-[1.02]'
+                            : 'border-transparent text-gray-400'
+                        }`}
                       >
                         <span className="text-4xl mb-2">{column.emoji}</span>
                         <p className="text-sm text-center px-4">
-                          {column.id === 'todo' ? 'Create a task using the form below!' : 'No tasks yet.'}
+                          {draggedItem
+                            ? 'Drop here!'
+                            : column.id === 'todo'
+                            ? 'Create a task using the form below!'
+                            : 'No tasks yet.'}
                         </p>
                       </motion.div>
                     )}
@@ -456,33 +482,68 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                     {column.tasks.map((task, taskIndex) => {
                       const isDone = column.id === 'done';
                       const isDropTarget = dropTarget?.columnId === column.id && dropTarget?.index === taskIndex;
+                      const isDragging = draggedItem?.taskId === task.id;
 
                       return (
                         <div key={task.id} className="relative">
-                          {/* Drop indicator line */}
+                          {/* Drop indicator line with animation */}
                           {isDropTarget && (
-                            <div className="absolute -top-1 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full z-10" />
+                            <motion.div
+                              initial={{ scaleX: 0, opacity: 0 }}
+                              animate={{ scaleX: 1, opacity: 1 }}
+                              exit={{ scaleX: 0, opacity: 0 }}
+                              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                              className="absolute -top-1 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 rounded-full z-10 shadow-lg"
+                              style={{
+                                boxShadow: '0 0 10px rgba(168, 85, 247, 0.5), 0 0 20px rgba(236, 72, 153, 0.3)'
+                              }}
+                            />
                           )}
 
                           <motion.div
                             layout
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            transition={{ delay: taskIndex * 0.05 }}
+                            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                            animate={{
+                              opacity: isDragging ? 0.5 : 1,
+                              scale: isDragging ? 0.95 : 1,
+                              y: 0,
+                              rotateZ: isDragging ? 5 : 0
+                            }}
+                            exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                            transition={{
+                              type: 'spring',
+                              stiffness: 300,
+                              damping: 30,
+                              delay: taskIndex * 0.05
+                            }}
+                            whileHover={!isDone ? {
+                              scale: 1.03,
+                              rotateZ: -1,
+                              y: -4,
+                              transition: { type: 'spring', stiffness: 400, damping: 20 }
+                            } : {}}
+                            whileTap={!isDone ? {
+                              scale: 0.98,
+                              rotateZ: 2,
+                              transition: { type: 'spring', stiffness: 400, damping: 20 }
+                            } : {}}
                             draggable={!isDone}
                             onDragStart={() => !isDone && handleDragStart(task.id, column.id, taskIndex)}
-                            onDragOver={(e) => !isDone && handleDragOver(e, column.id, taskIndex)}
+                            onDragOver={(e) => handleDragOver(e, column.id, taskIndex)}
                             onDrop={(e) => {
                               e.preventDefault();
                               handleDrop(column.id, taskIndex);
                             }}
                             onDragEnd={handleDragEnd}
-                            className={`group bg-white/60 backdrop-blur-sm border border-white/40 rounded-2xl p-3 mb-2 transition-all transform ${
+                            className={`group bg-white/60 backdrop-blur-sm border border-white/40 rounded-2xl p-3 mb-2 transition-all ${
                               isDone
                                 ? 'opacity-70 cursor-default'
-                                : 'cursor-grab active:cursor-grabbing hover:border-gray-300 hover:shadow-lg hover:scale-102'
+                                : 'cursor-grab active:cursor-grabbing hover:border-purple-300 hover:shadow-[0_8px_24px_rgba(168,85,247,0.2),0_0_0_1px_rgba(168,85,247,0.1)]'
                             }`}
+                            style={{
+                              transformStyle: 'preserve-3d',
+                              perspective: '1000px'
+                            }}
                           >
                             <div className="flex items-start gap-2 mb-2">
                               {!isDone && (
@@ -527,16 +588,32 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                     })}
 
                     {/* Drop zone at the end */}
-                    {column.tasks.length > 0 && (
-                      <div
+                    {column.tasks.length > 0 && draggedItem && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 48 }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                         onDragOver={(e) => handleDragOver(e, column.id, column.tasks.length)}
                         onDrop={() => handleDrop(column.id, column.tasks.length)}
-                        className={`h-12 rounded-xl border-2 border-dashed transition-all ${
+                        className={`rounded-xl border-2 border-dashed transition-all flex items-center justify-center ${
                           dropTarget?.columnId === column.id && dropTarget?.index === column.tasks.length
-                            ? 'border-purple-400 bg-purple-50/50'
-                            : 'border-transparent'
+                            ? 'border-purple-400 bg-gradient-to-br from-purple-50 to-pink-50 shadow-inner scale-[1.02]'
+                            : 'border-gray-300/50'
                         }`}
-                      />
+                      >
+                        {dropTarget?.columnId === column.id && dropTarget?.index === column.tasks.length && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                            className="text-xs font-bold text-purple-600 flex items-center gap-1"
+                          >
+                            <span>Drop here</span>
+                            <span className="text-lg">✨</span>
+                          </motion.div>
+                        )}
+                      </motion.div>
                     )}
                   </AnimatePresence>
                 </div>

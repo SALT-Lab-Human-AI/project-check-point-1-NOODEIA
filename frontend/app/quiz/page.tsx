@@ -127,6 +127,8 @@ export default function QuizPage() {
       score,
       streak,
       highestStreak,
+      selectedAnswer,  // Save answer state to prevent re-answering same question
+      isCorrect,       // Save correctness state to prevent re-answering same question
       timestamp: Date.now()
     };
 
@@ -166,8 +168,9 @@ export default function QuizPage() {
       setScore(quizState.score);
       setStreak(quizState.streak);
       setHighestStreak(quizState.highestStreak);
-      setSelectedAnswer(null);
-      setIsCorrect(null);
+      // IMPORTANT: Restore answered state to prevent answering same question twice
+      setSelectedAnswer(quizState.selectedAnswer || null);
+      setIsCorrect(quizState.isCorrect !== undefined ? quizState.isCorrect : null);
       setGameState('quiz');
       setHasSavedQuiz(false);
     } catch (error) {
@@ -226,9 +229,13 @@ export default function QuizPage() {
       if (!response.ok) throw new Error('Failed to start quiz');
 
       const data = await response.json();
-      setSessionId(data.sessionId);
-      setQuestions(data.questions);
-      setAnswers(data._answers); // Store correct answers
+      const newSessionId = data.sessionId;
+      const newQuestions = data.questions;
+      const newAnswers = data._answers;
+
+      setSessionId(newSessionId);
+      setQuestions(newQuestions);
+      setAnswers(newAnswers); // Store correct answers
       setCurrentQuestionIndex(0);
       setScore(0);
       setStreak(0);
@@ -236,6 +243,31 @@ export default function QuizPage() {
       setSelectedAnswer(null);
       setIsCorrect(null);
       setGameState('quiz');
+
+      // Save quiz state immediately (even before first question answered)
+      // Use setTimeout to ensure state has been updated
+      setTimeout(() => {
+        if (user?.id && newSessionId && newQuestions.length > 0) {
+          const initialState = {
+            userId: user.id,
+            sessionId: newSessionId,
+            questions: newQuestions,
+            answers: newAnswers,
+            currentQuestionIndex: 0,
+            score: 0,
+            streak: 0,
+            highestStreak: 0,
+            selectedAnswer: null,  // Initially no answer selected
+            isCorrect: null,       // Initially no correctness status
+            timestamp: Date.now()
+          };
+          try {
+            localStorage.setItem(`quiz_progress_${user.id}`, JSON.stringify(initialState));
+          } catch (error) {
+            console.error('Failed to save initial quiz state:', error);
+          }
+        }
+      }, 100);
     } catch (error) {
       console.error('Start quiz error:', error);
       alert('Failed to start quiz. Please try again.');
@@ -280,21 +312,35 @@ export default function QuizPage() {
           });
         }, 200);
       }
-    } else {
-      setStreak(0);
-    }
 
-    // Move to next question or end quiz
-    if (currentQuestionIndex < questions.length - 1) {
-      // Delay before next question (for answer feedback)
-      setTimeout(() => {
-        setCurrentQuestionIndex(prev => prev + 1);
-        setSelectedAnswer(null);
-        setIsCorrect(null);
-      }, 1500);
+      // Correct answer: move to next after 1.5s
+      if (currentQuestionIndex < questions.length - 1) {
+        setTimeout(() => {
+          setCurrentQuestionIndex(prev => prev + 1);
+          setSelectedAnswer(null);
+          setIsCorrect(null);
+        }, 1500);
+      } else {
+        // Pass the calculated final score to avoid state timing issues
+        endQuiz(finalScore);
+      }
     } else {
-      // Pass the calculated final score to avoid state timing issues
-      endQuiz(finalScore);
+      // Wrong answer: reset streak and show explanation for 5 seconds
+      setStreak(0);
+
+      if (currentQuestionIndex < questions.length - 1) {
+        // Delay before next question (show explanation for 5 seconds)
+        setTimeout(() => {
+          setCurrentQuestionIndex(prev => prev + 1);
+          setSelectedAnswer(null);
+          setIsCorrect(null);
+        }, 5000);
+      } else {
+        // Last question - still show explanation before ending
+        setTimeout(() => {
+          endQuiz(finalScore);
+        }, 5000);
+      }
     }
   };
 
@@ -456,7 +502,7 @@ export default function QuizPage() {
                       transformStyle: 'preserve-3d',
                       background: 'linear-gradient(to bottom right, #E4B953, #F8EAC1)',
                       borderColor: 'rgba(228, 185, 83, 0.5)',
-                      boxShadow: '0 10px 30px rgba(228,185,83,0.3), 0 0 20px rgba(248,234,193,0.3)',
+                      boxShadow: '0 15px 35px rgba(228,185,83,0.4), 0 8px 20px rgba(228,185,83,0.3), inset 0 2px 4px rgba(255,255,255,0.5)',
                     }}
                   >
                     {/* Glow ring */}
@@ -479,7 +525,7 @@ export default function QuizPage() {
                       transformStyle: 'preserve-3d',
                       background: 'linear-gradient(to bottom right, #FAB9CA, #F8EAC1)',
                       borderColor: 'rgba(250, 185, 202, 0.5)',
-                      boxShadow: '0 10px 30px rgba(250,185,202,0.3), 0 0 25px rgba(248,234,193,0.4)',
+                      boxShadow: '0 15px 35px rgba(250,185,202,0.4), 0 8px 20px rgba(250,185,202,0.3), inset 0 2px 4px rgba(255,255,255,0.5)',
                     }}
                   >
                     {/* Glow ring */}
@@ -502,7 +548,7 @@ export default function QuizPage() {
                       transformStyle: 'preserve-3d',
                       background: 'linear-gradient(to bottom right, #F58FA8, #FAB9CA)',
                       borderColor: 'rgba(245, 143, 168, 0.5)',
-                      boxShadow: '0 10px 30px rgba(245,143,168,0.4), 0 0 30px rgba(250,185,202,0.5)',
+                      boxShadow: '0 15px 35px rgba(245,143,168,0.5), 0 8px 20px rgba(245,143,168,0.4), inset 0 2px 4px rgba(255,255,255,0.5)',
                     }}
                   >
                     {/* Glow ring */}
@@ -573,6 +619,8 @@ export default function QuizPage() {
                 onClick={() => {
                   // Auto-save progress and exit without confirmation
                   saveQuizProgress();
+                  // Set hasSavedQuiz to true so Continue button shows immediately
+                  setHasSavedQuiz(true);
                   setGameState('menu');
                 }}
                 className="mb-4 flex items-center gap-2 px-4 py-2 rounded-lg glass-button glass-button-light text-gray-700 font-medium hover:bg-white/30 transition-all duration-300"
@@ -636,7 +684,7 @@ export default function QuizPage() {
               </motion.div>
 
               {/* Answer Options */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 {questions[currentQuestionIndex]?.options.map((option, idx) => (
                   <motion.button
                     key={idx}
@@ -666,6 +714,50 @@ export default function QuizPage() {
                   </motion.button>
                 ))}
               </div>
+
+              {/* Explanation Card - Shows only for wrong answers */}
+              <AnimatePresence>
+                {selectedAnswer !== null && isCorrect === false && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                    transition={{ duration: 0.4, type: 'spring', stiffness: 200, damping: 20 }}
+                    className="mt-6 p-6 rounded-2xl bg-gradient-to-br from-orange-100 via-yellow-50 to-orange-50 border-2 border-orange-300"
+                    style={{
+                      boxShadow: '0 15px 35px rgba(249,115,22,0.3), 0 8px 20px rgba(249,115,22,0.2), inset 0 2px 4px rgba(255,255,255,0.6)',
+                    }}
+                  >
+                    <div className="text-center space-y-3">
+                      <div className="text-xl font-black text-orange-900 mb-4">
+                        Let's learn from this! 📚
+                      </div>
+
+                      <div className="bg-white/60 rounded-xl p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-700 font-semibold">Your answer:</span>
+                          <span className="text-2xl font-black text-red-600">{selectedAnswer}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-700 font-semibold">Correct answer:</span>
+                          <span className="text-2xl font-black text-green-600">{answers[currentQuestionIndex]}</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                        <div className="text-sm font-bold text-blue-900 mb-2">💡 Explanation</div>
+                        <div className="text-base font-semibold text-blue-800">
+                          {questions[currentQuestionIndex]?.question} = {answers[currentQuestionIndex]}
+                        </div>
+                      </div>
+
+                      <div className="text-sm text-gray-600 font-medium mt-4">
+                        Moving to next question in a moment...
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </PuffyCard>
           </motion.div>
         )}

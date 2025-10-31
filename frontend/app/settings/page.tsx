@@ -70,134 +70,30 @@ export default function SettingsPage() {
     checkAuth()
   }, [])
 
-  // Enhanced scroll detection with Windows Chrome compatibility
+  // Scroll detection for bottom nav (using KanbanBoard's working logic)
   useEffect(() => {
-    // Platform and browser detection
-    const userAgent = navigator.userAgent.toLowerCase()
-    const isWindows = /win/.test(userAgent) || /windows/.test(userAgent)
-    const isChrome = /chrome/.test(userAgent) && !/edg/.test(userAgent)
-    const isWindowsChrome = isWindows && isChrome
-
-    // Debug logging for development
-    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-      console.log('[NAV DEBUG] Platform:', {
-        isWindows,
-        isChrome,
-        isWindowsChrome,
-        userAgent: userAgent.substring(0, 100)
-      })
-    }
-
     const handleScroll = () => {
-      // Use multiple methods to ensure accuracy across browsers
-      const scrollTop = Math.max(
-        window.pageYOffset || 0,
-        document.documentElement.scrollTop || 0,
-        document.body.scrollTop || 0
-      )
+      const doc = document.documentElement
+      const body = document.body
 
-      const scrollHeight = Math.max(
-        document.documentElement.scrollHeight || 0,
-        document.body.scrollHeight || 0,
-        document.documentElement.offsetHeight || 0,
-        document.body.offsetHeight || 0
-      )
+      const scrollTop = Math.ceil(window.scrollY ?? window.pageYOffset ?? doc.scrollTop ?? body.scrollTop ?? 0)
+      const scrollHeight = Math.max(doc.scrollHeight, body.scrollHeight)
+      const clientHeight = doc.clientHeight || window.innerHeight
 
-      const clientHeight = window.innerHeight ||
-                          document.documentElement.clientHeight ||
-                          document.body.clientHeight
+      const isScrollable = scrollHeight > clientHeight + 20
+      const distanceFromBottom = scrollHeight - (scrollTop + clientHeight)
 
-      // Calculate how much content is below the viewport
-      const remainingScroll = scrollHeight - (scrollTop + clientHeight)
-
-      // Check if page has scrollable content (accounting for rounding errors)
-      const hasScrollableContent = scrollHeight > (clientHeight + 5)
-
-      // Windows Chrome specific: More generous bottom detection
-      // Account for: scrollbar (17px), rounding errors, zoom levels
-      const bottomThreshold = isWindowsChrome ? 25 : 2
-
-      // Check if we're at the bottom using multiple methods
-      const isAtBottomPixels = remainingScroll <= bottomThreshold
-
-      // Alternative: percentage-based detection for Windows Chrome
-      const scrollPercentage = (scrollTop + clientHeight) / scrollHeight
-      const isAtBottomPercentage = isWindowsChrome ?
-        scrollPercentage >= 0.97 : // Windows Chrome: 97% is considered "at bottom"
-        scrollPercentage >= 0.99   // Others: 99% is considered "at bottom"
-
-      // Use either detection method
-      const isAtBottom = isAtBottomPixels || isAtBottomPercentage
-
-      // CRITICAL FIX: Show nav bar in two cases:
-      // 1. If page is NOT scrollable (content fits in viewport) → ALWAYS show nav bar
-      // 2. If page IS scrollable → Show nav bar when at bottom
-      let shouldShowNav = false
-      if (!hasScrollableContent) {
-        // Page fits in viewport - no scrolling needed, so show nav bar
-        shouldShowNav = true
-      } else {
-        // Page is scrollable - show nav bar only when at bottom
-        shouldShowNav = isAtBottom
-      }
-
-      // Debug logging
-      if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-        if (shouldShowNav !== showNavBar) {
-          console.log('[NAV DEBUG] Scroll state:', {
-            scrollTop: Math.round(scrollTop),
-            scrollHeight,
-            clientHeight,
-            remainingScroll: Math.round(remainingScroll),
-            scrollPercentage: (scrollPercentage * 100).toFixed(1) + '%',
-            hasScrollableContent,
-            isAtBottomPixels,
-            isAtBottomPercentage,
-            isAtBottom,
-            bottomThreshold,
-            willShowNav: shouldShowNav,
-            reason: !hasScrollableContent ? 'Page not scrollable' : 'At bottom of page'
-          })
-        }
-      }
-
-      // Show nav bar based on new logic
-      setShowNavBar(shouldShowNav)
+      setShowNavBar(isScrollable && Math.abs(distanceFromBottom) <= 1)
     }
 
-    // Check scroll position after a delay to handle page load
-    // Only do initial check on Windows (where nav needs to show if no scroll)
-    // On Mac, wait for user to actually scroll to prevent flash
-    let initialCheckTimer: NodeJS.Timeout | undefined
-    if (isWindows) {
-      initialCheckTimer = setTimeout(() => {
-        handleScroll()
-      }, 100)
-    }
-
-    // Add scroll listener
     window.addEventListener('scroll', handleScroll, { passive: true })
-    window.addEventListener('resize', handleScroll, { passive: true })
-
-    // Also check on content changes (for dynamic content)
-    const observer = new ResizeObserver(() => {
-      handleScroll()
-    })
-
-    // Observe body for size changes
-    if (document.body) {
-      observer.observe(document.body)
-    }
+    window.addEventListener('resize', handleScroll)
 
     return () => {
-      if (initialCheckTimer) {
-        clearTimeout(initialCheckTimer)
-      }
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
-      observer.disconnect()
     }
-  }, [showNavBar])
+  }, [])
 
   async function checkAuth() {
     try {
@@ -600,7 +496,7 @@ export default function SettingsPage() {
                 <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">
                   <LayoutGrid size={18} className="text-gray-500 group-active:text-gray-700 transition-colors" />
                 </div>
-                <span className="text-[9px] font-medium text-gray-500">Menu</span>
+                <span className="text-[9px] font-medium text-gray-500">To Do</span>
               </button>
 
               {/* Achievements */}
