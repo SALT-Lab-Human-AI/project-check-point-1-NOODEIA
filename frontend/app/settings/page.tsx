@@ -72,65 +72,120 @@ export default function SettingsPage() {
 
   // Scroll detection for bottom nav
   useEffect(() => {
-    // Detect if user is on macOS
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
-                  navigator.userAgent.toUpperCase().indexOf('MAC') >= 0
+    // More robust platform detection that works with Chrome deprecations
+    const detectPlatform = () => {
+      // Try multiple detection methods
+      const userAgent = window.navigator.userAgent || ''
+      const platform = window.navigator.platform || ''
 
-    const handleScroll = () => {
-      const doc = document.documentElement
-      const body = document.body
+      // Check for Mac using multiple signals
+      const isMacPlatform = /Mac|iPhone|iPod|iPad/i.test(platform)
+      const isMacUserAgent = /Mac OS X|macOS|Macintosh/i.test(userAgent)
+      const isMacVendor = window.navigator.vendor && /Apple/i.test(window.navigator.vendor)
 
-      const scrollTop = Math.ceil(window.scrollY ?? window.pageYOffset ?? doc.scrollTop ?? body.scrollTop ?? 0)
-      const scrollHeight = Math.max(doc.scrollHeight, body.scrollHeight)
-      const clientHeight = doc.clientHeight || window.innerHeight
+      // Also check for iOS devices (they should behave like Mac)
+      const isIOS = /iPhone|iPad|iPod/i.test(userAgent) ||
+                    (platform === 'MacIntel' && window.navigator.maxTouchPoints > 1)
 
-      const isScrollable = scrollHeight > clientHeight + 20
-      const distanceFromBottom = scrollHeight - (scrollTop + clientHeight)
-
-      if (isMac) {
-        // On Mac: Only show nav bar when scrolled to bottom (never show automatically)
-        setShowNavBar(Math.abs(distanceFromBottom) <= 1)
-      } else {
-        // On Windows/other: Show nav bar if page fits in viewport OR if at bottom
-        if (!isScrollable) {
-          setShowNavBar(true) // Always show when no scrollbar
-        } else {
-          setShowNavBar(Math.abs(distanceFromBottom) <= 1) // Show only at bottom when scrollable
-        }
-      }
+      return isMacPlatform || isMacUserAgent || isMacVendor || isIOS
     }
 
-    // Check immediately on mount (only for non-Mac)
-    const checkScrollability = () => {
-      if (!isMac) {
+    const isMac = detectPlatform()
+
+    // Throttle scroll handler for better performance
+    let scrollTimer = null
+    const handleScroll = () => {
+      if (scrollTimer !== null) {
+        clearTimeout(scrollTimer)
+      }
+
+      scrollTimer = setTimeout(() => {
         const doc = document.documentElement
-        const scrollHeight = Math.max(doc.scrollHeight, document.body.scrollHeight)
-        const clientHeight = doc.clientHeight || window.innerHeight
+        const body = document.body
+
+        const scrollTop = Math.ceil(window.scrollY || window.pageYOffset || doc.scrollTop || body.scrollTop || 0)
+        const scrollHeight = Math.max(doc.scrollHeight || 0, body.scrollHeight || 0)
+        const clientHeight = doc.clientHeight || window.innerHeight || 0
+
+        const isScrollable = scrollHeight > clientHeight + 20
+        const distanceFromBottom = scrollHeight - (scrollTop + clientHeight)
+
+        if (isMac) {
+          // On Mac: Only show nav bar when scrolled to bottom (never show automatically)
+          setShowNavBar(Math.abs(distanceFromBottom) <= 1)
+        } else {
+          // On Windows/other: Show nav bar if page fits in viewport OR if at bottom
+          if (!isScrollable) {
+            setShowNavBar(true) // Always show when no scrollbar
+          } else {
+            setShowNavBar(Math.abs(distanceFromBottom) <= 1) // Show only at bottom when scrollable
+          }
+        }
+      }, 50) // 50ms throttle for better performance
+    }
+
+    // Check scrollability with proper timing for Chrome
+    const checkScrollability = () => {
+      // Use requestAnimationFrame for more reliable DOM measurements in Chrome
+      requestAnimationFrame(() => {
+        const doc = document.documentElement
+        const body = document.body
+
+        const scrollHeight = Math.max(
+          doc.scrollHeight || 0,
+          doc.offsetHeight || 0,
+          body.scrollHeight || 0,
+          body.offsetHeight || 0
+        )
+
+        const clientHeight = Math.max(
+          doc.clientHeight || 0,
+          window.innerHeight || 0
+        )
+
         const isScrollable = scrollHeight > clientHeight + 20
 
-        // If not scrollable on Windows, show nav bar
-        if (!isScrollable) {
-          setShowNavBar(true)
+        if (!isMac) {
+          // On Windows/other: Show nav bar if page fits in viewport
+          if (!isScrollable) {
+            setShowNavBar(true)
+          } else {
+            // Check if already at bottom (edge case for short content)
+            const scrollTop = Math.ceil(window.scrollY || window.pageYOffset || doc.scrollTop || body.scrollTop || 0)
+            const distanceFromBottom = scrollHeight - (scrollTop + clientHeight)
+            setShowNavBar(Math.abs(distanceFromBottom) <= 1)
+          }
         }
-      }
-      // On Mac: Don't show nav bar on initial load
+        // On Mac: Don't show nav bar on initial load
+      })
     }
 
-    // Check immediately (only runs for Windows)
-    checkScrollability()
+    // Initial check after DOM is ready
+    if (document.readyState === 'complete') {
+      checkScrollability()
+    } else {
+      window.addEventListener('load', checkScrollability)
+    }
 
-    // Check again after content loads (for Chrome rendering delays on Windows)
+    // Additional checks for Chrome rendering delays
     const timer1 = setTimeout(checkScrollability, 100)
     const timer2 = setTimeout(checkScrollability, 500)
     const timer3 = setTimeout(checkScrollability, 1000)
+    const timer4 = setTimeout(checkScrollability, 2000)
 
+    // Attach scroll and resize handlers
     window.addEventListener('scroll', handleScroll, { passive: true })
     window.addEventListener('resize', handleScroll)
 
     return () => {
+      if (scrollTimer !== null) {
+        clearTimeout(scrollTimer)
+      }
       clearTimeout(timer1)
       clearTimeout(timer2)
       clearTimeout(timer3)
+      clearTimeout(timer4)
+      window.removeEventListener('load', checkScrollability)
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
