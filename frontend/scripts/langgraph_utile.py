@@ -2,11 +2,192 @@ from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict
 import re
 import json
 import time
+import os
+import asyncio, sys
+from datetime import datetime
+from pathlib import Path
+from collections import Counter
+
+from mcp import ClientSession
+from mcp.client.stdio import stdio_client, StdioServerParameters
+from mcp.client.streamable_http import streamablehttp_client
+from mcp.client.session import ClientSession  # newer import path
+from langchain_community.tools.tavily_search.tool import TavilySearchResults
+from langchain_community.graphs import Neo4jGraph
+from langchain_community.chains.graph_qa.cypher import GraphCypherQAChain
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import PromptTemplate
+from prompts.neotj_tool_prompt import *
 
 try:
     from openai import OpenAI
 except Exception:
     OpenAI = None
+
+from dotenv import load_dotenv
+load_dotenv()
+
+# ===================== Memory System =====================
+
+class ConversationMemory:
+    """
+    Simple persistent memory system to track conversation history.
+    Stores conversations in JSON format and provides analysis capabilities.
+    """
+    
+    def __init__(self, memory_file: str = "conversation_memory.json"):
+        self.memory_file = Path(memory_file)
+        self.conversations: List[Dict[str, Any]] = []
+        self._load_memory()
+    
+    def _load_memory(self):
+        """Load existing memory from file"""
+        if self.memory_file.exists():
+            try:
+                with open(self.memory_file, 'r', encoding='utf-8') as f:
+                    self.conversations = json.load(f)
+            except Exception as e:
+                print(f"Warning: Could not load memory file: {e}")
+                self.conversations = []
+        else:
+            self.conversations = []
+    
+    def _save_memory(self):
+        """Save memory to file"""
+        try:
+            with open(self.memory_file, 'w', encoding='utf-8') as f:
+                json.dump(self.conversations, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"Warning: Could not save memory file: {e}")
+    
+    def add_conversation(
+        self,
+        question: str,
+        answer: str,
+        mode: str,
+        metadata: Optional[Dict[str, Any]] = None
+    ):
+        """Add a new conversation to memory"""
+        conversation = {
+            "timestamp": datetime.now().isoformat(),
+            "question": question,
+            "answer": answer,
+            "mode": mode,
+            "metadata": metadata or {}
+        }
+        self.conversations.append(conversation)
+        self._save_memory()
+    
+    def get_all_conversations(self) -> List[Dict[str, Any]]:
+        """Get all stored conversations"""
+        return self.conversations
+    
+    def get_recent_conversations(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get most recent conversations"""
+        return self.conversations[-limit:]
+    
+    def analyze_frequent_questions(self, top_n: int = 10) -> List[Tuple[str, int]]:
+        """
+        Analyze and return most frequently asked questions.
+        Returns list of (question, count) tuples.
+        """
+        question_counter = Counter()
+        
+        for conv in self.conversations:
+            question = conv.get("question", "").strip().lower()
+            # Normalize question by removing extra whitespace
+            question = re.sub(r'\s+', ' ', question)
+            if question:
+                question_counter[question] += 1
+        
+        return question_counter.most_common(top_n)
+    
+    def analyze_question_patterns(self) -> Dict[str, Any]:
+        """
+        Analyze patterns in questions asked.
+        Returns statistics about question types, modes used, etc.
+        """
+        if not self.conversations:
+            return {
+                "total_conversations": 0,
+                "mode_distribution": {},
+                "frequent_keywords": [],
+                "date_range": None
+            }
+        
+        # Mode distribution
+        mode_counter = Counter()
+        all_keywords = []
+        
+        for conv in self.conversations:
+            mode = conv.get("mode", "unknown")
+            mode_counter[mode] += 1
+            
+            # Extract keywords from questions
+            question = conv.get("question", "").lower()
+            # Common question words to extract
+            keywords = re.findall(r'\b(?:calculate|search|find|explain|what|how|why|when|where|who|chapter|unit|textbook|database|graph)\b', question)
+            all_keywords.extend(keywords)
+        
+        keyword_counter = Counter(all_keywords)
+        
+        # Date range
+        timestamps = [conv.get("timestamp") for conv in self.conversations if conv.get("timestamp")]
+        date_range = None
+        if timestamps:
+            date_range = {
+                "earliest": min(timestamps),
+                "latest": max(timestamps)
+            }
+        
+        return {
+            "total_conversations": len(self.conversations),
+            "mode_distribution": dict(mode_counter),
+            "frequent_keywords": keyword_counter.most_common(10),
+            "date_range": date_range
+        }
+    
+    def search_conversations(self, keyword: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Search conversations by keyword in question or answer.
+        Returns matching conversations.
+        """
+        keyword_lower = keyword.lower()
+        matching = []
+        
+        for conv in self.conversations:
+            question = conv.get("question", "").lower()
+            answer = conv.get("answer", "").lower()
+            
+            if keyword_lower in question or keyword_lower in answer:
+                matching.append(conv)
+                if len(matching) >= limit:
+                    break
+        
+        return matching
+    
+    def clear_memory(self):
+        """Clear all stored conversations (use with caution!)"""
+        self.conversations = []
+        self._save_memory()
+    
+    def get_statistics(self) -> Dict[str, Any]:
+        """Get comprehensive statistics about stored conversations"""
+        stats = self.analyze_question_patterns()
+        stats["frequent_questions"] = self.analyze_frequent_questions(top_n=5)
+        return stats
+
+
+# Global memory instance
+_CONVERSATION_MEMORY = None
+
+def get_conversation_memory(memory_file: str = "conversation_memory.json") -> ConversationMemory:
+    """Get or create the global conversation memory instance"""
+    global _CONVERSATION_MEMORY
+    if _CONVERSATION_MEMORY is None:
+        _CONVERSATION_MEMORY = ConversationMemory(memory_file)
+    return _CONVERSATION_MEMORY
+
 
 class GraphState(TypedDict):
     messages: List[Dict[str, Any]]
@@ -20,7 +201,7 @@ class LLM:
             raise ImportError(
                 "openai package not installed. `pip install openai` to use this."
             )
-        self.client = OpenAI(api_key= "")
+        self.client = OpenAI(api_key= os.getenv("OPENAI_API_KEY"))
         self.model = model
         self.temperature = temperature
 
@@ -54,8 +235,8 @@ class LLM:
 COT_PROMPT = (
     "You are a careful reasoner. Solve the user's problem. "
     "Think step by step in a <scratchpad>...</scratchpad> block, then output only the final answer "
-    "in <final>ANSWER</final> tags. If choices exist, return the letter only inside <final>."
-)
+    "wrap it in <final></final> tags like: <final>your actual answer</final>.\n"
+    "Keep Thoughts concise.")
 
 TOT_EXPAND_TEMPLATE = (
     "You are exploring solution paths as short thoughts.\n"
@@ -71,62 +252,295 @@ TOT_VALUE_TEMPLATE = (
 
 REACT_SYSTEM = (
     "You are a ReAct-style agent. Alternate Thought → Action with tools.\n"
-    "Use tools only when they help. After you believe you have the answer,\n"
-    "output it in <final>ANSWER</final>. Keep Thoughts concise."
-)
+    "Use tools when they help answer the question. After receiving tool results,\n"
+    "analyze them and provide your final answer wrapped in <final></final> tags.\n"
+    "Format: <final>your actual answer here</final>\n"
+    "Be concise and direct. Extract key information from tool results to answer the user's question.")
 
-class Calculator:
-    name = "calculator"
-    description = "Evaluate a basic arithmetic expression. Supports + - * / ** ( ) and decimals."
+######tools
+def _calculator_run(args: Dict[str, Any]) -> str:
+    """
+    Simple calculator tool that evaluates mathematical expressions.
+    Supports basic arithmetic operations: +, -, *, /, **, %, and parentheses.
+    """
+    expression = args.get("expression", "").strip()
+    if not expression:
+        return "Calculator error: missing 'expression'."
+    
+    try:
+        # Sanitize the expression - only allow numbers, operators, and parentheses
+        allowed_chars = set("0123456789+-*/()%.** ")
+        if not all(c in allowed_chars for c in expression):
+            return f"Calculator error: Invalid characters in expression. Only numbers and operators (+, -, *, /, **, %, parentheses) are allowed."
+        
+        # Evaluate the expression safely
+        result = eval(expression, {"__builtins__": {}}, {})
+        return json.dumps({"expression": expression, "result": result})
+    except ZeroDivisionError:
+        return "Calculator error: Division by zero."
+    except Exception as e:
+        return f"Calculator error: {str(e)}"
 
-    @staticmethod
-    def json_schema() -> Dict[str, Any]:
-        return {
-            "type": "function",
-            "function": {
-                "name": Calculator.name,
-                "description": Calculator.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "expression": {
-                            "type": "string",
-                            "description": "Arithmetic expression to evaluate",
-                        }
+def _calculator_schema() -> dict:
+    return {
+        "type": "function",
+        "function": {
+            "name": "calculator",
+            "description": "Performs mathematical calculations. Supports basic arithmetic operations: addition (+), subtraction (-), multiplication (*), division (/), exponentiation (**), modulo (%), and parentheses for grouping.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "expression": {
+                        "type": "string",
+                        "description": "The mathematical expression to evaluate (e.g., '2 + 2', '10 * (5 + 3)', '2 ** 3')"
                     },
-                    "required": ["expression"],
                 },
+                "required": ["expression"],
             },
+        },
+    }
+
+def _deep_research_run(args: Dict[str, Any]) -> str:
+    if TavilySearchResults is None:
+        return "DeepResearch error: langchain_community or tavily-python not installed."
+    query = args.get("query") or ""
+    if not query:
+        return "DeepResearch error: missing 'query'."
+    tool = TavilySearchResults(
+        max_results=int(args.get("max_results", 5)),
+        include_answer=bool(args.get("include_answer", True)),
+        include_raw_content=bool(args.get("include_raw_content", False)),
+        search_depth=str(args.get("search_depth", "advanced")),
+        tavily_api_key=os.getenv("TAVILY_API_KEY"), 
+    )
+    out = tool.invoke({"query": query})
+    try:
+        return json.dumps(out)
+    except Exception:
+        return str(out)
+
+def _deep_research_schema() -> dict:
+    return {
+        "type": "function",
+        "function": {
+            "name": "deep_research",
+            "description": "Web deep-research via Tavily; returns aggregated JSON with sources and (optional) short answer.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query to investigate deeply."},
+                    "max_results": {"type": "integer", "default": 5},
+                    "search_depth": {"type": "string", "enum": ["basic", "advanced"], "default": "advanced"},
+                    "include_answer": {"type": "boolean", "default": True},
+                    "include_raw_content": {"type": "boolean", "default": False},
+                },
+                "required": ["query"],
+            },
+        },
+    }
+
+# ---- Neo4j Retrieve+QA tool ----
+_NEO4J_CHAIN = None  # lazy singleton
+
+def _neo4j_retrieveqa_schema() -> dict:
+    return {
+        "type": "function",
+        "function": {
+            "name": "neo4j_retrieveqa",
+            "description": "Query Neo4j with natural language. Step 1: generate Cypher and retrieve context. Step 2: answer from that context.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "question": {"type": "string", "description": "User's natural-language question about the Neo4j graph."},
+                    "top_k": {"type": "integer", "default": 10, "description": "Limit for returned rows to keep answers concise."},
+                    "include_context": {"type": "boolean", "default": True, "description": "Whether to include retrieved rows in the output."},
+                },
+                "required": ["question"],
+            },
+        },
+    }
+
+def _extract_cypher_query(text: str) -> str:
+    """
+    Extract and clean a Cypher query from LLM output.
+    Handles cases where the LLM adds extra text or formatting.
+    """
+    if not text:
+        return ""
+    
+    text = text.strip()
+    
+    # Remove markdown code blocks if present
+    if text.startswith("```") and text.endswith("```"):
+        lines = text.split("\n")
+        # Remove first and last lines (the ``` markers)
+        text = "\n".join(lines[1:-1]).strip()
+        # Remove language identifier if present (e.g., ```cypher)
+        if text.startswith("cypher") or text.startswith("Cypher"):
+            text = text[6:].strip()
+    
+    # Remove "Cypher:" prefix if present
+    if text.lower().startswith("cypher:"):
+        text = text[7:].strip()
+    
+    # Check if the query starts with a valid Cypher keyword
+    valid_starts = ["MATCH", "RETURN", "CREATE", "MERGE", "WITH", "UNWIND", "CALL", "OPTIONAL"]
+    first_word = text.split()[0].upper() if text.split() else ""
+    
+    if first_word not in valid_starts:
+        # Try to find a line that starts with a valid keyword
+        for line in text.split("\n"):
+            line = line.strip()
+            if line and line.split()[0].upper() in valid_starts:
+                # Found the start of the query
+                idx = text.index(line)
+                text = text[idx:]
+                break
+    
+    return text.strip()
+
+def _build_neo4j_chain(top_k: int = 10):
+    """
+    Build Neo4j GraphCypherQAChain with two-step pipeline:
+    Step 1: Generate Cypher query using CYPHER_PROMPT
+    Step 2: Answer question using QA_PROMPT based on retrieved context
+    """
+    global _NEO4J_CHAIN
+    if _NEO4J_CHAIN is not None:
+        return _NEO4J_CHAIN
+
+    # Support both NEXT_PUBLIC_ (for Next.js) and regular env vars (for Python backend)
+    # Try regular vars first, then fall back to NEXT_PUBLIC_ vars
+    uri = (os.getenv("NEO4J_URI") or 
+           os.getenv("NEXT_PUBLIC_NEO4J_URI") or 
+           "bolt://localhost:7687")
+    user = (os.getenv("NEO4J_USERNAME") or 
+            os.getenv("NEXT_PUBLIC_NEO4J_USERNAME") or 
+            "neo4j")
+    pwd = (os.getenv("NEO4J_PASSWORD") or 
+           os.getenv("NEXT_PUBLIC_NEO4J_PASSWORD") or 
+           "password")
+    # NEO4J_DATABASE: Optional database name for Neo4j 4.0+. None = default database
+    db = os.getenv("NEO4J_DATABASE", None)
+
+    graph = Neo4jGraph(url=uri, username=user, password=pwd, database=db)
+
+    # Create PromptTemplate objects from the prompt strings
+    # CYPHER_PROMPT expects {schema} and {question} variables
+    cypher_prompt_template = PromptTemplate(
+        input_variables=["schema", "question"],
+        template=CYPHER_PROMPT
+    )
+    
+    # QA_PROMPT expects {context} and {question} variables
+    qa_prompt_template = PromptTemplate(
+        input_variables=["context", "question"],
+        template=QA_PROMPT
+    )
+
+    # Use a more capable model for Cypher generation with strict temperature
+    cypher_llm = ChatOpenAI(
+        model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        temperature=0.0,
+        api_key=os.getenv("OPENAI_API_KEY"),
+        model_kwargs={"top_p": 0.1}  # Make output more deterministic
+    )
+    
+    # Use the same LLM for QA
+    qa_llm = ChatOpenAI(
+        model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        temperature=0.2,
+        api_key=os.getenv("OPENAI_API_KEY"),
+    )
+
+    # Build the two-step pipeline chain
+    _NEO4J_CHAIN = GraphCypherQAChain.from_llm(
+        llm=cypher_llm,
+        qa_llm=qa_llm,
+        graph=graph,
+        cypher_prompt=cypher_prompt_template,
+        qa_prompt=qa_prompt_template,
+        return_intermediate_steps=True,
+        top_k=top_k,
+        verbose=True,  # Enable verbose to debug Cypher generation
+        allow_dangerous_requests=True,  # Acknowledge that LLM can generate Cypher queries
+        validate_cypher=True,  # Validate Cypher syntax before execution
+    )
+    return _NEO4J_CHAIN
+
+def _neo4j_retrieveqa_run(args: Dict[str, Any]) -> str:
+    """
+    Run Neo4j retrieve-and-QA with two-step pipeline:
+    1. Generate Cypher query from natural language question
+    2. Execute query and answer based on retrieved context
+    
+    Returns JSON with answer, generated_cypher, and optionally context.
+    """
+    question = (args or {}).get("question", "").strip()
+    if not question:
+        return "Neo4jRetrieveQA error: missing 'question'."
+    top_k = int((args or {}).get("top_k", 10))
+    include_context = bool((args or {}).get("include_context", True))
+
+    try:
+        # Build and invoke the two-step chain
+        chain = _build_neo4j_chain(top_k=top_k)
+        res = chain.invoke({"query": question})
+        
+        # Extract results
+        answer = res.get("result", "")
+        interm = res.get("intermediate_steps", []) or []
+        
+        # GraphCypherQAChain intermediate_steps is a list containing:
+        # - dict with "query": the generated Cypher statement
+        # - "context": the raw data retrieved from Neo4j
+        # The structure can vary, so we handle both dict and list formats
+        cypher = ""
+        context = []
+        
+        if isinstance(interm, list) and len(interm) > 0:
+            # intermediate_steps is typically a list of dicts or a dict
+            if isinstance(interm[0], dict):
+                cypher = interm[0].get("query", "")
+                context = interm[0].get("context", [])
+            else:
+                # Sometimes it's a flat list: [query_string, context_list]
+                cypher = str(interm[0]) if len(interm) > 0 else ""
+                context = interm[1] if len(interm) > 1 else []
+        elif isinstance(interm, dict):
+            cypher = interm.get("query", "")
+            context = interm.get("context", [])
+
+        payload = {
+            "answer": answer,
+            "generated_cypher": cypher,
+            "top_k": top_k,
         }
+        if include_context:
+            payload["context"] = context
+        
+        try:
+            return json.dumps(payload)
+        except Exception:
+            return str(payload)
+            
+    except Exception as e:
+        error_msg = f"Neo4jRetrieveQA error: {str(e)}"
+        # Try to extract the generated Cypher from intermediate steps if available
+        try:
+            interm = res.get("intermediate_steps", []) if 'res' in locals() else []
+            if interm:
+                if isinstance(interm, list) and len(interm) > 0:
+                    if isinstance(interm[0], dict):
+                        bad_cypher = interm[0].get("query", "")
+                    else:
+                        bad_cypher = str(interm[0])
+                    error_msg += f" | Generated Cypher: {bad_cypher}"
+        except Exception:
+            pass
+        return json.dumps({"error": error_msg, "question": question})
 
-    @staticmethod
-    def run(expression: str) -> str:
-        import ast
-        import operator as op
-        ops = {
-            ast.Add: op.add,
-            ast.Sub: op.sub,
-            ast.Mult: op.mul,
-            ast.Div: op.truediv,
-            ast.Pow: op.pow,
-            ast.USub: op.neg,
-        }
-        def eval_(node):
-            if isinstance(node, ast.Num):
-                return node.n
-            if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
-                return ops[ast.USub](eval_(node.operand))
-            if isinstance(node, ast.BinOp) and type(node.op) in ops:
-                return ops[type(node.op)](eval_(node.left), eval_(node.right))
-            if isinstance(node, ast.Expression):
-                return eval_(node.body)
-            raise ValueError("Unsupported expression")
-        tree = ast.parse(expression, mode="eval")
-        val = eval_(tree)
-        return str(val)
-
-TOOLS = [Calculator]
-
+############
 def _extract_final(text: str) -> Optional[str]:
     m = re.search(r"<final>(.*?)</final>", text, flags=re.DOTALL | re.IGNORECASE)
     return m.group(1).strip() if m else None
@@ -223,42 +637,78 @@ def solve_tot(state: GraphState) -> Dict[str, Any]:
     text = fin["choices"][0]["message"]["content"]
     return {"answer": _extract_final(text) or text, "scratchpad": best_pad}
 
+
 def solve_react(state: GraphState) -> Dict[str, Any]:
     params = state["scratch"]
-    max_turns = int(params.get("max_turns", 6))
+    max_turns = int(params.get("max_turns", 8))  # Increased from 6 to 8
     temp = float(params.get("temperature", 0.2))
-    tool_schemas = [cls.json_schema() for cls in TOOLS]
+    # Build tool schemas dynamically: calculator + deep-research + neo4j
+    tool_schemas = [_calculator_schema(), _deep_research_schema(), _neo4j_retrieveqa_schema()]
     llm = LLM(temperature=temp)
     messages = [{"role": "system", "content": REACT_SYSTEM}] + state["messages"]
-    for _ in range(max_turns):
-        resp = llm.chat(messages, tools=tool_schemas, tool_choice="auto", max_tokens=800)
+
+    for turn in range(max_turns):
+        # Increase max_tokens for later turns to allow for comprehensive answers
+        max_tokens = 1200 if turn > 0 else 800
+        resp = llm.chat(messages, tools=tool_schemas, tool_choice="auto", max_tokens=max_tokens)
         choice = resp["choices"][0]["message"]
         content = choice.get("content") or ""
         tool_calls = choice.get("tool_calls") or []
+
+        # Check for final answer before appending message
         if content:
-            messages.append({"role": "assistant", "content": content})
             final = _extract_final(content)
             if final:
+                messages.append({"role": "assistant", "content": content})
                 return {"answer": final, "trace": messages}
-        for tc in tool_calls:
-            name = tc["function"]["name"]
-            args = tc["function"].get("arguments")
-            try:
-                parsed = json.loads(args) if isinstance(args, str) else (args or {})
-            except Exception:
-                parsed = {}
-            if name == Calculator.name:
+
+        # Always append the assistant message (with or without tool_calls)
+        # This is required by OpenAI API before tool responses
+        assistant_msg = {"role": "assistant", "content": content}
+        if tool_calls:
+            assistant_msg["tool_calls"] = tool_calls
+        messages.append(assistant_msg)
+
+        # Process tool calls if any
+        if tool_calls:
+            for tc in tool_calls:
+                name = tc["function"]["name"]
+                args = tc["function"].get("arguments")
                 try:
-                    out = Calculator.run(parsed.get("expression", ""))
-                except Exception as e:
-                    out = f"Calculator error: {e}"
-            else:
-                out = f"Unknown tool: {name}"
-            messages.append(
-                {
-                    "role": "tool",
-                    "content": out,
-                    "tool_call_id": tc.get("id", ""),
-                }
-            )
+                    parsed = json.loads(args) if isinstance(args, str) else (args or {})
+                except Exception:
+                    parsed = {}
+
+                ##### Route to appropriate tool
+                if name == "calculator":
+                    out = _calculator_run(parsed)
+                elif name == "deep_research":
+                    out = _deep_research_run(parsed)
+                elif name == "neo4j_retrieveqa":
+                    out = _neo4j_retrieveqa_run(parsed)
+                else:
+                    out = f"Unknown tool: {name}"
+
+                messages.append(
+                    {
+                        "role": "tool",
+                        "content": out if isinstance(out, str) else json.dumps(out),
+                        "tool_call_id": tc.get("id", ""),
+                    }
+                )
+            
+            # After tool results, if approaching max turns, prompt for final answer
+            if turn >= max_turns - 2:
+                messages.append({
+                    "role": "user",
+                    "content": "Based on the tool results above, please provide your final answer wrapped in <final></final> tags."
+                })
+
+    # If we exhausted all turns, try to extract an answer from the last content
     return {"answer": content.strip() if content else "(no final)", "trace": messages}
+
+
+
+if __name__ == "__main__":
+    tool = TavilySearchResults(max_results=3)
+    print(tool.invoke({"query": "current prime minister of Canada"}))
