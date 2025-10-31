@@ -21,18 +21,18 @@ type TaskPriority = Task['priority'];
 
 const PRIORITY_THEMES: Record<TaskPriority, { gradient: [string, string]; accent: string; glow: string }> = {
   high: {
-    gradient: ['#ff4d6d', '#ff9f68'],
-    accent: '#ffe3dd',
+    gradient: ['rgba(255, 77, 109, 0.25)', 'rgba(255, 159, 104, 0.20)'],
+    accent: 'rgba(255, 227, 221, 0.15)',
     glow: 'rgba(255, 77, 109, 0.35)'
   },
   medium: {
-    gradient: ['#4facfe', '#00f2fe'],
-    accent: '#d6ecff',
+    gradient: ['rgba(79, 172, 254, 0.25)', 'rgba(0, 242, 254, 0.20)'],
+    accent: 'rgba(214, 236, 255, 0.15)',
     glow: 'rgba(79, 172, 254, 0.35)'
   },
   low: {
-    gradient: ['#43e97b', '#38f9d7'],
-    accent: '#d4fff1',
+    gradient: ['rgba(67, 233, 123, 0.25)', 'rgba(56, 249, 215, 0.20)'],
+    accent: 'rgba(212, 255, 241, 0.15)',
     glow: 'rgba(67, 233, 123, 0.35)'
   }
 };
@@ -170,19 +170,63 @@ const createTaskTexture = (task: Task, index: number): string => {
 
   const theme = PRIORITY_THEMES[task.priority] ?? FALLBACK_THEME;
 
-  // Base gradient
+  // 🎨 NEW: Soft aurora-style gradient background
   const gradient = ctx.createLinearGradient(0, 0, width, height);
   gradient.addColorStop(0, theme.gradient[0]);
-  gradient.addColorStop(1, theme.gradient[1]);
+  gradient.addColorStop(0.4, theme.gradient[1]);
+  gradient.addColorStop(1, theme.accent);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
 
-  // Overlay shapes for depth
+  // 🎨 NEW: Add grainy texture overlay (2025 trend)
+  ctx.save();
+  ctx.globalCompositeOperation = 'overlay';
+  ctx.globalAlpha = 0.08;
+  for (let i = 0; i < width * height / 100; i++) {
+    ctx.fillStyle = Math.random() > 0.5 ? '#fff' : '#000';
+    ctx.fillRect(Math.random() * width, Math.random() * height, 1, 1);
+  }
+  ctx.restore();
+
+  // 🎨 NEW: Playful floating circles with soft blur
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  drawSoftCircle(ctx, width * 0.2, height * 0.25, 220, theme.glow);
-  drawSoftCircle(ctx, width * 0.75, height * 0.35, 260, 'rgba(255,255,255,0.25)');
-  drawSoftCircle(ctx, width * 0.6, height * 0.75, 200, 'rgba(255,255,255,0.18)');
+  drawSoftCircle(ctx, width * 0.15, height * 0.2, 180, theme.glow);
+  drawSoftCircle(ctx, width * 0.8, height * 0.3, 200, 'rgba(255,255,255,0.3)');
+  drawSoftCircle(ctx, width * 0.5, height * 0.8, 160, 'rgba(255,255,255,0.22)');
+
+  // 🎨 NEW: Add cute decorative circles (scattered dots)
+  ctx.globalAlpha = 0.15;
+  for (let i = 0; i < 8; i++) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    const size = 10 + Math.random() * 30;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // 🎨 NEW: Add sparkle stars
+  ctx.save();
+  ctx.globalAlpha = 0.6;
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 6; i++) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    const size = 4 + Math.random() * 8;
+    // Draw 4-point star
+    ctx.beginPath();
+    for (let j = 0; j < 4; j++) {
+      const angle = (j * Math.PI) / 2;
+      const px = x + size * Math.cos(angle);
+      const py = y + size * Math.sin(angle);
+      j === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
   ctx.restore();
 
   // Frosted glass panel

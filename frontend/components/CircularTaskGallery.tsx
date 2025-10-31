@@ -67,50 +67,155 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
 
     if (!ctx) return '';
 
-    // Color palette matching the 4 home page feature cards
+    // 🎨 2025 Glassmorphism Color Palette - Transparent backgrounds with high contrast text
     const colorPalette = [
-      // Purple (AI Tutor Card)
-      { start: '#d8b4fe', middle: '#e9d5ff', end: '#f3e8ff', text: '#581c87' },
+      // Purple (AI Tutor Card) - 25% opacity for glassmorphism
+      {
+        start: 'rgba(216, 180, 254, 0.25)',
+        middle: 'rgba(233, 213, 255, 0.20)',
+        end: 'rgba(243, 232, 255, 0.15)',
+        border: 'rgba(216, 180, 254, 0.4)',
+        text: '#581c87',
+        textShadow: 'rgba(255, 255, 255, 0.9)'
+      },
       // Pink (Group Chat Card)
-      { start: '#fbcfe8', middle: '#fce7f3', end: '#fdf2f8', text: '#831843' },
+      {
+        start: 'rgba(251, 207, 232, 0.25)',
+        middle: 'rgba(252, 231, 243, 0.20)',
+        end: 'rgba(253, 242, 248, 0.15)',
+        border: 'rgba(251, 207, 232, 0.4)',
+        text: '#831843',
+        textShadow: 'rgba(255, 255, 255, 0.9)'
+      },
       // Blue (Quiz Card)
-      { start: '#bfdbfe', middle: '#dbeafe', end: '#eff6ff', text: '#1e3a8a' },
+      {
+        start: 'rgba(191, 219, 254, 0.25)',
+        middle: 'rgba(219, 234, 254, 0.20)',
+        end: 'rgba(239, 246, 255, 0.15)',
+        border: 'rgba(191, 219, 254, 0.4)',
+        text: '#1e3a8a',
+        textShadow: 'rgba(255, 255, 255, 0.9)'
+      },
       // Yellow (Games Card)
-      { start: '#fef08a', middle: '#fef9c3', end: '#fefce8', text: '#713f12' },
+      {
+        start: 'rgba(254, 240, 138, 0.25)',
+        middle: 'rgba(254, 249, 195, 0.20)',
+        end: 'rgba(254, 252, 232, 0.15)',
+        border: 'rgba(254, 240, 138, 0.4)',
+        text: '#713f12',
+        textShadow: 'rgba(255, 255, 255, 0.9)'
+      },
     ];
 
     // Cycle through colors based on index
     const colors = colorPalette[colorIndex % colorPalette.length];
-    console.log(`🎨 Card ${colorIndex}: Using color scheme`, ['Purple', 'Pink', 'Blue', 'Yellow'][colorIndex % 4], colors);
 
-    // Create gradient background - draw a horizontal card appearance within the vertical canvas
-    // Draw the "card" in the middle of the canvas to look horizontal
-    const cardY = 300;  // Position the horizontal card in middle of vertical canvas
-    const cardHeight = 300;  // Height of the visible card area
+    // Card dimensions - horizontal card centered in vertical canvas
+    const cardY = 300;  // Position in middle of 900px canvas
+    const cardHeight = 300;  // Height of the card
+    const cardMargin = 40;  // Increased margin for better spacing
+    const cardWidth = 700 - (cardMargin * 2);
+    const cardPadding = 25;  // Internal padding for content
 
-    // Fill entire canvas with transparent/subtle background first
+    // Fill entire canvas with transparent background
     ctx.fillStyle = 'rgba(255, 255, 255, 0)';
     ctx.fillRect(0, 0, 700, 900);
 
-    // Add subtle shadow for the card
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-    ctx.shadowBlur = 20;
+    // 🎨 Layer 1: Outer glow shadow for depth (glassmorphism effect)
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.12)';
+    ctx.shadowBlur = 30;
     ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 10;
+    ctx.shadowOffsetY = 15;
 
-    // Create rounded rectangle for card background
-    const cardMargin = 30;
+    // Draw main card background with transparent gradient
     ctx.beginPath();
-    ctx.roundRect(cardMargin, cardY, 700 - (cardMargin * 2), cardHeight, 25);
+    ctx.roundRect(cardMargin, cardY, cardWidth, cardHeight, 24);
     ctx.closePath();
 
-    // Create gradient for the main card area
-    const gradient = ctx.createLinearGradient(0, cardY, 0, cardY + cardHeight);
+    // 🎨 Layer 2: Transparent gradient background (glassmorphism)
+    const gradient = ctx.createLinearGradient(cardMargin, cardY, cardMargin + cardWidth, cardY + cardHeight);
     gradient.addColorStop(0, colors.start);
     gradient.addColorStop(0.5, colors.middle);
     gradient.addColorStop(1, colors.end);
     ctx.fillStyle = gradient;
     ctx.fill();
+
+    // Reset shadow for border
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+
+    // 🎨 Layer 3: Subtle border glow (glassmorphism trend)
+    ctx.strokeStyle = colors.border;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Reset shadow for decorative elements
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+
+    // 🎨 NEW: Add grainy texture overlay (2025 trend)
+    ctx.save();
+    ctx.globalCompositeOperation = 'overlay';
+    ctx.globalAlpha = 0.06;
+    ctx.beginPath();
+    ctx.roundRect(cardMargin, cardY, cardWidth, cardHeight, 30);
+    ctx.clip();
+    for (let i = 0; i < (cardWidth * cardHeight) / 150; i++) {
+      ctx.fillStyle = Math.random() > 0.5 ? '#fff' : '#000';
+      const x = cardMargin + Math.random() * cardWidth;
+      const y = cardY + Math.random() * cardHeight;
+      ctx.fillRect(x, y, 1, 1);
+    }
+    ctx.restore();
+
+    // 🎨 NEW: Add cute floating circles
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(cardMargin, cardY, cardWidth, cardHeight, 30);
+    ctx.clip();
+
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.12;
+    // Draw soft decorative circles
+    const drawSoftCircle = (x: number, y: number, radius: number) => {
+      const radGrad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      radGrad.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+      radGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = radGrad;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    drawSoftCircle(cardMargin + cardWidth * 0.2, cardY + cardHeight * 0.25, 80);
+    drawSoftCircle(cardMargin + cardWidth * 0.8, cardY + cardHeight * 0.7, 100);
+    drawSoftCircle(cardMargin + cardWidth * 0.5, cardY + cardHeight * 0.5, 60);
+
+    ctx.restore();
+
+    // 🎨 NEW: Add sparkle decorations
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(cardMargin, cardY, cardWidth, cardHeight, 30);
+    ctx.clip();
+
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = '#ffffff';
+    // Draw small star sparkles
+    for (let i = 0; i < 5; i++) {
+      const x = cardMargin + Math.random() * cardWidth;
+      const y = cardY + Math.random() * cardHeight;
+      const size = 3 + Math.random() * 5;
+      // Draw diamond shape
+      ctx.beginPath();
+      ctx.moveTo(x, y - size);
+      ctx.lineTo(x + size / 2, y);
+      ctx.lineTo(x, y + size);
+      ctx.lineTo(x - size / 2, y);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
 
     // Reset shadow for text
     ctx.shadowColor = 'transparent';

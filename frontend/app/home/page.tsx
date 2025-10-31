@@ -22,7 +22,7 @@ import {
   LayoutGrid,
   User
 } from 'lucide-react';
-import ActiveTasksGallery from '@/components/ActiveTasksGallery';
+import CircularTaskGallery from '@/components/CircularTaskGallery';
 
 export default function HomePage() {
   const router = useRouter();
@@ -157,8 +157,8 @@ export default function HomePage() {
           </h1>
         </div>
 
-        {/* Active Tasks Gallery - Swipe through TODO and IN_PROGRESS tasks */}
-        <ActiveTasksGallery userId={user?.id} />
+        {/* Circular Task Gallery - Swipe through TODO and IN_PROGRESS tasks */}
+        <CircularTaskGallery userId={user?.id} />
 
         {/* Section Title */}
         <div className="mb-4">

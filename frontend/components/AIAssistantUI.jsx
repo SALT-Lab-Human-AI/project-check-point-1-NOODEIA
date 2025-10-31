@@ -249,6 +249,10 @@ export default function AIAssistantUI() {
     // Generate random XP between 1.01 and 1.75
     const xpEarned = Math.random() * 0.74 + 1.01
 
+    // Show the XP animation immediately so it feels responsive
+    setXpGain(xpEarned)
+    setTriggerXpUpdate(prev => prev + 1)
+
     try {
       const response = await fetch('/api/user/xp', {
         method: 'POST',
@@ -267,9 +271,6 @@ export default function AIAssistantUI() {
           xp: data.xp,
           level: data.level
         }))
-        // Trigger XP gain animation
-        setXpGain(xpEarned)
-        setTriggerXpUpdate(prev => prev + 1)
       }
     } catch (error) {
       console.error('Failed to update XP:', error)
