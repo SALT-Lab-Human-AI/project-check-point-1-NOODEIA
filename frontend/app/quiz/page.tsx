@@ -429,7 +429,7 @@ export default function QuizPage() {
                 className="glass-button glass-button-light flex items-center gap-2 px-4 py-2 rounded-full"
               >
                 <ArrowLeft size={20} />
-                <span className="font-semibold">Back</span>
+                <span className="font-semibold">Home Page</span>
               </button>
 
               <h1 className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
@@ -571,15 +571,14 @@ export default function QuizPage() {
               {/* Back Button */}
               <button
                 onClick={() => {
-                  if (window.confirm('Are you sure you want to exit? Your progress will be saved.')) {
-                    saveQuizProgress();
-                    setGameState('menu');
-                  }
+                  // Auto-save progress and exit without confirmation
+                  saveQuizProgress();
+                  setGameState('menu');
                 }}
                 className="mb-4 flex items-center gap-2 px-4 py-2 rounded-lg glass-button glass-button-light text-gray-700 font-medium hover:bg-white/30 transition-all duration-300"
               >
                 <ArrowLeft className="w-5 h-5" />
-                Back to Menu
+                Back to Quiz Page
               </button>
 
               {/* Progress Header */}

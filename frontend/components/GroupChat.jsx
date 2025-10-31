@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
-import { Send, Users, LogOut } from 'lucide-react'
+import { Send, Users, LogOut, TrendingUp, Sparkles } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import ThreadedMessage from './ThreadedMessage'
 import ThreadPanel from './ThreadPanel'
 import { getPusherClient, PUSHER_EVENTS } from '../lib/pusher'
@@ -16,6 +17,8 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
   const [typingUsers, setTypingUsers] = useState([])
   const [selectedThread, setSelectedThread] = useState(null)
   const [totalMessagesLoaded, setTotalMessagesLoaded] = useState(0) // Track total messages from DB
+  const [xpGain, setXpGain] = useState(0)
+  const [showXpAnimation, setShowXpAnimation] = useState(false)
   const messagesEndRef = useRef(null)
   const messagesContainerRef = useRef(null)
   const pusherRef = useRef(null)
@@ -203,6 +206,31 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     if (!newMessage.trim() || sending) return
 
     const messageContent = newMessage.trim()
+
+    // Check if message contains @ai and trigger XP animation
+    if (messageContent.includes('@ai')) {
+      // Generate random XP between 1.01 and 1.75
+      const xpEarned = Math.random() * 0.74 + 1.01
+      setXpGain(xpEarned)
+      setShowXpAnimation(true)
+
+      // Hide animation after 2 seconds
+      setTimeout(() => {
+        setShowXpAnimation(false)
+      }, 2000)
+
+      // Award XP to user (non-blocking)
+      if (currentUser?.id) {
+        fetch('/api/user/xp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            xpGained: xpEarned
+          })
+        }).catch(err => console.error('Failed to update XP:', err))
+      }
+    }
 
     setNewMessage('')
     setSending(true)

@@ -598,7 +598,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setNewTaskPriority('low')}
-                    className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                       newTaskPriority === 'low'
                         ? 'bg-green-500 text-white shadow-lg'
                         : 'bg-white/60 text-green-700 border border-green-300 hover:bg-green-50'
@@ -606,10 +606,11 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                     title="Low Priority"
                   >
                     <Circle className="w-4 h-4" />
+                    <span>Low</span>
                   </button>
                   <button
                     onClick={() => setNewTaskPriority('medium')}
-                    className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                       newTaskPriority === 'medium'
                         ? 'bg-amber-500 text-white shadow-lg'
                         : 'bg-white/60 text-amber-700 border border-amber-300 hover:bg-amber-50'
@@ -617,10 +618,11 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                     title="Medium Priority"
                   >
                     <Flag className="w-4 h-4" />
+                    <span>Medium</span>
                   </button>
                   <button
                     onClick={() => setNewTaskPriority('high')}
-                    className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                       newTaskPriority === 'high'
                         ? 'bg-red-500 text-white shadow-lg'
                         : 'bg-white/60 text-red-700 border border-red-300 hover:bg-red-50'
@@ -628,6 +630,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                     title="High Priority"
                   >
                     <Flag className="w-4 h-4" fill="currentColor" />
+                    <span>High</span>
                   </button>
                 </div>
               </div>
