@@ -22,12 +22,11 @@ import {
   LayoutGrid,
   User
 } from 'lucide-react';
+import CircularTaskGallery from '@/components/CircularTaskGallery';
 
 export default function HomePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [userLevel, setUserLevel] = useState(1);
-  const [userXP, setUserXP] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showNavBar, setShowNavBar] = useState(false);
 
@@ -35,7 +34,7 @@ export default function HomePage() {
     checkAuth();
   }, []);
 
-  // Scroll detection for bottom nav (using KanbanBoard's working logic)
+  // Scroll detection for bottom nav
   useEffect(() => {
     const handleScroll = () => {
       const doc = document.documentElement;
@@ -48,13 +47,22 @@ export default function HomePage() {
       const isScrollable = scrollHeight > clientHeight + 20;
       const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
 
-      setShowNavBar(isScrollable && Math.abs(distanceFromBottom) <= 1);
+      // Show nav bar if page is NOT scrollable (fits in viewport) OR if at bottom
+      if (!isScrollable) {
+        setShowNavBar(true); // Always show when no scrollbar
+      } else {
+        setShowNavBar(Math.abs(distanceFromBottom) <= 1); // Show only at bottom when scrollable
+      }
     };
+
+    // Check after a small delay to let page fully load
+    const timer = setTimeout(handleScroll, 100);
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };
@@ -68,27 +76,11 @@ export default function HomePage() {
         return;
       }
       setUser(session.user);
-
-      // Fetch user's XP and level
-      await fetchUserStats(session.user.id);
     } catch (error) {
       console.error('Auth error:', error);
       router.push('/login');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchUserStats = async (userId) => {
-    try {
-      const response = await fetch(`/api/user/xp?userId=${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setUserLevel(data.level || 1);
-        setUserXP(data.xp || 0);
-      }
-    } catch (error) {
-      console.error('Failed to fetch user stats:', error);
     }
   };
 
@@ -115,26 +107,8 @@ export default function HomePage() {
           </h1>
         </div>
 
-        {/* Stats Card - Glass Morphism matching GamificationBar */}
-        <div className="relative bg-white/10 backdrop-blur-lg rounded-3xl p-6 shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/20 mb-6 overflow-hidden">
-          {/* Glass overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-
-          <div className="relative grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-black text-orange-600">{userLevel}</div>
-              <div className="text-xs font-bold text-gray-600">Level</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-black text-orange-600">{Math.round(userXP)}</div>
-              <div className="text-xs font-bold text-gray-600">XP</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-black text-orange-600">0</div>
-              <div className="text-xs font-bold text-gray-600">Quizzes</div>
-            </div>
-          </div>
-        </div>
+        {/* Circular Task Gallery - Displays TODO and IN_PROGRESS tasks */}
+        <CircularTaskGallery userId={user?.id} />
 
         {/* Section Title */}
         <div className="mb-4">

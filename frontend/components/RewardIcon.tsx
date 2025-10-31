@@ -159,7 +159,7 @@ export default function RewardIcon({ type, size = 'md', animate = false }: Rewar
           {data.emoji}
         </motion.div>
 
-        {/* Main icon */}
+        {/* Main icon - OPTIMIZED: Toned down white glow, removed expensive filter animation */}
         <motion.div
           className="relative flex items-center justify-center"
           style={{
@@ -167,19 +167,16 @@ export default function RewardIcon({ type, size = 'md', animate = false }: Rewar
             textShadow: `
               0 2px 10px rgba(0, 0, 0, 0.3),
               0 4px 20px ${data.shadowColor},
-              0 0 30px rgba(255, 255, 255, 0.8)
+              0 0 20px ${data.glowColor}
             `,
             filter: `drop-shadow(0 0 15px ${data.glowColor})`,
+            willChange: 'transform', // Only animate transform for performance
           }}
           animate={
             animate
               ? {
                   scale: [1, 1.05, 1],
-                  filter: [
-                    `drop-shadow(0 0 15px ${data.glowColor})`,
-                    `drop-shadow(0 0 25px ${data.glowColor}) drop-shadow(0 0 35px rgba(255, 255, 255, 0.8))`,
-                    `drop-shadow(0 0 15px ${data.glowColor})`,
-                  ],
+                  // REMOVED: Expensive filter animation for better performance
                 }
               : {}
           }

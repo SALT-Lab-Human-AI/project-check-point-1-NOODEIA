@@ -40,7 +40,7 @@ export default function AchievementsPage() {
     checkAuth();
   }, []);
 
-  // Scroll detection for bottom nav (using KanbanBoard's working logic)
+  // Scroll detection for bottom nav
   useEffect(() => {
     const handleScroll = () => {
       const doc = document.documentElement;
@@ -53,13 +53,22 @@ export default function AchievementsPage() {
       const isScrollable = scrollHeight > clientHeight + 20;
       const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
 
-      setShowNavBar(isScrollable && Math.abs(distanceFromBottom) <= 1);
+      // Show nav bar if page is NOT scrollable (fits in viewport) OR if at bottom
+      if (!isScrollable) {
+        setShowNavBar(true); // Always show when no scrollbar
+      } else {
+        setShowNavBar(Math.abs(distanceFromBottom) <= 1); // Show only at bottom when scrollable
+      }
     };
+
+    // Check after a small delay to let page fully load
+    const timer = setTimeout(handleScroll, 100);
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };

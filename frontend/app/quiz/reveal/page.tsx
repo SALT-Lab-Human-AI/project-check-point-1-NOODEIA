@@ -144,49 +144,52 @@ function OrbContent() {
               Click to Reveal Your Reward!
             </motion.h1>
 
-            {/* Liquid Morphing Orb with SVG Mask */}
+            {/* Liquid Morphing Orb with SVG Mask - OPTIMIZED FOR 60FPS */}
             <motion.div
               className="relative cursor-pointer flex items-center justify-center"
               style={{
                 width: '400px',
                 height: '400px',
+                willChange: 'transform',
               }}
               onClick={handleOrbClick}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              {/* Outer glow rings - multiple layers for depth */}
-              {[...Array(5)].map((_, i) => (
+              {/* Outer glow rings - REDUCED to 3 layers for performance */}
+              {[...Array(3)].map((_, i) => (
                 <motion.div
                   key={`glow-${i}`}
                   className="absolute inset-0 rounded-full"
                   style={{
                     background: `radial-gradient(circle, ${colors.glow}, transparent 70%)`,
-                    filter: `blur(${30 + i * 10}px)`,
+                    filter: `blur(${30 + i * 15}px)`,
+                    willChange: 'transform, opacity',
+                    transform: 'translateZ(0)', // GPU acceleration
                   }}
                   animate={isOrbClicked ? {
                     // Dramatic expansion on click (like Genshin Impact)
-                    scale: [1, 3 + i * 0.5, 0],
+                    scale: [1, 3 + i * 0.6, 0],
                     opacity: [0.6, 0.9, 0],
                   } : {
                     // Continuous pulse before click
-                    scale: [1, 1.2 + i * 0.1, 1],
-                    opacity: [0.3 - i * 0.05, 0.6 - i * 0.05, 0.3 - i * 0.05],
+                    scale: [1, 1.25 + i * 0.15, 1],
+                    opacity: [0.4 - i * 0.08, 0.7 - i * 0.08, 0.4 - i * 0.08],
                   }}
                   transition={isOrbClicked ? {
                     duration: 1.5,
-                    delay: i * 0.05,
+                    delay: i * 0.06,
                     ease: [0.6, 0.05, 0.2, 0.95],
                   } : {
-                    duration: 3 + i * 0.5,
+                    duration: 3 + i * 0.6,
                     repeat: Infinity,
-                    delay: i * 0.2,
+                    delay: i * 0.25,
                     ease: 'easeInOut',
                   }}
                 />
               ))}
 
-              {/* Liquid Morphing Orb */}
+              {/* Liquid Morphing Orb - OPTIMIZED: Removed expensive filter animations */}
               <motion.div
                 className="absolute"
                 style={{
@@ -197,100 +200,58 @@ function OrbContent() {
                   marginLeft: '-150px',
                   marginTop: '-150px',
                   borderRadius: '50%',
+                  willChange: 'transform, opacity',
+                  transform: 'translateZ(0)', // GPU acceleration
                 }}
                 animate={isOrbClicked ? {
                   scale: [1, 1.3, 0.5],
                   rotate: [0, 180, 360],
                   opacity: [1, 1, 0],
-                  filter: ['hue-rotate(0deg)', 'hue-rotate(180deg)', 'hue-rotate(360deg)'],
                 } : {
-                  filter: nodeType === 'legendary'
-                    ? ['hue-rotate(0deg)', 'hue-rotate(-30deg)', 'hue-rotate(-60deg)', 'hue-rotate(-45deg)', 'hue-rotate(0deg)']
-                    : 'hue-rotate(0deg)',
+                  // Subtle rotation for legendary only
+                  rotate: nodeType === 'legendary' ? [0, 10, -10, 0] : 0,
                 }}
                 transition={isOrbClicked ? {
                   duration: 1.5,
                   ease: [0.6, 0.05, 0.2, 0.95],
                 } : {
-                  duration: 6,
+                  duration: 5,
                   repeat: Infinity,
                   ease: 'easeInOut',
                 }}
               >
                 {/* SVG Masking and Glowing Shadow */}
                 <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                  {/* SVG with rotating polygon masks */}
+                  {/* SVG with rotating polygon masks - OPTIMIZED: Reduced to 3 polygons */}
                   <svg width={300} height={300} viewBox="0 0 300 300" style={{ position: 'absolute', top: 0, left: 0 }}>
                     <defs>
                       <mask id={`clipping-${nodeType}`}>
                         <polygon points="0,0 300,0 300,300 0,300" fill="black" />
-                        {/* Rotating triangles - these create the liquid morphing effect */}
-                        <motion.polygon
-                          points="75,75 225,75 150,225"
-                          fill="white"
-                          style={{ filter: 'blur(21px)', transformOrigin: '225px 75px' }}
-                          animate={{ rotate: 90 }}
-                          transition={{ duration: 0, ease: 'linear' }}
-                        />
+                        {/* OPTIMIZED: Only 3 rotating triangles for better performance */}
                         <motion.polygon
                           points="150,75 225,225 75,225"
                           fill="white"
-                          style={{ filter: 'blur(21px)', transformOrigin: '150px 150px' }}
+                          style={{ filter: 'blur(18px)', transformOrigin: '150px 150px' }}
                           animate={{ rotate: [0, 360] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
                         />
                         <motion.polygon
                           points="105,105 195,105 150,195"
                           fill="white"
-                          style={{ filter: 'blur(21px)', transformOrigin: '150px 180px' }}
-                          animate={{ rotate: [0, 360] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: 'linear', delay: -0.667 }}
-                        />
-                        <motion.polygon
-                          points="105,105 195,105 150,195"
-                          fill="white"
-                          style={{ filter: 'blur(21px)', transformOrigin: '120px 120px' }}
+                          style={{ filter: 'blur(18px)', transformOrigin: '150px 150px' }}
                           animate={{ rotate: [0, -360] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                         />
                         <motion.polygon
-                          points="105,105 195,105 150,195"
+                          points="120,90 180,90 150,210"
                           fill="white"
-                          style={{ filter: 'blur(21px)', transformOrigin: '120px 120px' }}
-                          animate={{ rotate: [0, -360] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: 'linear', delay: -1 }}
-                        />
-                        <motion.polygon
-                          points="105,105 195,105 150,195"
-                          fill="white"
-                          style={{ filter: 'blur(21px)', transformOrigin: '180px 120px' }}
+                          style={{ filter: 'blur(18px)', transformOrigin: '150px 150px' }}
                           animate={{ rotate: [0, 360] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                        />
-                        <motion.polygon
-                          points="105,105 195,105 150,195"
-                          fill="white"
-                          style={{ filter: 'blur(21px)', transformOrigin: '180px 120px' }}
-                          animate={{ rotate: [0, 360] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: 'linear', delay: -0.75 }}
+                          transition={{ duration: 5, repeat: Infinity, ease: 'linear', delay: -1.5 }}
                         />
                       </mask>
 
-                      {/* Pulsing contrast animation for liquid effect */}
-                      <motion.filter
-                        id={`contrast-${nodeType}`}
-                        animate={{
-                          contrast: [15, 3, 3, 15, 15],
-                        }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          ease: 'linear',
-                          times: [0, 0.2, 0.4, 0.6, 1],
-                        }}
-                      >
-                        <feColorMatrix type="saturate" values="1" />
-                      </motion.filter>
+                      {/* REMOVED: Expensive contrast filter animation */}
                     </defs>
                   </svg>
 
@@ -313,7 +274,7 @@ function OrbContent() {
                     }}
                   />
 
-                  {/* Masked gradient box */}
+                  {/* Masked gradient box - OPTIMIZED: Removed expensive filter */}
                   <div
                     style={{
                       width: '300px',
@@ -321,7 +282,7 @@ function OrbContent() {
                       background: colors.gradient,
                       mask: `url(#clipping-${nodeType})`,
                       WebkitMask: `url(#clipping-${nodeType})`,
-                      filter: `url(#contrast-${nodeType}) contrast(15)`,
+                      // REMOVED: filter for better performance
                     }}
                   />
                 </div>
@@ -368,12 +329,12 @@ function OrbContent() {
                 })}
               </motion.div>
 
-              {/* Burst particles when clicked - Enhanced with rotation */}
+              {/* Burst particles when clicked - OPTIMIZED: Reduced from 40 to 24 particles */}
               <AnimatePresence>
                 {isOrbClicked && (
                   <>
-                    {[...Array(40)].map((_, i) => {
-                      const angle = (i / 40) * 360;
+                    {[...Array(24)].map((_, i) => {
+                      const angle = (i / 24) * 360;
                       const distance = 250 + Math.random() * 120;
                       const rotationDirection = i % 2 === 0 ? 1 : -1;
                       const size = Math.random() * 14 + 8;
@@ -388,6 +349,8 @@ function OrbContent() {
                             left: '50%',
                             top: '50%',
                             boxShadow: `0 0 25px ${colors.glow}`,
+                            willChange: 'transform, opacity', // GPU acceleration
+                            transform: 'translateZ(0)',
                           }}
                           initial={{
                             x: 0,
@@ -448,10 +411,16 @@ function OrbContent() {
                 {nodeType === 'legendary' && ' 👑'}
               </motion.h2>
 
-              {/* Animated Reward Icon */}
+              {/* Animated Reward Icon - OPTIMIZED: Removed expensive filter animations */}
               <motion.div
                 className="relative mx-auto mb-8 flex items-center justify-center"
-                style={{ perspective: '1500px', width: '200px', height: '200px' }}
+                style={{
+                  perspective: '1500px',
+                  width: '200px',
+                  height: '200px',
+                  willChange: 'transform, opacity', // GPU acceleration
+                  transform: 'translateZ(0)',
+                }}
                 initial={{
                   rotateY: 0,
                   scale: 0.5,
@@ -461,13 +430,7 @@ function OrbContent() {
                   rotateY: isFlipping ? [0, 180, 360, 540, 720] : 0,
                   scale: isFlipping ? [0.5, 1.3, 0.9, 1.25, 1.1] : 1,
                   opacity: 1,
-                  filter: isFlipping ? [
-                    'brightness(1) saturate(1)',
-                    'brightness(1.5) saturate(1.3)',
-                    'brightness(1.2) saturate(1.1)',
-                    'brightness(1.7) saturate(1.4)',
-                    'brightness(1.3) saturate(1.2)',
-                  ] : 'brightness(1) saturate(1)',
+                  // REMOVED: Expensive filter animations for better performance
                 }}
                 transition={{
                   duration: isFlipping ? 2.5 : 0.6,
