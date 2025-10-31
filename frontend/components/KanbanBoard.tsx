@@ -420,25 +420,77 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
               transition={{ delay: index * 0.1 }}
               className="flex-shrink-0 w-96"
             >
-              {/* Column Container */}
-              <div className={`flex flex-col h-[calc(100vh-320px)] bg-[var(--surface-1)] rounded-3xl shadow-lg border overflow-hidden transition-all duration-300 ${
-                draggedItem && dropTarget?.columnId === column.id
-                  ? 'border-purple-400 shadow-[0_0_0_2px_rgba(168,85,247,0.3),0_8px_32px_rgba(168,85,247,0.2)] scale-[1.02]'
-                  : 'border-[var(--surface-2-border)]'
-              }`}>
-                {/* Column Header */}
-                <div className={`bg-gradient-to-r ${column.color} p-4 flex items-center justify-between`}>
+              {/* Column Container with enhanced hover and drag state */}
+              <motion.div
+                animate={{
+                  scale: draggedItem && dropTarget?.columnId === column.id ? 1.02 : 1,
+                  boxShadow: draggedItem && dropTarget?.columnId === column.id
+                    ? '0 0 0 2px rgba(168,85,247,0.3), 0 8px 32px rgba(168,85,247,0.2), 0 16px 64px rgba(236,72,153,0.15)'
+                    : '0 4px 16px rgba(0,0,0,0.08)'
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 400,
+                  damping: 25,
+                  mass: 0.8
+                }}
+                whileHover={{
+                  scale: draggedItem ? 1 : 1.01,
+                  boxShadow: draggedItem ? undefined : '0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(168,85,247,0.1)',
+                  transition: {
+                    type: 'spring',
+                    stiffness: 500,
+                    damping: 30
+                  }
+                }}
+                className={`flex flex-col h-[calc(100vh-320px)] bg-[var(--surface-1)] rounded-3xl border overflow-hidden ${
+                  draggedItem && dropTarget?.columnId === column.id
+                    ? 'border-purple-400'
+                    : 'border-[var(--surface-2-border)]'
+                }`}
+              >
+                {/* Column Header with hover animation */}
+                <motion.div
+                  whileHover={!draggedItem ? {
+                    scale: 1.02,
+                    transition: { type: 'spring', stiffness: 500, damping: 20 }
+                  } : {}}
+                  className={`bg-gradient-to-r ${column.color} p-4 flex items-center justify-between cursor-default`}
+                >
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">{column.icon}</span>
+                    <motion.span
+                      whileHover={{
+                        rotate: [0, -10, 10, -5, 5, 0],
+                        scale: 1.15,
+                        transition: { duration: 0.5 }
+                      }}
+                      className="text-3xl inline-block"
+                    >
+                      {column.icon}
+                    </motion.span>
                     <div>
                       <h2 className="text-lg font-black text-white">{column.title}</h2>
-                      <p className="text-xs text-white/80">
+                      <motion.p
+                        key={column.tasks.length}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="text-xs text-white/80"
+                      >
                         {column.tasks.length} task{column.tasks.length !== 1 ? 's' : ''}
-                      </p>
+                      </motion.p>
                     </div>
                   </div>
-                  <span className="text-2xl">{column.emoji}</span>
-                </div>
+                  <motion.span
+                    whileHover={{
+                      rotate: [0, 10, -10, 0],
+                      scale: 1.2,
+                      transition: { duration: 0.4 }
+                    }}
+                    className="text-2xl inline-block"
+                  >
+                    {column.emoji}
+                  </motion.span>
+                </motion.div>
 
                 {/* Task List */}
                 <div
@@ -456,26 +508,68 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                   }}
                 >
                   <AnimatePresence>
-                    {/* Empty state with drop zone */}
+                    {/* Empty state with drop zone - enhanced bounce animation */}
                     {column.tasks.length === 0 && (
                       <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className={`flex flex-col items-center justify-center py-12 rounded-2xl border-2 border-dashed transition-all ${
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{
+                          opacity: 1,
+                          scale: draggedItem && dropTarget?.columnId === column.id ? [1, 1.05, 1] : 1,
+                          y: draggedItem && dropTarget?.columnId === column.id ? [0, -4, 0] : 0
+                        }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 400,
+                          damping: 20,
+                          scale: draggedItem && dropTarget?.columnId === column.id ? {
+                            repeat: Infinity,
+                            duration: 0.6,
+                            ease: 'easeInOut'
+                          } : undefined,
+                          y: draggedItem && dropTarget?.columnId === column.id ? {
+                            repeat: Infinity,
+                            duration: 0.6,
+                            ease: 'easeInOut'
+                          } : undefined
+                        }}
+                        className={`flex flex-col items-center justify-center py-12 rounded-2xl border-2 border-dashed ${
                           draggedItem && dropTarget?.columnId === column.id
-                            ? 'border-purple-400 bg-purple-50/50 scale-[1.02]'
+                            ? 'border-purple-400 bg-gradient-to-br from-purple-50/50 to-pink-50/30 shadow-[0_0_20px_rgba(168,85,247,0.2)]'
                             : 'border-transparent text-gray-400'
                         }`}
                       >
-                        <span className="text-4xl mb-2">{column.emoji}</span>
-                        <p className="text-sm text-center px-4">
-                          {draggedItem
-                            ? 'Drop here!'
+                        <motion.span
+                          animate={{
+                            rotate: draggedItem && dropTarget?.columnId === column.id ? [0, 10, -10, 0] : 0,
+                            scale: draggedItem && dropTarget?.columnId === column.id ? [1, 1.2, 1] : 1
+                          }}
+                          transition={draggedItem && dropTarget?.columnId === column.id ? {
+                            repeat: Infinity,
+                            duration: 0.8,
+                            ease: 'easeInOut'
+                          } : undefined}
+                          className="text-4xl mb-2 inline-block"
+                        >
+                          {column.emoji}
+                        </motion.span>
+                        <motion.p
+                          animate={{
+                            opacity: draggedItem && dropTarget?.columnId === column.id ? [1, 0.7, 1] : 1
+                          }}
+                          transition={draggedItem && dropTarget?.columnId === column.id ? {
+                            repeat: Infinity,
+                            duration: 0.8,
+                            ease: 'easeInOut'
+                          } : undefined}
+                          className="text-sm text-center px-4 font-bold"
+                        >
+                          {draggedItem && dropTarget?.columnId === column.id
+                            ? '✨ Drop here! ✨'
                             : column.id === 'todo'
                             ? 'Create a task using the form below!'
                             : 'No tasks yet.'}
-                        </p>
+                        </motion.p>
                       </motion.div>
                     )}
 
@@ -486,46 +580,95 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
 
                       return (
                         <div key={task.id} className="relative">
-                          {/* Drop indicator line with animation */}
+                          {/* Enhanced drop indicator with magnetic glow */}
                           {isDropTarget && (
                             <motion.div
-                              initial={{ scaleX: 0, opacity: 0 }}
-                              animate={{ scaleX: 1, opacity: 1 }}
-                              exit={{ scaleX: 0, opacity: 0 }}
-                              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                              className="absolute -top-1 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 rounded-full z-10 shadow-lg"
+                              initial={{ scaleX: 0, opacity: 0, y: -10 }}
+                              animate={{
+                                scaleX: 1,
+                                opacity: 1,
+                                y: 0,
+                                scale: [1, 1.1, 1],
+                              }}
+                              exit={{ scaleX: 0, opacity: 0, y: 10 }}
+                              transition={{
+                                type: 'spring',
+                                stiffness: 400,
+                                damping: 20,
+                                scale: {
+                                  repeat: Infinity,
+                                  duration: 0.8,
+                                  ease: "easeInOut"
+                                }
+                              }}
+                              className="absolute -top-2 left-0 right-0 h-1.5 rounded-full z-10"
                               style={{
-                                boxShadow: '0 0 10px rgba(168, 85, 247, 0.5), 0 0 20px rgba(236, 72, 153, 0.3)'
+                                background: 'linear-gradient(90deg, rgba(168,85,247,0.8) 0%, rgba(236,72,153,1) 50%, rgba(168,85,247,0.8) 100%)',
+                                boxShadow: '0 0 20px rgba(168, 85, 247, 0.8), 0 0 40px rgba(236, 72, 153, 0.6), 0 0 60px rgba(168, 85, 247, 0.4)',
+                                filter: 'blur(0.5px)'
                               }}
                             />
                           )}
 
                           <motion.div
                             layout
+                            layoutId={task.id}
                             initial={{ opacity: 0, scale: 0.8, y: 20 }}
                             animate={{
-                              opacity: isDragging ? 0.5 : 1,
-                              scale: isDragging ? 0.95 : 1,
+                              opacity: isDragging ? 0.4 : 1,
+                              scale: isDragging ? 0.92 : [1, 1.02, 1],
                               y: 0,
-                              rotateZ: isDragging ? 5 : 0
+                              rotateZ: isDragging ? 8 : 0,
+                              rotateX: isDragging ? 5 : 0,
                             }}
-                            exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                            exit={{
+                              opacity: 0,
+                              scale: 0.7,
+                              y: -30,
+                              rotateZ: -10,
+                              transition: { duration: 0.15, ease: 'easeIn' }
+                            }}
                             transition={{
-                              type: 'spring',
-                              stiffness: 300,
-                              damping: 30,
-                              delay: taskIndex * 0.05
+                              layout: {
+                                type: 'spring',
+                                stiffness: 500,
+                                damping: 35,
+                                mass: 0.8
+                              },
+                              default: {
+                                type: 'spring',
+                                stiffness: 400,
+                                damping: 28,
+                                mass: 0.6
+                              },
+                              scale: {
+                                duration: 0.4,
+                                ease: 'easeOut',
+                                times: [0, 0.5, 1]
+                              },
+                              delay: taskIndex * 0.03
                             }}
                             whileHover={!isDone ? {
-                              scale: 1.03,
-                              rotateZ: -1,
-                              y: -4,
-                              transition: { type: 'spring', stiffness: 400, damping: 20 }
+                              scale: 1.04,
+                              rotateZ: -1.5,
+                              y: -6,
+                              rotateY: 2,
+                              transition: {
+                                type: 'spring',
+                                stiffness: 500,
+                                damping: 22,
+                                mass: 0.5
+                              }
                             } : {}}
                             whileTap={!isDone ? {
-                              scale: 0.98,
-                              rotateZ: 2,
-                              transition: { type: 'spring', stiffness: 400, damping: 20 }
+                              scale: 0.96,
+                              rotateZ: 3,
+                              transition: {
+                                type: 'spring',
+                                stiffness: 600,
+                                damping: 25,
+                                duration: 0.1
+                              }
                             } : {}}
                             draggable={!isDone}
                             onDragStart={() => !isDone && handleDragStart(task.id, column.id, taskIndex)}
@@ -535,14 +678,19 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                               handleDrop(column.id, taskIndex);
                             }}
                             onDragEnd={handleDragEnd}
-                            className={`group bg-white/60 backdrop-blur-sm border border-white/40 rounded-2xl p-3 mb-2 transition-all ${
+                            className={`group bg-white/60 backdrop-blur-sm border rounded-2xl p-3 mb-2 transition-all duration-200 ${
                               isDone
-                                ? 'opacity-70 cursor-default'
-                                : 'cursor-grab active:cursor-grabbing hover:border-purple-300 hover:shadow-[0_8px_24px_rgba(168,85,247,0.2),0_0_0_1px_rgba(168,85,247,0.1)]'
+                                ? 'opacity-70 cursor-default border-white/40'
+                                : isDragging
+                                ? 'cursor-grabbing border-purple-400 shadow-[0_20px_60px_rgba(168,85,247,0.5),0_0_0_2px_rgba(168,85,247,0.3),0_0_100px_rgba(236,72,153,0.3)]'
+                                : 'cursor-grab border-white/40 hover:border-purple-300 hover:shadow-[0_12px_32px_rgba(168,85,247,0.25),0_0_0_1px_rgba(168,85,247,0.15),0_0_80px_rgba(236,72,153,0.1)]'
                             }`}
                             style={{
                               transformStyle: 'preserve-3d',
-                              perspective: '1000px'
+                              perspective: '1000px',
+                              boxShadow: isDragging
+                                ? '0 20px 60px rgba(168,85,247,0.5), 0 0 0 2px rgba(168,85,247,0.3), 0 0 100px rgba(236,72,153,0.3), inset 0 1px 0 rgba(255,255,255,0.3)'
+                                : undefined
                             }}
                           >
                             <div className="flex items-start gap-2 mb-2">
@@ -617,7 +765,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                     )}
                   </AnimatePresence>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
           ))}
         </div>

@@ -22,7 +22,7 @@ import {
   LayoutGrid,
   User
 } from 'lucide-react';
-import CircularTaskGallery from '@/components/CircularTaskGallery';
+import ActiveTasksGallery from '@/components/ActiveTasksGallery';
 
 export default function HomePage() {
   const router = useRouter();
@@ -36,7 +36,10 @@ export default function HomePage() {
 
   // Scroll detection for bottom nav
   useEffect(() => {
+    let hasUserScrolled = false;
+
     const handleScroll = () => {
+      hasUserScrolled = true;
       const doc = document.documentElement;
       const body = document.body;
 
@@ -55,14 +58,27 @@ export default function HomePage() {
       }
     };
 
-    // Check after a small delay to let page fully load
-    const timer = setTimeout(handleScroll, 100);
+    // Delayed check to see if page is non-scrollable AFTER content loads
+    // But only if user hasn't scrolled yet
+    const checkTimer = setTimeout(() => {
+      if (!hasUserScrolled) {
+        const doc = document.documentElement;
+        const scrollHeight = Math.max(doc.scrollHeight, document.body.scrollHeight);
+        const clientHeight = doc.clientHeight || window.innerHeight;
+        const isScrollable = scrollHeight > clientHeight + 20;
+
+        // Only show if truly not scrollable
+        if (!isScrollable) {
+          setShowNavBar(true);
+        }
+      }
+    }, 500); // Wait longer for content to render
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll);
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(checkTimer);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };
@@ -107,8 +123,8 @@ export default function HomePage() {
           </h1>
         </div>
 
-        {/* Circular Task Gallery - Displays TODO and IN_PROGRESS tasks */}
-        <CircularTaskGallery userId={user?.id} />
+        {/* Active Tasks Gallery - Swipe through TODO and IN_PROGRESS tasks */}
+        <ActiveTasksGallery userId={user?.id} />
 
         {/* Section Title */}
         <div className="mb-4">

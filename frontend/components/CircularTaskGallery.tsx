@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, AlertCircle, Circle } from 'lucide-react';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { Calendar, AlertCircle } from 'lucide-react';
 
 interface Task {
   id: string;
@@ -78,27 +78,6 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
     return `${diffDays} days`;
   };
 
-  // Circular positioning calculation
-  const getCardPosition = (index: number, total: number) => {
-    const radius = 140; // Distance from center
-    const centerX = 0;
-    const centerY = 0;
-
-    // Calculate angle for this card
-    const angleStep = (2 * Math.PI) / Math.max(total, 3); // At least 3 positions
-    const angle = index * angleStep - Math.PI / 2; // Start from top
-
-    const x = centerX + radius * Math.cos(angle);
-    const y = centerY + radius * Math.sin(angle);
-
-    return { x, y, angle };
-  };
-
-  // Handle card selection
-  const handleCardClick = (index: number) => {
-    setSelectedIndex(index);
-  };
-
   // Rotate gallery
   const handleRotate = (direction: 'left' | 'right') => {
     if (tasks.length === 0) return;
@@ -107,6 +86,54 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
       setSelectedIndex((prev) => (prev - 1 + tasks.length) % tasks.length);
     } else {
       setSelectedIndex((prev) => (prev + 1) % tasks.length);
+    }
+  };
+
+  // Handle swipe gestures
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const swipeThreshold = 50;
+
+    if (Math.abs(info.offset.x) > swipeThreshold) {
+      if (info.offset.x > 0) {
+        handleRotate('left');
+      } else {
+        handleRotate('right');
+      }
+    }
+  };
+
+  // Calculate card position and style based on index relative to selected
+  const getCardStyle = (index: number) => {
+    const diff = index - selectedIndex;
+    const absDiff = Math.abs(diff);
+
+    if (absDiff === 0) {
+      // Center card
+      return {
+        x: 0,
+        scale: 1,
+        rotateY: 0,
+        opacity: 1,
+        zIndex: 10,
+      };
+    } else if (absDiff === 1) {
+      // Adjacent cards
+      return {
+        x: diff * 220, // Horizontal spacing
+        scale: 0.85,
+        rotateY: diff * 25, // 3D rotation
+        opacity: 0.7,
+        zIndex: 5,
+      };
+    } else {
+      // Far cards (hidden)
+      return {
+        x: diff * 220,
+        scale: 0.7,
+        rotateY: diff * 35,
+        opacity: 0,
+        zIndex: 0,
+      };
     }
   };
 
@@ -131,8 +158,6 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
     );
   }
 
-  const selectedTask = tasks[selectedIndex];
-
   return (
     <div className="relative bg-white/10 backdrop-blur-lg rounded-3xl p-6 shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/20 mb-6 overflow-hidden">
       {/* Glass overlay */}
@@ -140,7 +165,7 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
 
       <div className="relative">
         {/* Title */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-6">
           <h3 className="text-lg font-black text-gray-800 flex items-center justify-center gap-2">
             <span>Active Tasks</span>
             <span className="text-sm font-normal bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2 py-0.5 rounded-full">
@@ -149,54 +174,83 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
           </h3>
         </div>
 
-        {/* Circular Gallery Container */}
-        <div className="relative" style={{ height: '320px' }}>
-          {/* Center display area */}
+        {/* 3D Card Carousel Container */}
+        <div className="relative overflow-hidden" style={{ height: '360px', perspective: '1000px' }}>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-full max-w-[280px]">
-              <AnimatePresence mode="wait">
+            {tasks.map((task, index) => {
+              const style = getCardStyle(index);
+              const isCenter = index === selectedIndex;
+
+              return (
                 <motion.div
-                  key={selectedTask.id}
-                  initial={{ opacity: 0, scale: 0.8, rotateY: -90 }}
-                  animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-                  exit={{ opacity: 0, scale: 0.8, rotateY: 90 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                  className="relative"
+                  key={task.id}
+                  className="absolute"
+                  style={{
+                    transformStyle: 'preserve-3d',
+                  }}
+                  animate={{
+                    x: style.x,
+                    scale: style.scale,
+                    rotateY: style.rotateY,
+                    opacity: style.opacity,
+                    zIndex: style.zIndex,
+                  }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 260,
+                    damping: 20,
+                  }}
+                  drag={isCenter ? 'x' : false}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => !isCenter && setSelectedIndex(index)}
+                  whileHover={!isCenter ? { scale: style.scale * 1.05 } : {}}
+                  className={isCenter ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
                 >
-                  {/* Selected Task Card */}
-                  <div className={`relative bg-gradient-to-br ${getPriorityColor(selectedTask.priority)} rounded-2xl p-4 shadow-2xl`}>
+                  {/* Task Card - Taller and narrower */}
+                  <div
+                    className={`relative bg-gradient-to-br ${getPriorityColor(task.priority)} rounded-3xl shadow-2xl`}
+                    style={{
+                      width: '200px',  // Narrower
+                      height: '280px', // Taller (portrait orientation)
+                    }}
+                  >
                     {/* Status badge */}
-                    <div className="absolute -top-2 -right-2 text-2xl">
-                      {getStatusEmoji(selectedTask.status)}
+                    <div className="absolute -top-2 -right-2 text-2xl z-10">
+                      {getStatusEmoji(task.status)}
                     </div>
 
-                    {/* Task content */}
-                    <div className="space-y-2">
-                      <h4 className="text-base font-bold text-white line-clamp-2">
-                        {selectedTask.title}
+                    {/* Card content */}
+                    <div className="p-5 h-full flex flex-col">
+                      {/* Task title */}
+                      <h4 className="text-base font-bold text-white mb-3 line-clamp-3">
+                        {task.title}
                       </h4>
 
-                      {selectedTask.description && (
-                        <p className="text-xs text-white/90 line-clamp-2">
-                          {selectedTask.description}
+                      {/* Task description */}
+                      {task.description && (
+                        <p className="text-xs text-white/90 mb-4 line-clamp-4 flex-grow">
+                          {task.description}
                         </p>
                       )}
 
-                      {/* Priority indicator */}
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">
+                      {/* Bottom section with priority and due date */}
+                      <div className="space-y-2 mt-auto">
+                        {/* Priority indicator */}
+                        <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
                           <AlertCircle className="w-3 h-3 text-white" />
                           <span className="text-xs font-bold text-white capitalize">
-                            {selectedTask.priority}
+                            {task.priority}
                           </span>
                         </div>
 
                         {/* Due date */}
-                        {selectedTask.dueDate && (
-                          <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">
+                        {task.dueDate && (
+                          <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
                             <Calendar className="w-3 h-3 text-white" />
                             <span className="text-xs font-bold text-white">
-                              {formatDueDate(selectedTask.dueDate)}
+                              {formatDueDate(task.dueDate)}
                             </span>
                           </div>
                         )}
@@ -204,50 +258,13 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
                     </div>
                   </div>
                 </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Circular task indicators */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            {tasks.map((task, index) => {
-              const { x, y } = getCardPosition(index, tasks.length);
-              const isSelected = index === selectedIndex;
-
-              return (
-                <motion.button
-                  key={task.id}
-                  className="absolute pointer-events-auto"
-                  style={{
-                    left: '50%',
-                    top: '50%',
-                  }}
-                  animate={{
-                    x: x - 12, // Offset for button size
-                    y: y - 12,
-                  }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                  onClick={() => handleCardClick(index)}
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <div className={`w-6 h-6 rounded-full transition-all duration-300 ${
-                    isSelected
-                      ? 'bg-gradient-to-br from-blue-500 to-purple-500 shadow-lg ring-2 ring-white'
-                      : 'bg-white/40 backdrop-blur-sm hover:bg-white/60'
-                  }`}>
-                    {isSelected && (
-                      <Circle className="w-6 h-6 text-white fill-current" />
-                    )}
-                  </div>
-                </motion.button>
               );
             })}
           </div>
         </div>
 
         {/* Navigation controls */}
-        <div className="flex items-center justify-center gap-4 mt-4">
+        <div className="flex items-center justify-center gap-4 mt-6">
           <motion.button
             onClick={() => handleRotate('left')}
             className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all shadow-md"
@@ -269,6 +286,13 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
           >
             <span className="text-lg font-bold text-gray-700">→</span>
           </motion.button>
+        </div>
+
+        {/* Swipe hint text */}
+        <div className="text-center mt-3">
+          <p className="text-xs text-gray-500">
+            Swipe or click cards to navigate
+          </p>
         </div>
       </div>
     </div>

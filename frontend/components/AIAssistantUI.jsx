@@ -708,6 +708,7 @@ export default function AIAssistantUI() {
       <div className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: 'var(--app-bg)' }}>
         <Header
           onMenuClick={() => setSidebarOpen(true)}
+          onNotesClick={() => setMarkdownPanelOpen(true)}
         />
         <main className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: 'var(--app-bg)' }}>
           <ChatPane

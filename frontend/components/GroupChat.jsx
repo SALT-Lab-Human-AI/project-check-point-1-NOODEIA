@@ -64,7 +64,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
             console.warn(`Duplicate message prevented via Pusher: ${data.id}`)
             return prev
           }
-          return [data, ...prev]
+          return [...prev, data] // Append to end (newest at bottom)
         })
         scrollToBottom()
       } else {
@@ -357,9 +357,9 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
   }
 
   return (
-    <div className="flex h-full flex-col bg-app-bg dark:bg-app-bg-dark">
+    <div className="flex h-full flex-col bg-[var(--surface-0)]">
       {/* Header */}
-      <div className="flex h-14 items-center justify-between border-b px-4 sm:px-6 dark:border-zinc-800">
+      <div className="flex h-14 items-center justify-between border-b px-4 sm:px-6 border-[var(--surface-2-border)]">
         <div className="flex items-center gap-2 sm:gap-3">
           <h2 className="text-base sm:text-lg font-semibold truncate max-w-[150px] sm:max-w-none">{groupData.name}</h2>
           <span className="hidden sm:flex text-sm text-zinc-500 dark:text-zinc-400 items-center">
@@ -423,7 +423,7 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
       </div>
 
       {/* Input */}
-      <div className="border-t p-3 sm:p-4 dark:border-zinc-800">
+      <div className="border-t p-3 sm:p-4 border-[var(--surface-2-border)]">
         <div className="flex gap-2">
           <input
             type="text"
@@ -440,15 +440,41 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
             }}
             placeholder="Type a message..."
             disabled={sending}
-            className="flex-1 rounded-lg border border-zinc-200 px-3 sm:px-4 py-2 text-base dark:border-zinc-700 bg-white/50 dark:bg-black/20"
+            className="flex-1 rounded-lg border border-[var(--surface-2-border)] px-3 sm:px-4 py-2 text-base bg-[var(--surface-1)]"
           />
-          <button
-            onClick={sendMessage}
-            disabled={!newMessage.trim() || sending}
-            className="rounded-lg bg-indigo-500 px-3 sm:px-4 py-2 text-white hover:bg-indigo-600 disabled:opacity-50 dark:bg-indigo-600 dark:hover:bg-indigo-700"
-          >
-            <Send className="h-4 sm:h-5 w-4 sm:w-5" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={sendMessage}
+              disabled={!newMessage.trim() || sending}
+              className="rounded-lg bg-indigo-500 px-3 sm:px-4 py-2 text-white hover:bg-indigo-600 disabled:opacity-50 dark:bg-indigo-600 dark:hover:bg-indigo-700"
+            >
+              <Send className="h-4 sm:h-5 w-4 sm:w-5" />
+            </button>
+
+            {/* XP Gain Animation - Above send button */}
+            <AnimatePresence>
+              {showXpAnimation && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5, y: 0 }}
+                  animate={{ opacity: 1, scale: 1, y: -60 }}
+                  exit={{ opacity: 0, scale: 0.3, y: -100 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                  className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none"
+                >
+                  <div
+                    className="flex items-center gap-2 px-5 py-3 text-white rounded-full shadow-2xl"
+                    style={{
+                      background: 'linear-gradient(to right, #F6B3DC, #F8C8E2)',
+                    }}
+                  >
+                    <TrendingUp className="w-5 h-5" />
+                    <span className="font-black text-lg">+{xpGain.toFixed(2)} XP</span>
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 

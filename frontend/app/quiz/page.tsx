@@ -114,9 +114,9 @@ export default function QuizPage() {
     }
   };
 
-  // Save quiz progress to localStorage
-  const saveQuizProgress = () => {
-    if (!user?.id || !sessionId || questions.length === 0) return;
+  // Save quiz progress to localStorage - returns true if saved successfully
+  const saveQuizProgress = (): boolean => {
+    if (!user?.id || !sessionId || questions.length === 0) return false;
 
     const quizState = {
       userId: user.id,
@@ -134,8 +134,10 @@ export default function QuizPage() {
 
     try {
       localStorage.setItem(`quiz_progress_${user.id}`, JSON.stringify(quizState));
+      return true;
     } catch (error) {
       console.error('Failed to save quiz progress:', error);
+      return false;
     }
   };
 
@@ -245,33 +247,45 @@ export default function QuizPage() {
       setGameState('quiz');
 
       // Save quiz state immediately (even before first question answered)
-      // Use setTimeout to ensure state has been updated
-      setTimeout(() => {
-        if (user?.id && newSessionId && newQuestions.length > 0) {
-          const initialState = {
-            userId: user.id,
-            sessionId: newSessionId,
-            questions: newQuestions,
-            answers: newAnswers,
-            currentQuestionIndex: 0,
-            score: 0,
-            streak: 0,
-            highestStreak: 0,
-            selectedAnswer: null,  // Initially no answer selected
-            isCorrect: null,       // Initially no correctness status
-            timestamp: Date.now()
-          };
-          try {
-            localStorage.setItem(`quiz_progress_${user.id}`, JSON.stringify(initialState));
-          } catch (error) {
-            console.error('Failed to save initial quiz state:', error);
-          }
+      // Save directly with API response values to avoid state timing issues
+      if (user?.id && newSessionId && newQuestions.length > 0) {
+        const initialState = {
+          userId: user.id,
+          sessionId: newSessionId,
+          questions: newQuestions,
+          answers: newAnswers,
+          currentQuestionIndex: 0,
+          score: 0,
+          streak: 0,
+          highestStreak: 0,
+          selectedAnswer: null,  // Initially no answer selected
+          isCorrect: null,       // Initially no correctness status
+          timestamp: Date.now()
+        };
+        try {
+          localStorage.setItem(`quiz_progress_${user.id}`, JSON.stringify(initialState));
+        } catch (error) {
+          console.error('Failed to save initial quiz state:', error);
         }
-      }, 100);
+      }
     } catch (error) {
       console.error('Start quiz error:', error);
       alert('Failed to start quiz. Please try again.');
     }
+  };
+
+  // Helper function to get educational tips based on operation type
+  const getOperationTips = (question: string): string => {
+    if (question.includes('+')) {
+      return "Addition Tip: When adding numbers, try breaking them down into tens and ones. For example, 25 + 15 = (20+10) + (5+5) = 30 + 10 = 40. You can also count up from the larger number!";
+    } else if (question.includes('−') || question.includes('-')) {
+      return "Subtraction Tip: Think of subtraction as 'taking away' or 'finding the difference'. You can count backwards from the larger number, or think about what you need to add to the smaller number to reach the larger one!";
+    } else if (question.includes('×') || question.includes('*')) {
+      return "Multiplication Tip: Multiplication is repeated addition! For 8 × 7, think of it as adding 8 seven times, or 7 eight times. Try breaking numbers into easier parts: 8 × 7 = (8 × 5) + (8 × 2) = 40 + 16 = 56.";
+    } else if (question.includes('÷') || question.includes('/')) {
+      return "Division Tip: Division means splitting into equal groups! Think about how many times the smaller number fits into the larger one. You can also think backwards: if 24 ÷ 6 = ?, ask yourself '6 times what equals 24?'";
+    }
+    return "Math Tip: Take your time and break the problem into smaller, easier steps. Practice makes perfect!";
   };
 
   const handleAnswer = (answer: number) => {
@@ -325,21 +339,21 @@ export default function QuizPage() {
         endQuiz(finalScore);
       }
     } else {
-      // Wrong answer: reset streak and show explanation for 5 seconds
+      // Wrong answer: reset streak and show explanation for 20 seconds
       setStreak(0);
 
       if (currentQuestionIndex < questions.length - 1) {
-        // Delay before next question (show explanation for 5 seconds)
+        // Delay before next question (show explanation for 20 seconds)
         setTimeout(() => {
           setCurrentQuestionIndex(prev => prev + 1);
           setSelectedAnswer(null);
           setIsCorrect(null);
-        }, 5000);
+        }, 20000);
       } else {
         // Last question - still show explanation before ending
         setTimeout(() => {
           endQuiz(finalScore);
-        }, 5000);
+        }, 20000);
       }
     }
   };
@@ -618,9 +632,11 @@ export default function QuizPage() {
               <button
                 onClick={() => {
                   // Auto-save progress and exit without confirmation
-                  saveQuizProgress();
-                  // Set hasSavedQuiz to true so Continue button shows immediately
-                  setHasSavedQuiz(true);
+                  const saved = saveQuizProgress();
+                  // Only set hasSavedQuiz to true if save was successful
+                  if (saved) {
+                    setHasSavedQuiz(true);
+                  }
                   setGameState('menu');
                 }}
                 className="mb-4 flex items-center gap-2 px-4 py-2 rounded-lg glass-button glass-button-light text-gray-700 font-medium hover:bg-white/30 transition-all duration-300"
@@ -745,14 +761,14 @@ export default function QuizPage() {
                       </div>
 
                       <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                        <div className="text-sm font-bold text-blue-900 mb-2">💡 Explanation</div>
-                        <div className="text-base font-semibold text-blue-800">
-                          {questions[currentQuestionIndex]?.question} = {answers[currentQuestionIndex]}
+                        <div className="text-sm font-bold text-blue-900 mb-2">💡 Learning Tip</div>
+                        <div className="text-sm font-medium text-blue-800 text-left">
+                          {getOperationTips(questions[currentQuestionIndex]?.question || '')}
                         </div>
                       </div>
 
                       <div className="text-sm text-gray-600 font-medium mt-4">
-                        Moving to next question in a moment...
+                        Take your time to understand this concept. Moving to next question in 20 seconds...
                       </div>
                     </div>
                   </motion.div>

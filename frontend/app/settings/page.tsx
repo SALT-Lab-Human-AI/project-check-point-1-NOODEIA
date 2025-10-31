@@ -72,7 +72,10 @@ export default function SettingsPage() {
 
   // Scroll detection for bottom nav
   useEffect(() => {
+    let hasUserScrolled = false
+
     const handleScroll = () => {
+      hasUserScrolled = true
       const doc = document.documentElement
       const body = document.body
 
@@ -91,14 +94,27 @@ export default function SettingsPage() {
       }
     }
 
-    // Check after a small delay to let page fully load
-    const timer = setTimeout(handleScroll, 100)
+    // Delayed check to see if page is non-scrollable AFTER content loads
+    // But only if user hasn't scrolled yet
+    const checkTimer = setTimeout(() => {
+      if (!hasUserScrolled) {
+        const doc = document.documentElement
+        const scrollHeight = Math.max(doc.scrollHeight, document.body.scrollHeight)
+        const clientHeight = doc.clientHeight || window.innerHeight
+        const isScrollable = scrollHeight > clientHeight + 20
+
+        // Only show if truly not scrollable
+        if (!isScrollable) {
+          setShowNavBar(true)
+        }
+      }
+    }, 500) // Wait longer for content to render
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     window.addEventListener('resize', handleScroll)
 
     return () => {
-      clearTimeout(timer)
+      clearTimeout(checkTimer)
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
@@ -499,7 +515,7 @@ export default function SettingsPage() {
 
               {/* Grid/Dashboard */}
               <button
-                onClick={() => router.push('/home')}
+                onClick={() => router.push('/todo')}
                 className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
               >
                 <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">

@@ -95,6 +95,29 @@ export default function Composer({ onSend, busy, xpGain }) {
               )}
             </button>
 
+            {/* XP Gain Animation - Above send button */}
+            <AnimatePresence>
+              {showXpAnimation && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5, y: 0 }}
+                  animate={{ opacity: 1, scale: 1, y: -60 }}
+                  exit={{ opacity: 0, scale: 0.3, y: -100 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                  className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none"
+                >
+                  <div
+                    className="flex items-center gap-2 px-5 py-3 text-white rounded-full shadow-2xl"
+                    style={{
+                      background: 'linear-gradient(to right, #F6B3DC, #F8C8E2)',
+                    }}
+                  >
+                    <TrendingUp className="w-5 h-5" />
+                    <span className="font-black text-lg">+{xpAmount.toFixed(2)} XP</span>
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
         <div className="mt-2 text-xs text-zinc-500 hidden sm:block">
@@ -102,30 +125,6 @@ export default function Composer({ onSend, busy, xpGain }) {
         </div>
       </div>
     </form>
-
-    {/* XP Gain Animation - Fixed at top-center of screen like in /todo page */}
-    <AnimatePresence>
-      {showXpAnimation && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.5, y: 0 }}
-          animate={{ opacity: 1, scale: 1, y: -40 }}
-          exit={{ opacity: 0, scale: 0.3, y: -80 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
-        >
-          <div
-            className="flex items-center gap-2 px-4 py-2 text-white rounded-full shadow-2xl"
-            style={{
-              background: 'linear-gradient(to right, #F6B3DC, #F8C8E2)',
-            }}
-          >
-            <TrendingUp className="w-4 h-4" />
-            <span className="font-black text-sm">+{xpAmount.toFixed(2)} XP</span>
-            <Sparkles className="w-4 h-4" />
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
   </>
   )
 }

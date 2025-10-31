@@ -6,7 +6,8 @@ import confetti from 'canvas-confetti';
 import {
   Sparkles,
   Award,
-  Zap
+  Zap,
+  ArrowLeft
 } from 'lucide-react';
 
 // Vocabulary bank with emojis and definitions
@@ -144,7 +145,7 @@ interface MemoryCard {
   isMatched: boolean;
 }
 
-export default function VocabularyGame() {
+export default function VocabularyGame({ onBackToMenu }: { onBackToMenu?: () => void } = {}) {
   // Game state
   const [gameMode, setGameMode] = useState<GameMode>('menu');
   const [showTryAgain, setShowTryAgain] = useState(false);
