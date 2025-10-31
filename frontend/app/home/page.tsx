@@ -131,9 +131,14 @@ export default function HomePage() {
     };
 
     // Check scroll position after a delay to handle page load
-    const initialCheckTimer = setTimeout(() => {
-      handleScroll();
-    }, 100);
+    // Only do initial check on Windows (where nav needs to show if no scroll)
+    // On Mac, wait for user to actually scroll to prevent flash
+    let initialCheckTimer: NodeJS.Timeout | undefined;
+    if (isWindows) {
+      initialCheckTimer = setTimeout(() => {
+        handleScroll();
+      }, 100);
+    }
 
     // Add scroll listener
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -150,7 +155,9 @@ export default function HomePage() {
     }
 
     return () => {
-      clearTimeout(initialCheckTimer);
+      if (initialCheckTimer) {
+        clearTimeout(initialCheckTimer);
+      }
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
       observer.disconnect();
