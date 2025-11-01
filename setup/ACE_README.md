@@ -71,7 +71,7 @@ Where:
 |--------|---------|
 | `S`, `E`, `P` | Base strengths for semantic, episodic, and procedural memory components stored on the bullet (`semantic_strength`, `episodic_strength`, `procedural_strength`). |
 | `r_*` | Component-specific decay rates configured on `ACEMemory` (`decay_rates={"semantic": 0.01, "episodic": 0.05, "procedural": 0.002}` by default). |
-| `$$t_*$$` | Number of access events processed since the component was last retrieved (derived from a global access counter). |
+| `t_*` | Number of access events processed since the component was last retrieved (derived from a global access counter). |
 
 ### Implementation Notes
 
