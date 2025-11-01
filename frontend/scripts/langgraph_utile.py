@@ -278,6 +278,7 @@ class LLM:
         temperature: Optional[float] = None,
         max_tokens: int = 1000,
         retry: int = 3,
+        response_mime_type: Optional[str] = None,
     ) -> Dict[str, Any]:
         last_err: Optional[Exception] = None
         for _ in range(retry):
@@ -290,6 +291,9 @@ class LLM:
                         "maxOutputTokens": max_tokens,
                     },
                 }
+
+                if response_mime_type:
+                    body.setdefault("generationConfig", {})["responseMimeType"] = response_mime_type
 
                 tools_spec = self._convert_tools(tools)
                 if tools_spec:

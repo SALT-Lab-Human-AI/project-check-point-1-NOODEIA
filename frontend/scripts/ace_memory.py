@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import json
 import hashlib
+import re
 from pathlib import Path
 from collections import defaultdict
 import numpy as np
@@ -42,6 +43,12 @@ class Bullet:
     semantic_access_index: Optional[int] = None  # Access counter snapshot
     episodic_access_index: Optional[int] = None
     procedural_access_index: Optional[int] = None
+    learner_id: Optional[str] = None
+    topic: Optional[str] = None
+    concept: Optional[str] = None
+    memory_type: Optional[str] = None  # semantic, episodic, procedural
+    ttl_days: Optional[int] = None
+    content_hash: Optional[str] = None
     
     def __post_init__(self):
         """Generate ID from content if not provided"""
@@ -63,6 +70,11 @@ class Bullet:
             self.episodic_last_access = self.last_used or now_iso
         if self.procedural_strength > 0 and not self.procedural_last_access:
             self.procedural_last_access = self.last_used or now_iso
+        if not self.memory_type:
+            self.memory_type = "semantic"
+        else:
+            self.memory_type = self.memory_type.lower()
+        self.content_hash = self.content_hash or self._compute_hash(self.content)
     
     @staticmethod
     def _generate_id(content: str) -> str:
@@ -89,6 +101,12 @@ class Bullet:
             "semantic_access_index": self.semantic_access_index,
             "episodic_access_index": self.episodic_access_index,
             "procedural_access_index": self.procedural_access_index,
+            "learner_id": self.learner_id,
+            "topic": self.topic,
+            "concept": self.concept,
+            "memory_type": self.memory_type,
+            "ttl_days": self.ttl_days,
+            "content_hash": self.content_hash,
         }
     
     @classmethod
@@ -111,6 +129,12 @@ class Bullet:
             semantic_access_index=data.get("semantic_access_index"),
             episodic_access_index=data.get("episodic_access_index"),
             procedural_access_index=data.get("procedural_access_index"),
+            learner_id=data.get("learner_id"),
+            topic=data.get("topic"),
+            concept=data.get("concept"),
+            memory_type=data.get("memory_type"),
+            ttl_days=data.get("ttl_days"),
+            content_hash=data.get("content_hash"),
         )
     
     def score(self) -> float:
@@ -173,8 +197,42 @@ class ACEMemory:
         
         self.bullets: Dict[str, Bullet] = {}  # id -> Bullet
         self.categories: Dict[str, List[str]] = defaultdict(list)  # tag -> [bullet_ids]
+        self.hash_index: Dict[str, Set[str]] = defaultdict(set)  # normalized content hash -> bullet ids
         
         self._load_memory()
+
+    @staticmethod
+    def _normalized_hash(text: str) -> str:
+        normalized = re.sub(r"\s+", " ", text.strip().lower())
+        return hashlib.sha256(normalized.encode()).hexdigest()
+
+    def _register_bullet(self, bullet: Bullet):
+        bullet.content_hash = bullet.content_hash or self._normalized_hash(bullet.content)
+        self.hash_index[bullet.content_hash].add(bullet.id)
+
+    def _unregister_bullet(self, bullet_id: str):
+        for hash_val, ids in list(self.hash_index.items()):
+            if bullet_id in ids:
+                ids.remove(bullet_id)
+                if not ids:
+                    self.hash_index.pop(hash_val, None)
+
+    def _is_duplicate(self, bullet: Bullet) -> Optional[str]:
+        candidate_hash = bullet.content_hash or self._normalized_hash(bullet.content)
+        ids = self.hash_index.get(candidate_hash)
+        if not ids:
+            return None
+        for existing_id in ids:
+            existing = self.bullets.get(existing_id)
+            if not existing:
+                continue
+            if (
+                existing.memory_type == (bullet.memory_type or existing.memory_type)
+                and existing.learner_id == bullet.learner_id
+                and existing.topic == bullet.topic
+            ):
+                return existing_id
+        return None
     
     def _component_score(
         self,
@@ -240,6 +298,9 @@ class ACEMemory:
         if bullet.procedural_strength > 0 and "procedural" not in tag_set:
             bullet.tags.append("procedural")
             changed = True
+        if bullet.memory_type and bullet.memory_type.lower() not in tag_set:
+            bullet.tags.append(bullet.memory_type.lower())
+            changed = True
         if changed:
             # Keep tags unique while preserving order
             seen = set()
@@ -269,8 +330,18 @@ class ACEMemory:
             and bullet.procedural_strength == 0.0
         ):
             bullet.semantic_strength = max(1.0, float(bullet.helpful_count or 1))
+        if not bullet.memory_type or bullet.memory_type.lower() not in {"semantic", "episodic", "procedural"}:
+            if bullet.procedural_strength > 0:
+                bullet.memory_type = "procedural"
+            elif bullet.episodic_strength > 0:
+                bullet.memory_type = "episodic"
+            else:
+                bullet.memory_type = "semantic"
+        else:
+            bullet.memory_type = bullet.memory_type.lower()
         self._ensure_memory_tags(bullet)
         self._touch_bullet(bullet)
+        bullet.content_hash = bullet.content_hash or self._normalized_hash(bullet.content)
     
     def _load_memory(self):
         """Load memory from disk"""
@@ -290,6 +361,7 @@ class ACEMemory:
                         self.bullets[bullet.id] = bullet
                         for tag in bullet.tags:
                             self.categories[tag].append(bullet.id)
+                        self._register_bullet(bullet)
                     self.access_clock = int(data.get("access_clock", len(self.bullets)))
                     for bullet in self.bullets.values():
                         if bullet.semantic_strength > 0 and (bullet.semantic_access_index is None or bullet.semantic_access_index == 0):
@@ -323,10 +395,20 @@ class ACEMemory:
         """
         # Add new bullets
         for bullet in delta.new_bullets:
+            duplicate_id = self._is_duplicate(bullet)
+            if duplicate_id:
+                print(
+                    f"[ACE Memory][Delta Dedup] Skipping duplicate matching id={duplicate_id} "
+                    f"content={bullet.content}",
+                    flush=True,
+                )
+                continue
+
             if bullet.id not in self.bullets:
                 self._normalise_bullet(bullet)
                 self.bullets[bullet.id] = bullet
                 self._sync_categories(bullet)
+                self._register_bullet(bullet)
                 print(
                     f"[ACE Memory][Delta Add] id={bullet.id} helpful={bullet.helpful_count} "
                     f"harmful={bullet.harmful_count} tags={bullet.tags} content={bullet.content}",
@@ -340,9 +422,19 @@ class ACEMemory:
                 existing.semantic_strength = max(existing.semantic_strength, bullet.semantic_strength)
                 existing.episodic_strength = max(existing.episodic_strength, bullet.episodic_strength)
                 existing.procedural_strength = max(existing.procedural_strength, bullet.procedural_strength)
+                if bullet.learner_id and not existing.learner_id:
+                    existing.learner_id = bullet.learner_id
+                if bullet.topic and not existing.topic:
+                    existing.topic = bullet.topic
+                if bullet.concept and not existing.concept:
+                    existing.concept = bullet.concept
+                if bullet.memory_type:
+                    existing.memory_type = bullet.memory_type
+                existing.tags = list(dict.fromkeys(existing.tags + bullet.tags))
                 self._ensure_memory_tags(existing)
                 self._sync_categories(existing)
                 self._touch_bullet(existing)
+                self._register_bullet(existing)
                 print(
                     f"[ACE Memory][Delta Merge] id={existing.id} helpful={existing.helpful_count} "
                     f"harmful={existing.harmful_count} tags={existing.tags}",
@@ -356,6 +448,7 @@ class ACEMemory:
                 bullet.helpful_count += updates.get("helpful", 0)
                 bullet.harmful_count += updates.get("harmful", 0)
                 self._touch_bullet(bullet)
+                self._register_bullet(bullet)
                 print(
                     f"[ACE Memory][Delta Update] id={bullet_id} applied={updates} "
                     f"new_helpful={bullet.helpful_count} new_harmful={bullet.harmful_count}",
@@ -369,6 +462,7 @@ class ACEMemory:
                 for tag in bullet.tags:
                     if bullet_id in self.categories[tag]:
                         self.categories[tag].remove(bullet_id)
+                self._unregister_bullet(bullet_id)
                 print(
                     f"[ACE Memory][Delta Remove] id={bullet_id} tags={bullet.tags} content={bullet.content}",
                     flush=True,
@@ -434,6 +528,15 @@ class ACEMemory:
                             bullets_list[i].procedural_strength,
                             bullets_list[j].procedural_strength,
                         )
+                        if not bullets_list[i].learner_id:
+                            bullets_list[i].learner_id = bullets_list[j].learner_id
+                        if not bullets_list[i].topic:
+                            bullets_list[i].topic = bullets_list[j].topic
+                        if not bullets_list[i].concept:
+                            bullets_list[i].concept = bullets_list[j].concept
+                        bullets_list[i].tags = list(
+                            dict.fromkeys(bullets_list[i].tags + bullets_list[j].tags)
+                        )
                         access_candidates = [
                             idx
                             for idx in [
@@ -480,6 +583,15 @@ class ACEMemory:
                             bullets_list[i].procedural_strength,
                             bullets_list[j].procedural_strength,
                         )
+                        if not bullets_list[j].learner_id:
+                            bullets_list[j].learner_id = bullets_list[i].learner_id
+                        if not bullets_list[j].topic:
+                            bullets_list[j].topic = bullets_list[i].topic
+                        if not bullets_list[j].concept:
+                            bullets_list[j].concept = bullets_list[i].concept
+                        bullets_list[j].tags = list(
+                            dict.fromkeys(bullets_list[j].tags + bullets_list[i].tags)
+                        )
                         access_candidates = [
                             idx
                             for idx in [
@@ -519,6 +631,7 @@ class ACEMemory:
                 for tag in bullet.tags:
                     if bullet_id in self.categories[tag]:
                         self.categories[tag].remove(bullet_id)
+                self._unregister_bullet(bullet_id)
         
         if to_remove:
             print(f"[ACE Memory] Deduplicated {len(to_remove)} bullets")
@@ -579,6 +692,7 @@ class ACEMemory:
             for tag in bullet.tags:
                 if bullet_id in self.categories[tag]:
                     self.categories[tag].remove(bullet_id)
+            self._unregister_bullet(bullet_id)
 
         if to_remove:
             print(f"[ACE Memory] Pruned {len(to_remove)} low-quality bullets")
@@ -589,6 +703,9 @@ class ACEMemory:
         top_k: int = 10,
         tags: Optional[List[str]] = None,
         min_score: float = 0.0,
+        learner_id: Optional[str] = None,
+        topic: Optional[str] = None,
+        memory_types: Optional[List[str]] = None,
     ) -> List[Bullet]:
         """
         Retrieve relevant bullets for a query.
@@ -610,22 +727,36 @@ class ACEMemory:
             candidates = [self.bullets[bid] for bid in candidate_ids if bid in self.bullets]
         else:
             candidates = list(self.bullets.values())
-        
+
+        if memory_types:
+            allowed = {mt.lower() for mt in memory_types}
+            candidates = [b for b in candidates if (b.memory_type or "semantic") in allowed]
+
         score_cache = {b.id: self._compute_score(b) for b in candidates}
         # Filter by score
         candidates = [b for b in candidates if score_cache.get(b.id, 0.0) >= min_score]
-        
+
         if not candidates:
             return []
         
         # Rank by relevance to query (simple text similarity)
         scored_bullets = []
+        memory_weight = {"procedural": 0.6, "episodic": 0.4, "semantic": 0.1}
         for bullet in candidates:
             relevance = self._text_similarity(query, bullet.content)
-            # Combine relevance with bullet score
-            combined_score = 0.7 * relevance + 0.3 * score_cache.get(bullet.id, 0.0)
+            combined_score = 0.6 * relevance + 0.4 * score_cache.get(bullet.id, 0.0)
+            if learner_id:
+                if bullet.learner_id == learner_id:
+                    combined_score += 0.6
+                elif bullet.learner_id:
+                    combined_score -= 0.2
+            if topic:
+                if bullet.topic == topic:
+                    combined_score += 0.3
+            mt = (bullet.memory_type or "semantic").lower()
+            combined_score += memory_weight.get(mt, 0.0)
             scored_bullets.append((combined_score, bullet))
-        
+
         # Sort by combined score
         scored_bullets.sort(key=lambda x: x[0], reverse=True)
         top_bullets = [bullet for _, bullet in scored_bullets[:top_k]]
@@ -639,13 +770,23 @@ class ACEMemory:
         query: str,
         top_k: int = 10,
         tags: Optional[List[str]] = None,
+        learner_id: Optional[str] = None,
+        topic: Optional[str] = None,
+        memory_types: Optional[List[str]] = None,
     ) -> str:
         """
         Format relevant bullets into a context string for the LLM.
         
         This is what gets injected into the prompt to help the model.
         """
-        bullets = self.retrieve_relevant_bullets(query, top_k=top_k, tags=tags)
+        bullets = self.retrieve_relevant_bullets(
+            query,
+            top_k=top_k,
+            tags=tags,
+            learner_id=learner_id,
+            topic=topic,
+            memory_types=memory_types,
+        )
         
         if not bullets:
             return ""

@@ -7,9 +7,10 @@ Implements the three-role architecture from the ACE paper:
 3. Curator: Synthesizes lessons into delta updates
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
 import json
+import os
 import re
 from ace_memory import Bullet, DeltaUpdate, ACEMemory
 
@@ -180,8 +181,17 @@ class Reflector:
             success="✓ Success" if trace.success else "✗ Failed",
         )
         
-        # Call LLM
-        messages = [{"role": "user", "content": prompt}]
+        # Call LLM with strict JSON-only instructions
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a curation assistant. Output ONLY valid JSON that matches the provided schema. "
+                    "Never include explanations, markdown fences, or additional text."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ]
         
         for round_num in range(max_refinement_rounds):
             try:
@@ -244,6 +254,73 @@ class Curator:
     def __init__(self, llm, memory: ACEMemory):
         self.llm = llm
         self.memory = memory
+
+    @staticmethod
+    def _infer_memory_attributes(content: str, tags: List[str]) -> Tuple[str, Optional[str]]:
+        lower = content.lower()
+        if any(keyword in lower for keyword in ["step", "goal", "convert", "next", "state", "progress", "now do"]):
+            memory_type = "procedural"
+        elif any(keyword in lower for keyword in ["user", "student", "prefers", "request", "frustration", "asked", "likes", "history"]):
+            memory_type = "episodic"
+        elif any(keyword in lower for keyword in ["misconception", "error", "mistake", "struggle", "issue", "confused"]):
+            memory_type = "episodic"
+        elif any(tag.lower() == "state" for tag in tags):
+            memory_type = "procedural"
+        else:
+            memory_type = "semantic"
+
+        concept = None
+        if "denominator" in lower or "lcm" in lower:
+            concept = "common_denominator"
+        elif "equivalent" in lower:
+            concept = "equivalent_fractions"
+        elif "numerator" in lower:
+            concept = "numerator"
+        return memory_type, concept
+
+    @staticmethod
+    def _lessons_to_delta(
+        lessons: List[Dict[str, Any]],
+        learner_id: Optional[str] = None,
+        topic: Optional[str] = None,
+    ) -> DeltaUpdate:
+        delta = DeltaUpdate()
+        for idx, lesson in enumerate(lessons, 1):
+            content = (lesson.get("content") or "").strip()
+            if not content:
+                continue
+            tags = lesson.get("tags") or []
+            ltype = lesson.get("type")
+            if ltype:
+                tags = list(dict.fromkeys(tags + [ltype]))
+            if not tags:
+                tags = ["lesson"]
+            memory_type, concept = self._infer_memory_attributes(content, tags)
+
+            bullet = Bullet(
+                id="",
+                content=content,
+                tags=tags,
+                helpful_count=1,
+                learner_id=learner_id,
+                topic=topic,
+                concept=concept,
+                memory_type=memory_type,
+            )
+            delta.new_bullets.append(bullet)
+            print(
+                f"[Curator][Heuristic New {idx}] type={memory_type} tags={tags} content={content}",
+                flush=True,
+            )
+        delta.metadata = {
+            "reasoning": "heuristic_lessons_to_bullets",
+            "num_lessons": len(lessons),
+        }
+        if learner_id:
+            delta.metadata["learner_id"] = learner_id
+        if topic:
+            delta.metadata["topic"] = topic
+        return delta
     
     def curate(
         self,
@@ -262,9 +339,16 @@ class Curator:
         """
         if not lessons:
             return DeltaUpdate()
+
+        use_llm = os.getenv("ACE_CURATOR_USE_LLM", "false").lower() in {"1", "true", "yes"}
         
         # Get relevant current bullets for context
-        relevant_bullets = self.memory.retrieve_relevant_bullets(query, top_k=10)
+        relevant_bullets = self.memory.retrieve_relevant_bullets(
+            query,
+            top_k=10,
+            learner_id=learner_id,
+            topic=topic,
+        )
         current_bullets_str = "\n".join(
             f"ID: {b.id}\n{b.format_for_prompt()}"
             for b in relevant_bullets
@@ -276,8 +360,23 @@ class Curator:
             current_bullets=current_bullets_str,
         )
         
+        if not use_llm:
+            print("[Curator] Using heuristic delta generation (LLM disabled).", flush=True)
+            delta = self._lessons_to_delta(lessons, learner_id=learner_id, topic=topic)
+            delta.metadata["prompt"] = prompt
+            return delta
+
         # Call LLM
-        messages = [{"role": "user", "content": prompt}]
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a curation assistant. Output ONLY valid JSON that matches the provided schema. "
+                    "Never include explanations, markdown fences, or additional text."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ]
         max_rounds = 3
         delta_data = None
         content = ""
@@ -287,6 +386,7 @@ class Curator:
                 messages,
                 temperature=0.2,
                 max_tokens=2000,
+                response_mime_type="application/json",
             )
             content = response["choices"][0]["message"]["content"]
             delta_data = self._parse_json_response(content)
@@ -310,31 +410,15 @@ class Curator:
 
         if not delta_data:
             print("[Curator] Falling back to deterministic delta generation", flush=True)
-            fallback = DeltaUpdate()
-            for idx, lesson in enumerate(lessons, 1):
-                lesson_content = (lesson.get("content") or "").strip()
-                if not lesson_content:
-                    continue
-                tags = list(dict.fromkeys((lesson.get("tags") or []) + ([lesson.get("type")] if lesson.get("type") else [])))
-                if not tags:
-                    tags = ["lesson"]
-                bullet = Bullet(
-                    id="",
-                    content=lesson_content,
-                    tags=tags,
-                    helpful_count=1,
-                )
-                fallback.new_bullets.append(bullet)
-                print(
-                    f"[Curator][Fallback New {idx}] tags={tags} content={lesson_content}",
-                    flush=True,
-                )
-            fallback.metadata = {
+            fallback = self._lessons_to_delta(lessons, learner_id=learner_id, topic=topic)
+            fallback.metadata.update({
                 "reasoning": "fallback_from_unparsed_curator",
                 "num_lessons": len(lessons),
                 "json_rounds": round_idx + 1,
                 "raw_response": content.strip(),
-            }
+                "learner_id": learner_id,
+                "topic": topic,
+            })
             return fallback
 
         # Convert to DeltaUpdate object
@@ -342,12 +426,25 @@ class Curator:
 
         # New bullets
         for bullet_data in delta_data.get("new_bullets", []):
+            helpful = bullet_data.get("helpful")
+            harmful = bullet_data.get("harmful")
+            tags = bullet_data.get("tags", [])
             bullet = Bullet(
                 id="",  # Will be auto-generated
                 content=bullet_data["content"],
-                tags=bullet_data.get("tags", []),
-                helpful_count=1,  # Start with 1 since it came from a successful reflection
+                tags=tags,
+                helpful_count=int(helpful) if helpful is not None else 1,
+                harmful_count=int(harmful) if harmful is not None else 0,
+                learner_id=bullet_data.get("learner_id") or learner_id,
+                topic=bullet_data.get("topic") or topic,
+                concept=bullet_data.get("concept"),
+                memory_type=bullet_data.get("memory_type"),
             )
+            if bullet.memory_type not in {"semantic", "episodic", "procedural"}:
+                inferred_type, inferred_concept = self._infer_memory_attributes(bullet.content, tags)
+                bullet.memory_type = inferred_type
+                if not bullet.concept and inferred_concept:
+                    bullet.concept = inferred_concept
             delta.new_bullets.append(bullet)
 
         # Update existing bullets
@@ -361,6 +458,8 @@ class Curator:
             "num_lessons": len(lessons),
             "json_rounds": round_idx + 1,
             "raw_response": content.strip(),
+            "learner_id": learner_id,
+            "topic": topic,
         }
 
         return delta
@@ -411,7 +510,7 @@ class ACEPipeline:
             The delta update (or None if reflection failed)
         """
         print(f"[ACE Pipeline] Processing execution...")
-        
+
         # Step 1: Reflector extracts lessons
         print("[ACE Pipeline] Step 1: Reflecting on execution...")
         lessons = self.reflector.reflect(trace)
@@ -429,11 +528,18 @@ class ACEPipeline:
                 f"[ACE Pipeline][Lesson {idx}] type={ltype} tags={tags} content={content}",
                 flush=True,
             )
-        
+
+        metadata = trace.metadata or {}
+        scratch_state = metadata.get("scratch") if isinstance(metadata, dict) else {}
+        if not isinstance(scratch_state, dict):
+            scratch_state = {}
+        learner_id = metadata.get("learner_id") or scratch_state.get("learner_id")
+        topic = scratch_state.get("topic") or _infer_topic_from_text(trace.question)
+
         # Step 2: Curator creates delta update
         print("[ACE Pipeline] Step 2: Curating delta update...")
-        delta = self.curator.curate(lessons, trace.question)
-        
+        delta = self.curator.curate(lessons, trace.question, learner_id=learner_id, topic=topic)
+
         print(f"[ACE Pipeline] Created delta: {len(delta.new_bullets)} new, "
               f"{len(delta.update_bullets)} updates, {len(delta.remove_bullets)} removals")
         if not delta.new_bullets and not delta.update_bullets and not delta.remove_bullets:
@@ -456,6 +562,10 @@ class ACEPipeline:
                 print(f"[ACE Pipeline][Delta Remove] id={bid}", flush=True)
         if delta.metadata:
             print(f"[ACE Pipeline][Delta Metadata] {delta.metadata}", flush=True)
+        if topic and "topic" not in delta.metadata:
+            delta.metadata["topic"] = topic
+        if learner_id and "learner_id" not in delta.metadata:
+            delta.metadata["learner_id"] = learner_id
         
         # Step 3: Apply delta to memory
         if apply_update:
@@ -470,6 +580,8 @@ class ACEPipeline:
         question: str,
         base_prompt: str,
         top_k: int = 10,
+        learner_id: Optional[str] = None,
+        topic: Optional[str] = None,
     ) -> str:
         """
         Get an enriched prompt with relevant context from memory.
@@ -477,9 +589,25 @@ class ACEPipeline:
         This is what makes memory actually USEFUL - it retrieves and injects
         relevant bullets into the prompt.
         """
-        context = self.memory.format_context(question, top_k=top_k)
+        context = self.memory.format_context(
+            question,
+            top_k=top_k,
+            learner_id=learner_id,
+            topic=topic,
+        )
         
         if context:
             return f"{base_prompt}\n\n{context}\n\nQuestion: {question}"
         else:
             return f"{base_prompt}\n\nQuestion: {question}"
+def _infer_topic_from_text(text: str) -> Optional[str]:
+    lowered = (text or "").lower()
+    if "fraction" in lowered or "/" in lowered:
+        if "add" in lowered or "+" in lowered:
+            return "fraction_addition"
+        return "fractions"
+    if "decimal" in lowered:
+        return "decimals"
+    if "percentage" in lowered or "%" in lowered:
+        return "percentages"
+    return None

@@ -75,10 +75,12 @@ Where:
 
 ### Implementation Notes
 
-* **Bullet fields** – Each bullet serialises strengths and per-component access counters. Tags (`semantic`, `episodic`, `procedural`) are auto-synchronised with the active strengths so every retrieved bullet advertises its memory type.
+* **Bullet fields** – Each bullet serialises strengths and per-component access counters. Tags (`semantic`, `episodic`, `procedural`) are auto-synchronised with the active strengths so every retrieved bullet advertises its memory type. Additional metadata now includes learner IDs, topic, concept, memory_type, TTL, and a dedupe hash.
 * **Access tracking** – Every time a bullet is retrieved or reinforced, `_touch_bullet` increments a global access counter and stamps the component’s access index. Decay now depends on event order instead of wall-clock time.
 * **Scoring API** – A new `ACEMemory._compute_score()` helper evaluates the formula. Pruning, deduplication, retrieval filtering, and statistics all consume this unified score.
 * **Category hygiene** – Whenever strengths change (including deduplication merges) the memory-type tags and `self.categories` index stay in sync so future lookups remain accurate.
+* **Dedupe & hashing** – Every bullet maintains a normalised content hash; duplicates (same learner/topic/memory_type) are merged and logged before write-back while the hash index keeps tag/category maps tidy.
+* **Retrieval ranking** – Queries can pass `learner_id`, `topic`, and `memory_types`; ranking prioritises procedural > episodic > semantic memories while boosting learner/topic matches, ensuring stateful facts surface first.
 * **Decay configuration** – Override via constructor:
   ```python
   memory = ACEMemory(decay_rates={"episodic": 0.08, "semantic": 0.005})
@@ -88,7 +90,9 @@ Where:
 * **Pipeline LLM** – The ACE pipeline now reads the same Gemini configuration (`GEMINI_MODEL`, `ACE_LLM_TEMPERATURE`) used by the primary agent, so reflector/curator calls stay on the supported model set.
 * **Thought logging** – The CoT/ToT/ReAct solvers emit `[ACE Thought]` lines showing scratchpads, branch scores, and tool outputs, mirroring the agent’s reasoning in the terminal while user-facing replies stay concise.
 * **Memory logging** – Context injection prints each retrieved bullet (ID, decay score, helpful/harmful counts, tags, content). Pruning and delta application log every removal/addition/update so you can watch the playbook evolve in real time.
-* **Lesson/delta logging** – After reflection the pipeline lists every lesson; delta creation dumps the raw curator payload (when it fails) and logs each new/updated/removed bullet plus metadata so you can trace exactly what changed.
+* **Lesson/delta logging** – After reflection the pipeline lists every lesson. If `ACE_CURATOR_USE_LLM=true`, the curator calls Gemini (JSON-only mode), retries on parse errors, logs the raw output, and otherwise falls back to heuristic lessons; with the default heuristic mode, no LLM call is made.
+* **Fallback curation** – When the heuristic path is used (default) or Gemini still fails after retries, each lesson is automatically turned into a new bullet (with inferred tags, learner/topic/concept, and memory type) so the playbook continues to grow, and that fallback action is logged.
+* **Curator modes** – `ACE_CURATOR_USE_LLM=false` (default) keeps curation heuristic and deterministic; flipping it on uses Gemini with schema retries, then gracefully falls back to the heuristic so no delta is ever lost.
 
 ### Key Implementation Snippets
 
@@ -201,6 +205,7 @@ These files were copied verbatim from `../ace memory` with only two syntax fixes
   export GEMINI_API_KEY="sk-..."            # required
   export GEMINI_MODEL="gemini-2.5-flash"    # optional override
   export ACE_LLM_TEMPERATURE="0.2"          # optional override for ACE pipeline LLM
+  export ACE_CURATOR_USE_LLM="false"         # disable LLM-based curation (use heuristic bullets)
   export ACE_MEMORY_FILE="frontend/scripts/ace_memory.json"  # optional override
 
   # Optional Neo4j tool configuration

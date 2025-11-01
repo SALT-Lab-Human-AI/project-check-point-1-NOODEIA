@@ -10,7 +10,7 @@ Integrates Agentic Context Engineering into the LangGraph workflow:
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph_utile import *
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import time
 import os
 
@@ -22,6 +22,19 @@ from ace_components import ACEPipeline, ExecutionTrace
 # Global ACE components
 _ACE_MEMORY = None
 _ACE_PIPELINE = None
+
+
+def _infer_topic(question: str) -> Optional[str]:
+    lowered = (question or "").lower()
+    if "fraction" in lowered or "/" in lowered:
+        if "add" in lowered or "+" in lowered:
+            return "fraction_addition"
+        return "fractions"
+    if "decimal" in lowered:
+        return "decimals"
+    if "percentage" in lowered or "%" in lowered:
+        return "percentages"
+    return None
 
 
 def get_ace_system():
@@ -63,33 +76,45 @@ def router_node(state: GraphState) -> GraphState:
     """Router with ACE memory retrieval"""
     if state.get("mode"):
         return state
-    
-    user_text = " ".join([m.get("content", "") for m in state.get("messages", []) if m.get("role") == "user"]).lower()
-    
+
+    scratch = state.setdefault("scratch", {})
+    user_text = " ".join([m.get("content", "") for m in state.get("messages", []) if m.get("role") == "user"])
+    normalized_text = user_text.lower()
+    learner_id = scratch.get("learner_id")
+    topic = scratch.get("topic") or _infer_topic(user_text)
+    if topic:
+        scratch["topic"] = topic
+        state["scratch"] = scratch
+
     # Get ACE memory for context-aware routing
     memory, _ = get_ace_system()
-    
+
     # Retrieve relevant bullets to inform routing decision
-    relevant_bullets = memory.retrieve_relevant_bullets(user_text, top_k=5)
-    
+    relevant_bullets = memory.retrieve_relevant_bullets(
+        user_text,
+        top_k=5,
+        learner_id=learner_id,
+        topic=topic,
+    )
+
     # Store bullets in scratch for use by other nodes
     state.setdefault("scratch", {})["ace_bullets"] = [b.to_dict() for b in relevant_bullets]
-    
+
     # Check for Neo4j/database queries
-    if any(w in user_text for w in ["chapter", "unit", "textbook", "quiz", "user", "session", "group", "message", "database", "graph"]):
+    if any(w in normalized_text for w in ["chapter", "unit", "textbook", "quiz", "user", "session", "group", "message", "database", "graph"]):
         state["mode"] = "react"
     # Check for calculator needs
-    elif any(w in user_text for w in ["calculate", "sum", "difference", "product", "ratio", "percent", "%", "number"]):
+    elif any(w in normalized_text for w in ["calculate", "sum", "difference", "product", "ratio", "percent", "%", "number"]):
         state["mode"] = "react"
     # Check for web search needs
-    elif any(w in user_text for w in ["search", "web", "internet", "current", "latest", "trending", "news"]):
+    elif any(w in normalized_text for w in ["search", "web", "internet", "current", "latest", "trending", "news"]):
         state["mode"] = "react"
     # Check for tree-of-thought needs
-    elif any(w in user_text for w in ["plan", "options", "steps", "strategy", "search space"]):
+    elif any(w in normalized_text for w in ["plan", "options", "steps", "strategy", "search space"]):
         state["mode"] = "tot"
     else:
         state["mode"] = "cot"
-    
+
     return state
 
 
@@ -127,17 +152,28 @@ def solver_node_with_ace(state: GraphState) -> GraphState:
     """
     mode = state["mode"]
     scratch = state.get("scratch", {})
-    
+
     # Get the user question
     user_messages = [m.get("content", "") for m in state.get("messages", []) if m.get("role") == "user"]
     question = " ".join(user_messages)
+
+    learner_id = scratch.get("learner_id")
+    topic = scratch.get("topic") or _infer_topic(question)
+    if topic and scratch.get("topic") != topic:
+        scratch["topic"] = topic
+        state["scratch"] = scratch
     
     # Get ACE system
     memory, pipeline = get_ace_system()
 
     # Enrich messages with ACE context if enabled
     if scratch.get("use_ace_context", True):
-        retrieved_bullets = memory.retrieve_relevant_bullets(question, top_k=10)
+        retrieved_bullets = memory.retrieve_relevant_bullets(
+            question,
+            top_k=10,
+            learner_id=learner_id,
+            topic=topic,
+        )
         if retrieved_bullets:
             print(
                 f"[ACE Memory][Inject] Retrieved {len(retrieved_bullets)} bullets for question: {question.strip()}",
@@ -148,6 +184,7 @@ def solver_node_with_ace(state: GraphState) -> GraphState:
                 print(
                     f"[ACE Memory][Bullet {idx}] id={bullet.id} score={score:.3f}"
                     f" helpful={bullet.helpful_count} harmful={bullet.harmful_count}"
+                    f" type={bullet.memory_type} learner={bullet.learner_id} topic={bullet.topic}"
                     f" tags={bullet.tags}"
                     f" content={bullet.content}",
                     flush=True,
@@ -155,7 +192,15 @@ def solver_node_with_ace(state: GraphState) -> GraphState:
 
             context_parts = ["=== Relevant Strategies and Lessons ==="]
             for idx, bullet in enumerate(retrieved_bullets, 1):
-                context_parts.append(f"{idx}. {bullet.format_for_prompt()}")
+                suffix = []
+                if bullet.memory_type:
+                    suffix.append(f"type={bullet.memory_type}")
+                if bullet.topic:
+                    suffix.append(f"topic={bullet.topic}")
+                if bullet.learner_id:
+                    suffix.append(f"learner={bullet.learner_id}")
+                annotation = f" ({', '.join(suffix)})" if suffix else ""
+                context_parts.append(f"{idx}. {bullet.format_for_prompt()}{annotation}")
             context_parts.append("=" * 50)
             context = "\n".join(context_parts)
 
