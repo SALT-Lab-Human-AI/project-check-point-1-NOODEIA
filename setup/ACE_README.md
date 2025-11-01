@@ -115,43 +115,52 @@ class ACEMemory:
     def _touch_bullet(self, bullet, timestamp=None):
         self.access_clock += 1
         idx = self.access_clock
-        ...  # Update last_used timestamps
-        if bullet.semantic_strength > 0:
-            bullet.semantic_access_index = idx
-        if bullet.episodic_strength > 0:
-            bullet.episodic_access_index = idx
-        if bullet.procedural_strength > 0:
-            bullet.procedural_access_index = idx
+        ...  # Update last_used timestamps and per-component access indices
 
     def _ensure_memory_tags(self, bullet):
-        ...  # Ensures semantic/episodic/procedural tags exist when strengths are non-zero
+        ...  # Ensures semantic/episodic/procedural + explicit memory_type tags are present
 
-    def _prune_bullets(self):
-        now = datetime.now()
-        bullets_list = sorted(
-            self.bullets.values(),
-            key=lambda b: (self._compute_score(b, now), b.helpful_count),
-            reverse=True,
-        )
-        to_keep = set(b.id for b in bullets_list[: self.max_bullets])
-        ...
+    def _is_duplicate(self, bullet):
+        ...  # Uses normalised hash + learner/topic/memory_type to detect duplicates
 
     def apply_delta(self, delta: DeltaUpdate):
         for bullet in delta.new_bullets:
-            if bullet.id not in self.bullets:
-                self._normalise_bullet(bullet)
-                self.bullets[bullet.id] = bullet
-                self._sync_categories(bullet)
-            else:
-                existing = self.bullets[bullet.id]
-                ...  # merge helpful/harmful counts, strengths, keep tags synced
-                self._touch_bullet(existing)
-```
+            duplicate_id = self._is_duplicate(bullet)
+            if duplicate_id:
+                print(f"[ACE Memory][Delta Dedup] Skipping duplicate {duplicate_id}")
+                continue
+            ...  # Normalise, merge metadata, register hash, log add/merge
 
-* `access_clock` increments on every retrieval or update, making `t` the number of accesses since last use.
-* Each memory component stores its own access index so its decay is independent.
-* `_ensure_memory_tags` keeps the bullet labelled with the correct memory types, and `_sync_categories` mirrors those labels inside the tag index.
-* Pruning and deltas now rely on `_compute_score`, so the retention window and merge logic honour semantic/episodic/procedural decay instead of simple helpful ratios.
+    def _prune_bullets(self):
+        ...  # Sort by decay score + helpful count, log removal with type/learner/topic, unregister hash
+
+class Curator:
+    def _infer_memory_attributes(content, tags):
+        ...  # Heuristics mapping lessons to procedural / episodic / semantic + concept hints
+
+    def _lessons_to_delta(..., learner_id=None, topic=None):
+        ...  # Deterministic fallback/create: bullet per lesson with learner/topic metadata
+
+    def curate(..., learner_id=None, topic=None):
+        if not use_llm:
+            return self._lessons_to_delta(lessons, learner_id, topic)
+        ...  # Gemini JSON (responseMimeType) + retries + logged fallback
+
+class ACEPipeline:
+    def process_execution(...):
+        learner_id = scratch.get("learner_id")
+        topic = scratch.get("topic") or _infer_topic_from_text(question)
+        delta = self.curator.curate(lessons, question, learner_id=learner_id, topic=topic)
+
+def solver_node_with_ace(state):
+    learner_id = scratch.get("learner_id")
+    topic = scratch.get("topic") or _infer_topic(question)
+    bullets = memory.retrieve_relevant_bullets(question, learner_id=learner_id, topic=topic)
+    for bullet in bullets:
+        print(f"[ACE Memory][Bullet] id={bullet.id} type={bullet.memory_type} learner={bullet.learner_id} topic={bullet.topic} ...")
+    context = memory.format_context(question, learner_id=learner_id, topic=topic)
+    ...  # inject context into prompt
+```
 
 ### Memory Types Reference
 
