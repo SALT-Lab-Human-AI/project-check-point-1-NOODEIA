@@ -22,7 +22,14 @@ from langchain_community.graphs import Neo4jGraph
 from langchain_community.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
-from neotj_tool_prompt import *
+
+# Add project root to path to import prompts
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from prompts.neo4j_prompts import CYPHER_PROMPT, QA_PROMPT
+from prompts.reasoning_prompts import COT_PROMPT, TOT_EXPAND_TEMPLATE, TOT_VALUE_TEMPLATE, REACT_SYSTEM
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -365,30 +372,7 @@ class LLM:
 
         raise RuntimeError(f"Gemini call failed after retries: {last_err}")
 
-COT_PROMPT = (
-    "You are a careful reasoner. Solve the user's problem. "
-    "Think step by step in a <scratchpad>...</scratchpad> block, then output only the final answer "
-    "wrap it in <final></final> tags like: <final>your actual answer</final>.\n"
-    "Keep Thoughts concise.")
-
-TOT_EXPAND_TEMPLATE = (
-    "You are exploring solution paths as short thoughts.\n"
-    "Given the question and the current partial reasoning, propose up to {k} distinct next thoughts.\n"
-    "Thoughts should be short (1-2 sentences), logically incremental, and avoid repetition.\n"
-    "Return them as a JSON list under key 'thoughts'.\n"
-)
-
-TOT_VALUE_TEMPLATE = (
-    "Rate how promising this partial reasoning is for solving the question from 1 (poor) to 10 (excellent).\n"
-    "Respond with a single integer only."
-)
-
-REACT_SYSTEM = (
-    "You are a ReAct-style agent. Alternate Thought → Action with tools.\n"
-    "Use tools when they help answer the question. After receiving tool results,\n"
-    "analyze them and provide your final answer wrapped in <final></final> tags.\n"
-    "Format: <final>your actual answer here</final>\n"
-    "Be concise and direct. Extract key information from tool results to answer the user's question.")
+# Prompts are now imported from prompts/reasoning_prompts.py
 
 ######tools
 def _calculator_run(args: Dict[str, Any]) -> str:

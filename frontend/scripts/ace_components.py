@@ -12,101 +12,13 @@ from dataclasses import dataclass
 import json
 import os
 import re
+import sys
+
+# Add project root to path to import prompts
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
 from ace_memory import Bullet, DeltaUpdate, ACEMemory
-
-
-# ============== PROMPTS ==============
-
-REFLECTOR_PROMPT = """You are the Reflector in an Agentic Context Engineering system.
-
-Your role is to analyze the execution trace and extract concrete, actionable lessons that can help improve future performance.
-
-## Execution Trace
-{trace}
-
-## Current Question
-{question}
-
-## Ground Truth Answer (if available)
-{ground_truth}
-
-## Model's Answer
-{model_answer}
-
-## Execution Success
-{success}
-
-## Instructions
-Analyze the execution trace above and extract specific lessons:
-
-1. **Successful Strategies**: What specific approaches, tools, or reasoning patterns worked well?
-2. **Failure Modes**: What specific mistakes or pitfalls occurred? What should be avoided?
-3. **Domain Insights**: What domain-specific knowledge or concepts were crucial?
-4. **Tool Usage Patterns**: How should tools be used effectively?
-
-For EACH lesson:
-- Be SPECIFIC and CONCRETE (not vague generalizations)
-- Include EXAMPLES or CONTEXT when possible
-- Make it ACTIONABLE (something that can guide future attempts)
-- Keep it FOCUSED on one insight
-
-Output your response as a JSON object:
-{{
-  "lessons": [
-    {{
-      "content": "Specific lesson content here",
-      "type": "success" or "failure" or "domain" or "tool",
-      "tags": ["tag1", "tag2"]
-    }},
-    ...
-  ],
-  "reflection": "Brief overall reflection on what was learned"
-}}
-
-Output ONLY valid JSON, nothing else."""
-
-CURATOR_PROMPT = """You are the Curator in an Agentic Context Engineering system.
-
-Your role is to synthesize lessons from the Reflector into structured bullet updates for the evolving playbook.
-
-## Reflector's Lessons
-{lessons}
-
-## Current Context Bullets (relevant ones)
-{current_bullets}
-
-## Instructions
-Based on the Reflector's lessons, create a delta update:
-
-1. **New Bullets**: Create NEW bullets for genuinely novel insights
-   - Each bullet should be a self-contained, reusable strategy or lesson
-   - Should be specific enough to be useful, general enough to be reusable
-   - Include appropriate tags for categorization
-
-2. **Update Existing**: If a lesson reinforces an existing bullet, mark it for update
-   - Identify the bullet ID
-   - Indicate whether it was helpful (+1) or harmful (-1)
-
-3. **Remove**: If a lesson contradicts or invalidates an existing bullet, mark for removal
-
-Output your response as a JSON object:
-{{
-  "new_bullets": [
-    {{
-      "content": "The bullet content",
-      "tags": ["tag1", "tag2"]
-    }},
-    ...
-  ],
-  "update_bullets": {{
-    "bullet_id": {{"helpful": 1, "harmful": 0}},
-    ...
-  }},
-  "remove_bullets": ["bullet_id1", "bullet_id2"],
-  "reasoning": "Brief explanation of curation decisions"
-}}
-
-Output ONLY valid JSON, nothing else."""
+from prompts.ace_memory_prompts import REFLECTOR_PROMPT, CURATOR_PROMPT
 
 
 # ============== COMPONENTS ==============
@@ -278,8 +190,8 @@ class Curator:
             concept = "numerator"
         return memory_type, concept
 
-    @staticmethod
     def _lessons_to_delta(
+        self,
         lessons: List[Dict[str, Any]],
         learner_id: Optional[str] = None,
         topic: Optional[str] = None,
@@ -321,11 +233,14 @@ class Curator:
         if topic:
             delta.metadata["topic"] = topic
         return delta
-    
+
     def curate(
         self,
         lessons: List[Dict[str, Any]],
         query: str,
+        learner_id: Optional[str] = None,
+        topic: Optional[str] = None,
+        **_: Any,
     ) -> DeltaUpdate:
         """
         Curate lessons into a delta update.
@@ -333,6 +248,8 @@ class Curator:
         Args:
             lessons: Lessons from the Reflector
             query: The original query (for retrieving relevant bullets)
+            learner_id: Optional learner identifier for personalised bullets
+            topic: Optional inferred topic for improved tagging
         
         Returns:
             DeltaUpdate to apply to memory
@@ -341,7 +258,7 @@ class Curator:
             return DeltaUpdate()
 
         use_llm = os.getenv("ACE_CURATOR_USE_LLM", "false").lower() in {"1", "true", "yes"}
-        
+
         # Get relevant current bullets for context
         relevant_bullets = self.memory.retrieve_relevant_bullets(
             query,
@@ -350,7 +267,7 @@ class Curator:
             topic=topic,
         )
         current_bullets_str = "\n".join(
-            f"ID: {b.id}\n{b.format_for_prompt()}"
+            f"ID: {b.id}\n{b.format_for_prompt()}\nType: {b.memory_type} | Learner: {b.learner_id} | Topic: {b.topic}"
             for b in relevant_bullets
         ) if relevant_bullets else "No existing bullets"
         
@@ -363,7 +280,12 @@ class Curator:
         if not use_llm:
             print("[Curator] Using heuristic delta generation (LLM disabled).", flush=True)
             delta = self._lessons_to_delta(lessons, learner_id=learner_id, topic=topic)
-            delta.metadata["prompt"] = prompt
+            delta.metadata.update({
+                "reasoning": "heuristic_lessons_to_bullets",
+                "prompt": prompt,
+                "learner_id": learner_id,
+                "topic": topic,
+            })
             return delta
 
         # Call LLM

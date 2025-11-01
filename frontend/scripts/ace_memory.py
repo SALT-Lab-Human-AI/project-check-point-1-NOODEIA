@@ -566,6 +566,12 @@ class ACEMemory:
                         bullets_list[i].procedural_access_index = max(access_candidates) if access_candidates else None
                         self._ensure_memory_tags(bullets_list[i])
                         self._sync_categories(bullets_list[i])
+                        bullets_list[i].content_hash = self._normalized_hash(bullets_list[i].content)
+                        self._register_bullet(bullets_list[i])
+                        print(
+                            f"[ACE Memory][Dedup Merge] kept={bullets_list[i].id} merged={bullets_list[j].id}",
+                            flush=True,
+                        )
                         to_remove.add(bullets_list[j].id)
                     else:
                         # Merge i into j
@@ -621,6 +627,12 @@ class ACEMemory:
                         bullets_list[j].procedural_access_index = max(access_candidates) if access_candidates else None
                         self._ensure_memory_tags(bullets_list[j])
                         self._sync_categories(bullets_list[j])
+                        bullets_list[j].content_hash = self._normalized_hash(bullets_list[j].content)
+                        self._register_bullet(bullets_list[j])
+                        print(
+                            f"[ACE Memory][Dedup Merge] kept={bullets_list[j].id} merged={bullets_list[i].id}",
+                            flush=True,
+                        )
                         to_remove.add(bullets_list[i].id)
                         break
         

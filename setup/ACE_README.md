@@ -80,6 +80,7 @@ Where:
 * **Scoring API** – A new `ACEMemory._compute_score()` helper evaluates the formula. Pruning, deduplication, retrieval filtering, and statistics all consume this unified score.
 * **Category hygiene** – Whenever strengths change (including deduplication merges) the memory-type tags and `self.categories` index stay in sync so future lookups remain accurate.
 * **Dedupe & hashing** – Every bullet maintains a normalised content hash; duplicates (same learner/topic/memory_type) are merged and logged before write-back while the hash index keeps tag/category maps tidy.
+* **Dedup logging** – Whenever two bullets collapse into one, the memory prints `[ACE Memory][Dedup Merge] kept=… merged=…` so you can confirm which entry survived.
 * **Retrieval ranking** – Queries can pass `learner_id`, `topic`, and `memory_types`; ranking prioritises procedural > episodic > semantic memories while boosting learner/topic matches, ensuring stateful facts surface first.
 * **Decay configuration** – Override via constructor:
   ```python
@@ -98,68 +99,94 @@ Where:
 
 ```python
 class ACEMemory:
-    def __init__(..., decay_rates=None):
-        default_decay = {"semantic": 0.01, "episodic": 0.05, "procedural": 0.002}
-        ...
-        self.decay_rates = {k: max(0.0, min(1.0, v)) for k, v in default_decay.items()}
-        self.access_clock = 0  # Global counter used for decay instead of wall-clock time
-
     def _component_score(self, strength, last_index, decay_key):
-        if strength <= 0:
+        if strength <= 0:  # Component not active → no contribution
             return 0.0
-        base = max(0.0, min(1.0, 1.0 - self.decay_rates.get(decay_key, 0.0)))
-        last_index = last_index if last_index is not None else self.access_clock
-        t = max(self.access_clock - last_index, 0)
-        return strength * base**t  # (1 - r)^t decay
-
-    def _touch_bullet(self, bullet, timestamp=None):
-        self.access_clock += 1
-        idx = self.access_clock
-        ...  # Update last_used timestamps and per-component access indices
-
-    def _ensure_memory_tags(self, bullet):
-        ...  # Ensures semantic/episodic/procedural + explicit memory_type tags are present
-
-    def _is_duplicate(self, bullet):
-        ...  # Uses normalised hash + learner/topic/memory_type to detect duplicates
-
-    def apply_delta(self, delta: DeltaUpdate):
-        for bullet in delta.new_bullets:
-            duplicate_id = self._is_duplicate(bullet)
-            if duplicate_id:
-                print(f"[ACE Memory][Delta Dedup] Skipping duplicate {duplicate_id}")
-                continue
-            ...  # Normalise, merge metadata, register hash, log add/merge
+        base = max(0.0, min(1.0, 1.0 - self.decay_rates.get(decay_key, 0.0)))  # Clamp 1 - r
+        last_index = last_index if last_index is not None else self.access_clock  # Default to current access index
+        t = max(self.access_clock - last_index, 0)  # Number of accesses since we last saw this memory
+        return strength * base**t  # Implements S(1-r)^t / E(1-r)^t / P(1-r)^t
 
     def _prune_bullets(self):
-        ...  # Sort by decay score + helpful count, log removal with type/learner/topic, unregister hash
+        now = datetime.now()  # Timestamp used only for logging/debug output
+        bullets_list = sorted(  # Rank bullets by decay-aware score, then helpful count
+            self.bullets.values(),
+            key=lambda b: (self._compute_score(b, now), b.helpful_count),
+            reverse=True,
+        )
+        to_keep = set(b.id for b in bullets_list[: self.max_bullets])  # Retain highest-scoring window
+        to_remove = set(self.bullets.keys()) - to_keep  # Everything else is pruned
+        for bullet_id in to_remove:
+            bullet = self.bullets.pop(bullet_id)  # Drop bullet from main store
+            try:
+                score = self._compute_score(bullet, now)  # Log decay-aware score for visibility
+            except Exception:
+                score = bullet.score()  # Fallback to legacy ratio if needed
+            print(
+                f"[ACE Memory][Prune] Removing id={bullet_id} score={score:.3f} "
+                f"helpful={bullet.helpful_count} harmful={bullet.harmful_count} "
+                f"tags={bullet.tags} content={bullet.content}",
+                flush=True,
+            )
+            for tag in bullet.tags:
+                if bullet_id in self.categories[tag]:  # Keep tag index consistent
+                    self.categories[tag].remove(bullet_id)
+            self._unregister_bullet(bullet_id)  # Remove hash/index entry so dedupe stays accurate
+        if to_remove:
+            print(f"[ACE Memory] Pruned {len(to_remove)} low-quality bullets")
+
+    def _deduplicate_bullets(self):
+        ...
+            if similarity > self.dedup_threshold:
+                ...
+                self._register_bullet(bullets_list[i])  # Re-register hash after merge
+                print(f"[ACE Memory][Dedup Merge] kept={bullets_list[i].id} merged={bullets_list[j].id}", flush=True)
+                ...
 
 class Curator:
-    def _infer_memory_attributes(content, tags):
-        ...  # Heuristics mapping lessons to procedural / episodic / semantic + concept hints
+    def _lessons_to_delta(self, lessons, learner_id=None, topic=None):
+        delta = DeltaUpdate()  # Deterministic fallback when Gemini is unavailable
+        for lesson in lessons:
+            ...
+            bullet = Bullet(
+                id="",
+                content=content,
+                tags=tags,
+                helpful_count=1,
+                learner_id=learner_id,
+                topic=topic,
+                concept=concept,
+                memory_type=memory_type,
+            )
+            delta.new_bullets.append(bullet)  # Attach metadata so retrieval can prioritise it later
 
-    def _lessons_to_delta(..., learner_id=None, topic=None):
-        ...  # Deterministic fallback/create: bullet per lesson with learner/topic metadata
-
-    def curate(..., learner_id=None, topic=None):
+    def curate(self, lessons, query, learner_id=None, topic=None, **_):
+        if not lessons:
+            return DeltaUpdate()  # Fast no-op guard
+        relevant = self.memory.retrieve_relevant_bullets(
+            query,
+            top_k=10,
+            learner_id=learner_id,
+            topic=topic,
+        )  # Pull bullets for prompt context
+        current_bullets_str = "\n".join(
+            f"ID: {b.id}\n{b.format_for_prompt()}\nType: {b.memory_type} | Learner: {b.learner_id} | Topic: {b.topic}"
+            for b in relevant
+        ) if relevant else "No existing bullets"
+        prompt = CURATOR_PROMPT.format(
+            lessons=json.dumps(lessons, indent=2),
+            current_bullets=current_bullets_str,
+        )
         if not use_llm:
-            return self._lessons_to_delta(lessons, learner_id, topic)
-        ...  # Gemini JSON (responseMimeType) + retries + logged fallback
+            return self._lessons_to_delta(lessons, learner_id=learner_id, topic=topic)
+        # Gemini path: JSON-only call with retries, then fallback if parsing fails
 
 class ACEPipeline:
     def process_execution(...):
         learner_id = scratch.get("learner_id")
         topic = scratch.get("topic") or _infer_topic_from_text(question)
         delta = self.curator.curate(lessons, question, learner_id=learner_id, topic=topic)
-
-def solver_node_with_ace(state):
-    learner_id = scratch.get("learner_id")
-    topic = scratch.get("topic") or _infer_topic(question)
-    bullets = memory.retrieve_relevant_bullets(question, learner_id=learner_id, topic=topic)
-    for bullet in bullets:
-        print(f"[ACE Memory][Bullet] id={bullet.id} type={bullet.memory_type} learner={bullet.learner_id} topic={bullet.topic} ...")
-    context = memory.format_context(question, learner_id=learner_id, topic=topic)
-    ...  # inject context into prompt
+        self.memory.apply_delta(delta)  # Every delta application prints add/update/remove + dedupe logs
 ```
 
 ### Memory Types Reference
