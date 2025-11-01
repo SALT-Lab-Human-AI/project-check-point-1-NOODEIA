@@ -16,6 +16,7 @@ import hashlib
 from pathlib import Path
 from collections import defaultdict
 import numpy as np
+import math
 
 
 @dataclass
@@ -32,11 +33,36 @@ class Bullet:
     last_used: Optional[str] = None
     tags: List[str] = field(default_factory=list)  # For categorization
     embedding: Optional[List[float]] = None  # For semantic similarity
+    semantic_strength: float = 0.0  # Base weight for semantic memory component
+    episodic_strength: float = 0.0  # Base weight for episodic memory component
+    procedural_strength: float = 0.0  # Base weight for procedural memory component
+    semantic_last_access: Optional[str] = None  # Legacy timestamp support
+    episodic_last_access: Optional[str] = None
+    procedural_last_access: Optional[str] = None
+    semantic_access_index: Optional[int] = None  # Access counter snapshot
+    episodic_access_index: Optional[int] = None
+    procedural_access_index: Optional[int] = None
     
     def __post_init__(self):
         """Generate ID from content if not provided"""
         if not self.id:
             self.id = self._generate_id(self.content)
+        # Initialize strengths if none provided
+        if (
+            self.semantic_strength == 0.0
+            and self.episodic_strength == 0.0
+            and self.procedural_strength == 0.0
+        ):
+            # Default to semantic memory with unit strength
+            self.semantic_strength = max(1.0, float(self.helpful_count or 1))
+        # Ensure access timestamps exist for active components
+        now_iso = datetime.now().isoformat()
+        if self.semantic_strength > 0 and not self.semantic_last_access:
+            self.semantic_last_access = self.last_used or now_iso
+        if self.episodic_strength > 0 and not self.episodic_last_access:
+            self.episodic_last_access = self.last_used or now_iso
+        if self.procedural_strength > 0 and not self.procedural_last_access:
+            self.procedural_last_access = self.last_used or now_iso
     
     @staticmethod
     def _generate_id(content: str) -> str:
@@ -54,6 +80,15 @@ class Bullet:
             "created_at": self.created_at,
             "last_used": self.last_used,
             "tags": self.tags,
+            "semantic_strength": self.semantic_strength,
+            "episodic_strength": self.episodic_strength,
+            "procedural_strength": self.procedural_strength,
+            "semantic_last_access": self.semantic_last_access,
+            "episodic_last_access": self.episodic_last_access,
+            "procedural_last_access": self.procedural_last_access,
+            "semantic_access_index": self.semantic_access_index,
+            "episodic_access_index": self.episodic_access_index,
+            "procedural_access_index": self.procedural_access_index,
         }
     
     @classmethod
@@ -67,6 +102,15 @@ class Bullet:
             created_at=data.get("created_at", datetime.now().isoformat()),
             last_used=data.get("last_used"),
             tags=data.get("tags", []),
+            semantic_strength=float(data.get("semantic_strength", 0.0)),
+            episodic_strength=float(data.get("episodic_strength", 0.0)),
+            procedural_strength=float(data.get("procedural_strength", 0.0)),
+            semantic_last_access=data.get("semantic_last_access"),
+            episodic_last_access=data.get("episodic_last_access"),
+            procedural_last_access=data.get("procedural_last_access"),
+            semantic_access_index=data.get("semantic_access_index"),
+            episodic_access_index=data.get("episodic_access_index"),
+            procedural_access_index=data.get("procedural_access_index"),
         )
     
     def score(self) -> float:
@@ -111,16 +155,122 @@ class ACEMemory:
         max_bullets: int = 100,
         dedup_threshold: float = 0.85,
         prune_threshold: float = 0.3,
+        decay_rates: Optional[Dict[str, float]] = None,
     ):
         self.memory_file = Path(memory_file)
         self.max_bullets = max_bullets
         self.dedup_threshold = dedup_threshold  # Cosine similarity threshold for deduplication
         self.prune_threshold = prune_threshold  # Score threshold for pruning low-quality bullets
+        default_decay = {
+            "semantic": 0.01,
+            "episodic": 0.05,
+            "procedural": 0.002,
+        }
+        if decay_rates:
+            default_decay.update(decay_rates)
+        self.decay_rates = {k: max(0.0, min(1.0, v)) for k, v in default_decay.items()}
+        self.access_clock = 0
         
         self.bullets: Dict[str, Bullet] = {}  # id -> Bullet
         self.categories: Dict[str, List[str]] = defaultdict(list)  # tag -> [bullet_ids]
         
         self._load_memory()
+    
+    def _component_score(
+        self,
+        strength: float,
+        last_index: Optional[int],
+        decay_key: str,
+    ) -> float:
+        if strength <= 0:
+            return 0.0
+        decay_rate = self.decay_rates.get(decay_key, 0.0)
+        base = max(0.0, min(1.0, 1.0 - decay_rate))
+        last_index = last_index if last_index is not None else self.access_clock
+        t = max(self.access_clock - last_index, 0)
+        return strength * math.pow(base, t)
+
+    def _compute_score(self, bullet: Bullet, now: Optional[datetime] = None) -> float:
+        # 'now' retained for backward compatibility but unused in access-count mode.
+        semantic = self._component_score(
+            bullet.semantic_strength,
+            bullet.semantic_access_index,
+            "semantic",
+        )
+        episodic = self._component_score(
+            bullet.episodic_strength,
+            bullet.episodic_access_index,
+            "episodic",
+        )
+        procedural = self._component_score(
+            bullet.procedural_strength,
+            bullet.procedural_access_index,
+            "procedural",
+        )
+        return semantic + episodic + procedural
+
+    def _touch_bullet(self, bullet: Bullet, timestamp: Optional[datetime] = None):
+        """Mark a bullet as accessed and bump component access indices."""
+        self.access_clock += 1
+        idx = self.access_clock
+        ts = timestamp or datetime.now()
+        iso_ts = ts.isoformat()
+        bullet.last_used = iso_ts
+        if bullet.semantic_strength > 0:
+            bullet.semantic_last_access = iso_ts
+            bullet.semantic_access_index = idx
+        if bullet.episodic_strength > 0:
+            bullet.episodic_last_access = iso_ts
+            bullet.episodic_access_index = idx
+        if bullet.procedural_strength > 0:
+            bullet.procedural_last_access = iso_ts
+            bullet.procedural_access_index = idx
+
+    @staticmethod
+    def _ensure_memory_tags(bullet: Bullet):
+        """Guarantee that memory-type strengths are reflected in the bullet tags."""
+        tag_set = {tag.lower() for tag in bullet.tags}
+        changed = False
+        if bullet.semantic_strength > 0 and "semantic" not in tag_set:
+            bullet.tags.append("semantic")
+            changed = True
+        if bullet.episodic_strength > 0 and "episodic" not in tag_set:
+            bullet.tags.append("episodic")
+            changed = True
+        if bullet.procedural_strength > 0 and "procedural" not in tag_set:
+            bullet.tags.append("procedural")
+            changed = True
+        if changed:
+            # Keep tags unique while preserving order
+            seen = set()
+            bullet.tags = [t for t in bullet.tags if not (t.lower() in seen or seen.add(t.lower()))]
+
+    def _sync_categories(self, bullet: Bullet):
+        """Ensure category index contains the bullet for every tag."""
+        for tag in bullet.tags:
+            if bullet.id not in self.categories[tag]:
+                self.categories[tag].append(bullet.id)
+
+    def _normalise_bullet(self, bullet: Bullet):
+        """Ensure strengths and timestamps are initialised according to tags."""
+        # Tag-driven defaults for memory strengths.
+        tag_set = {tag.lower() for tag in bullet.tags}
+        if "procedural" in tag_set and bullet.procedural_strength <= 0:
+            bullet.procedural_strength = max(1.0, float(bullet.helpful_count or 1))
+            bullet.semantic_strength = bullet.semantic_strength or 0.0
+        if "episodic" in tag_set and bullet.episodic_strength <= 0:
+            bullet.episodic_strength = max(1.0, float(bullet.helpful_count or 1))
+        if "semantic" in tag_set and bullet.semantic_strength <= 0:
+            bullet.semantic_strength = max(1.0, float(bullet.helpful_count or 1))
+        # If still no strengths, fall back to semantic default.
+        if (
+            bullet.semantic_strength == 0.0
+            and bullet.episodic_strength == 0.0
+            and bullet.procedural_strength == 0.0
+        ):
+            bullet.semantic_strength = max(1.0, float(bullet.helpful_count or 1))
+        self._ensure_memory_tags(bullet)
+        self._touch_bullet(bullet)
     
     def _load_memory(self):
         """Load memory from disk"""
@@ -130,9 +280,24 @@ class ACEMemory:
                     data = json.load(f)
                     for bullet_data in data.get("bullets", []):
                         bullet = Bullet.from_dict(bullet_data)
+                        if bullet.semantic_strength > 0 and bullet.semantic_access_index is None:
+                            bullet.semantic_access_index = 0
+                        if bullet.episodic_strength > 0 and bullet.episodic_access_index is None:
+                            bullet.episodic_access_index = 0
+                        if bullet.procedural_strength > 0 and bullet.procedural_access_index is None:
+                            bullet.procedural_access_index = 0
+                        self._ensure_memory_tags(bullet)
                         self.bullets[bullet.id] = bullet
                         for tag in bullet.tags:
                             self.categories[tag].append(bullet.id)
+                    self.access_clock = int(data.get("access_clock", len(self.bullets)))
+                    for bullet in self.bullets.values():
+                        if bullet.semantic_strength > 0 and (bullet.semantic_access_index is None or bullet.semantic_access_index == 0):
+                            bullet.semantic_access_index = self.access_clock
+                        if bullet.episodic_strength > 0 and (bullet.episodic_access_index is None or bullet.episodic_access_index == 0):
+                            bullet.episodic_access_index = self.access_clock
+                        if bullet.procedural_strength > 0 and (bullet.procedural_access_index is None or bullet.procedural_access_index == 0):
+                            bullet.procedural_access_index = self.access_clock
                 print(f"[ACE Memory] Loaded {len(self.bullets)} bullets from {self.memory_file}")
             except Exception as e:
                 print(f"[ACE Memory] Warning: Could not load memory: {e}")
@@ -144,6 +309,7 @@ class ACEMemory:
                 "bullets": [bullet.to_dict() for bullet in self.bullets.values()],
                 "version": "1.0",
                 "last_updated": datetime.now().isoformat(),
+                "access_clock": self.access_clock,
             }
             with open(self.memory_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
@@ -158,15 +324,20 @@ class ACEMemory:
         # Add new bullets
         for bullet in delta.new_bullets:
             if bullet.id not in self.bullets:
+                self._normalise_bullet(bullet)
                 self.bullets[bullet.id] = bullet
-                for tag in bullet.tags:
-                    self.categories[tag].append(bullet.id)
+                self._sync_categories(bullet)
             else:
                 # Bullet already exists, merge with existing
                 existing = self.bullets[bullet.id]
                 existing.helpful_count += bullet.helpful_count
                 existing.harmful_count += bullet.harmful_count
-                existing.last_used = datetime.now().isoformat()
+                existing.semantic_strength = max(existing.semantic_strength, bullet.semantic_strength)
+                existing.episodic_strength = max(existing.episodic_strength, bullet.episodic_strength)
+                existing.procedural_strength = max(existing.procedural_strength, bullet.procedural_strength)
+                self._ensure_memory_tags(existing)
+                self._sync_categories(existing)
+                self._touch_bullet(existing)
         
         # Update existing bullets
         for bullet_id, updates in delta.update_bullets.items():
@@ -174,7 +345,7 @@ class ACEMemory:
                 bullet = self.bullets[bullet_id]
                 bullet.helpful_count += updates.get("helpful", 0)
                 bullet.harmful_count += updates.get("harmful", 0)
-                bullet.last_used = datetime.now().isoformat()
+                self._touch_bullet(bullet)
         
         # Remove bullets
         for bullet_id in delta.remove_bullets:
@@ -210,6 +381,7 @@ class ACEMemory:
         """
         bullets_list = list(self.bullets.values())
         to_remove = set()
+        now = datetime.now()
         
         for i in range(len(bullets_list)):
             if bullets_list[i].id in to_remove:
@@ -227,15 +399,97 @@ class ACEMemory:
                 
                 if similarity > self.dedup_threshold:
                     # Merge into the one with better score
-                    if bullets_list[i].score() >= bullets_list[j].score():
+                    if self._compute_score(bullets_list[i], now) >= self._compute_score(bullets_list[j], now):
                         # Merge j into i
                         bullets_list[i].helpful_count += bullets_list[j].helpful_count
                         bullets_list[i].harmful_count += bullets_list[j].harmful_count
+                        bullets_list[i].semantic_strength = max(
+                            bullets_list[i].semantic_strength,
+                            bullets_list[j].semantic_strength,
+                        )
+                        bullets_list[i].episodic_strength = max(
+                            bullets_list[i].episodic_strength,
+                            bullets_list[j].episodic_strength,
+                        )
+                        bullets_list[i].procedural_strength = max(
+                            bullets_list[i].procedural_strength,
+                            bullets_list[j].procedural_strength,
+                        )
+                        access_candidates = [
+                            idx
+                            for idx in [
+                                bullets_list[i].semantic_access_index,
+                                bullets_list[j].semantic_access_index,
+                            ]
+                            if idx is not None
+                        ]
+                        bullets_list[i].semantic_access_index = max(access_candidates) if access_candidates else None
+                        access_candidates = [
+                            idx
+                            for idx in [
+                                bullets_list[i].episodic_access_index,
+                                bullets_list[j].episodic_access_index,
+                            ]
+                            if idx is not None
+                        ]
+                        bullets_list[i].episodic_access_index = max(access_candidates) if access_candidates else None
+                        access_candidates = [
+                            idx
+                            for idx in [
+                                bullets_list[i].procedural_access_index,
+                                bullets_list[j].procedural_access_index,
+                            ]
+                            if idx is not None
+                        ]
+                        bullets_list[i].procedural_access_index = max(access_candidates) if access_candidates else None
+                        self._ensure_memory_tags(bullets_list[i])
+                        self._sync_categories(bullets_list[i])
                         to_remove.add(bullets_list[j].id)
                     else:
                         # Merge i into j
                         bullets_list[j].helpful_count += bullets_list[i].helpful_count
                         bullets_list[j].harmful_count += bullets_list[i].harmful_count
+                        bullets_list[j].semantic_strength = max(
+                            bullets_list[i].semantic_strength,
+                            bullets_list[j].semantic_strength,
+                        )
+                        bullets_list[j].episodic_strength = max(
+                            bullets_list[i].episodic_strength,
+                            bullets_list[j].episodic_strength,
+                        )
+                        bullets_list[j].procedural_strength = max(
+                            bullets_list[i].procedural_strength,
+                            bullets_list[j].procedural_strength,
+                        )
+                        access_candidates = [
+                            idx
+                            for idx in [
+                                bullets_list[i].semantic_access_index,
+                                bullets_list[j].semantic_access_index,
+                            ]
+                            if idx is not None
+                        ]
+                        bullets_list[j].semantic_access_index = max(access_candidates) if access_candidates else None
+                        access_candidates = [
+                            idx
+                            for idx in [
+                                bullets_list[i].episodic_access_index,
+                                bullets_list[j].episodic_access_index,
+                            ]
+                            if idx is not None
+                        ]
+                        bullets_list[j].episodic_access_index = max(access_candidates) if access_candidates else None
+                        access_candidates = [
+                            idx
+                            for idx in [
+                                bullets_list[i].procedural_access_index,
+                                bullets_list[j].procedural_access_index,
+                            ]
+                            if idx is not None
+                        ]
+                        bullets_list[j].procedural_access_index = max(access_candidates) if access_candidates else None
+                        self._ensure_memory_tags(bullets_list[j])
+                        self._sync_categories(bullets_list[j])
                         to_remove.add(bullets_list[i].id)
                         break
         
@@ -270,19 +524,19 @@ class ACEMemory:
         """
         Trim the playbook down to ``max_bullets`` entries.
 
-        Bullets are ordered by a two-part key:
-        1. ``Bullet.score()`` – helpful ratio with a neutral 0.5 default.
-        2. ``helpful_count`` – acts as a tiebreaker that favours strategies
-           that have been reinforced more often.
+        Bullets are ordered by the exponential decay score and then by
+        ``helpful_count`` as a tiebreaker so frequently reinforced strategies
+        edge out equally scored peers.
 
         Any bullet that falls outside the retention window is removed from the
         main dictionary *and* every tag index so future retrieval calls stay
         consistent.
         """
         # Rank bullets from most to least valuable using the score + frequency key.
+        now = datetime.now()
         bullets_list = sorted(
             self.bullets.values(),
-            key=lambda b: (b.score(), b.helpful_count),
+            key=lambda b: (self._compute_score(b, now), b.helpful_count),
             reverse=True
         )
         
@@ -328,8 +582,9 @@ class ACEMemory:
         else:
             candidates = list(self.bullets.values())
         
+        score_cache = {b.id: self._compute_score(b) for b in candidates}
         # Filter by score
-        candidates = [b for b in candidates if b.score() >= min_score]
+        candidates = [b for b in candidates if score_cache.get(b.id, 0.0) >= min_score]
         
         if not candidates:
             return []
@@ -339,13 +594,16 @@ class ACEMemory:
         for bullet in candidates:
             relevance = self._text_similarity(query, bullet.content)
             # Combine relevance with bullet score
-            combined_score = 0.7 * relevance + 0.3 * bullet.score()
+            combined_score = 0.7 * relevance + 0.3 * score_cache.get(bullet.id, 0.0)
             scored_bullets.append((combined_score, bullet))
         
         # Sort by combined score
         scored_bullets.sort(key=lambda x: x[0], reverse=True)
-        
-        return [bullet for _, bullet in scored_bullets[:top_k]]
+        top_bullets = [bullet for _, bullet in scored_bullets[:top_k]]
+        # Update access counters for retrieved bullets
+        for bullet in top_bullets:
+            self._touch_bullet(bullet)
+        return top_bullets
     
     def format_context(
         self,
@@ -381,7 +639,8 @@ class ACEMemory:
                 "categories": {},
             }
         
-        scores = [b.score() for b in self.bullets.values()]
+        now = datetime.now()
+        scores = [self._compute_score(b, now) for b in self.bullets.values()]
         
         return {
             "total_bullets": len(self.bullets),
