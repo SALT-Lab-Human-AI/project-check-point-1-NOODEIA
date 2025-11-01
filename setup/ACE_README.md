@@ -4,10 +4,9 @@
 
 
 
-## Baseline: Original Workflow of ACE 
+## Baseline: Original Workflow in ACE 
 
-
-## 6. Current Pruning Behaviour (Baseline)
+### Current Pruning Behaviour(Create and Delete)
 
 The playbook is capped by `ACEMemory._prune_bullets()`. The exact logic is:
 
@@ -64,9 +63,7 @@ This README represents the original, unmodified ACE workflow in this repository.
 
 Building on the baseline, the playbook now applies an exponential decay model inspired by human memory systems:
 
-\\[
-\\boxed{\\text{Score}_{\\text{memory}} = S(1 - r_{\\text{semantic}})^{t_{\\text{semantic}}} + E(1 - r_{\\text{episodic}})^{t_{\\text{episodic}}} + P(1 - r_{\\text{procedural}})^{t_{\\text{procedural}}}}
-\\]
+$$\boxed{\mathrm{Score}_{\mathrm{memory}} = S\,(1 - r_{\mathrm{semantic}})^{t_{\mathrm{semantic}}} + E\,(1 - r_{\mathrm{episodic}})^{t_{\mathrm{episodic}}} + P\,(1 - r_{\mathrm{procedural}})^{t_{\mathrm{procedural}}}}$$
 
 Where:
 
@@ -74,7 +71,7 @@ Where:
 |--------|---------|
 | `S`, `E`, `P` | Base strengths for semantic, episodic, and procedural memory components stored on the bullet (`semantic_strength`, `episodic_strength`, `procedural_strength`). |
 | `r_*` | Component-specific decay rates configured on `ACEMemory` (`decay_rates={"semantic": 0.01, "episodic": 0.05, "procedural": 0.002}` by default). |
-| `t_*` | Number of access events processed since the component was last retrieved (derived from a global access counter). |
+| `$$t_*$$` | Number of access events processed since the component was last retrieved (derived from a global access counter). |
 
 ### Implementation Notes
 
