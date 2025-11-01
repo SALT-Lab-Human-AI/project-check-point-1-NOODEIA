@@ -513,6 +513,7 @@ class App {
 
   isDown: boolean = false;
   start: number = 0;
+  startY: number = 0; // Track Y position to detect vertical scrolling
 
   constructor(
     container: HTMLElement,
@@ -673,36 +674,83 @@ class App {
     this.isHovered = true;
     this.hasDrag = false;
     this.scroll.position = this.scroll.current;
-    this.start = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const touch = 'touches' in e ? e.touches[0] : e;
+    this.start = touch.clientX;
+    this.startY = touch.clientY; // Track Y position for vertical scroll detection
   }
 
   onTouchMove(e: MouseEvent | TouchEvent) {
     if (!this.isDown) return;
     if ('touches' in e) {
       if (e.touches.length === 0) return;
-      e.preventDefault();
     }
-    const x = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const distance = (this.start - x) * (this.scrollSpeed * 0.025);
-    this.scroll.target = (this.scroll.position ?? 0) + distance;
-    if (Math.abs(distance) > 0.01) {
-      this.hasDrag = true;
+    const touch = 'touches' in e ? e.touches[0] : e;
+    const x = touch.clientX;
+    const y = touch.clientY;
+    
+    // Calculate horizontal and vertical distances
+    const deltaX = Math.abs(this.start - x);
+    const deltaY = Math.abs(this.startY - y);
+    
+    // If user is scrolling vertically (page scroll), don't interfere
+    // Only prevent default and handle gallery scroll if movement is primarily horizontal
+    if (deltaX > deltaY && deltaX > 5) {
+      // Primarily horizontal movement - handle gallery scroll
+      if ('touches' in e) {
+        e.preventDefault(); // Only prevent default for horizontal scrolling
+      }
+      const distance = (this.start - x) * (this.scrollSpeed * 0.025);
+      this.scroll.target = (this.scroll.position ?? 0) + distance;
+      if (Math.abs(distance) > 0.01) {
+        this.hasDrag = true;
+      }
+    } else if (deltaY > deltaX && deltaY > 10) {
+      // Primarily vertical movement - let page scroll, cancel gallery interaction
+      this.hasDrag = true; // Mark as drag to prevent click
+      this.isDown = false; // Cancel the interaction
+      this.isHovered = false;
     }
   }
 
   onTouchUp(e?: MouseEvent | TouchEvent) {
+    const wasDown = this.isDown;
+    const hadDrag = this.hasDrag;
+    
     this.isDown = false;
     this.onCheck();
+    
     if (e && 'touches' in e) {
       this.isHovered = false;
     }
-    if (!this.hasDrag && this.onSelect && this.activeMedia) {
-      const baseIndex = this.activeMedia.baseIndex % this.baseItems.length;
-      const item = this.baseItems[baseIndex];
-      if (item) {
-        this.onSelect(item, baseIndex);
+    
+    // Only trigger onSelect if:
+    // 1. Touch was actually down (wasDown)
+    // 2. There was no drag (hadDrag is false)
+    // 3. The touch was very short (tap, not scroll)
+    // 4. Active media exists
+    if (wasDown && !hadDrag && this.onSelect && this.activeMedia) {
+      // Additional check: verify this was a true tap by checking movement distance
+      const touch = e && 'touches' in e ? e.changedTouches?.[0] : e;
+      if (touch) {
+        const finalX = touch.clientX;
+        const finalY = touch.clientY;
+        const totalDeltaX = Math.abs(this.start - finalX);
+        const totalDeltaY = Math.abs(this.startY - finalY);
+        
+        // Only trigger if movement was minimal (true tap, not scroll)
+        // Threshold: less than 10px movement in either direction
+        if (totalDeltaX < 10 && totalDeltaY < 10) {
+          const baseIndex = this.activeMedia.baseIndex % this.baseItems.length;
+          const item = this.baseItems[baseIndex];
+          if (item) {
+            this.onSelect(item, baseIndex);
+          }
+        }
       }
     }
+    
+    // Reset drag state for next interaction
+    this.hasDrag = false;
   }
 
   onWheel(e: Event) {
