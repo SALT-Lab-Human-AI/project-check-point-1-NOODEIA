@@ -356,14 +356,15 @@ class Media {
     const viewportOffset = this.viewport.width / 2;
     this.isBefore = this.plane.position.x + planeOffset < -viewportOffset;
     this.isAfter = this.plane.position.x - planeOffset > viewportOffset;
-    if (direction === 'right' && this.isBefore) {
-      this.extra -= this.widthTotal;
-      this.isBefore = this.isAfter = false;
-    }
-    if (direction === 'left' && this.isAfter) {
-      this.extra += this.widthTotal;
-      this.isBefore = this.isAfter = false;
-    }
+    // Infinite scrolling disabled - repositioning logic commented out
+    // if (direction === 'right' && this.isBefore) {
+    //   this.extra -= this.widthTotal;
+    //   this.isBefore = this.isAfter = false;
+    // }
+    // if (direction === 'left' && this.isAfter) {
+    //   this.extra += this.widthTotal;
+    //   this.isBefore = this.isAfter = false;
+    // }
   }
 
   onResize({ screen, viewport }: { screen?: ScreenSize; viewport?: Viewport } = {}) {
@@ -550,7 +551,7 @@ class App {
     ];
     const galleryItems = items && items.length ? items : defaultItems;
     this.baseItems = galleryItems;
-    this.mediasImages = galleryItems.concat(galleryItems);
+    this.mediasImages = galleryItems; // Removed concat to disable infinite scrolling
     this.medias = this.mediasImages.map((data, index) => {
       return new Media({
         geometry: this.planeGeometry,

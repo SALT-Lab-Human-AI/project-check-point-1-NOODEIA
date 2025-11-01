@@ -110,7 +110,7 @@ export default function ChatPane({
   }
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 relative overflow-hidden" style={{ backgroundColor: 'var(--app-bg)' }}>
+    <div className="flex flex-1 flex-col min-h-0 relative overflow-visible" style={{ backgroundColor: 'var(--app-bg)' }}>
       <div
         ref={scrollRef}
         className={styles.scrollContainer}

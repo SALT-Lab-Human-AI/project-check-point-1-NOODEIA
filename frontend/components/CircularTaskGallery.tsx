@@ -31,7 +31,7 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
       const response = await fetch(`/api/kanban/tasks?userId=${userId}`);
       if (response.ok) {
         const data = await response.json();
-        // Filter for only TODO and IN_PROGRESS tasks
+        // Display only TODO and IN PROGRESS tasks (filter out DONE tasks)
         const activeTasks = data.tasks.filter(
           (task: Task) => task.status === 'todo' || task.status === 'inprogress'
         );
@@ -44,7 +44,7 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
             console.log(`🎨 Generating card ${index} for task:`, task.title, 'with color index:', index % 4);
             return {
               image: await generateTaskCardImage(task, index),
-              text: task.title
+              text: ''  // No text below cards
             };
           })
         );
@@ -60,48 +60,48 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
   // Generate a canvas-based image for each task card
   const generateTaskCardImage = async (task: Task, colorIndex: number): Promise<string> => {
     const canvas = document.createElement('canvas');
-    // Library expects 700x900 dimensions for proper scaling
-    canvas.width = 700;
-    canvas.height = 900;
+    // Extra large canvas dimensions for even bigger card backgrounds
+    canvas.width = 1680;
+    canvas.height = 2240;
     const ctx = canvas.getContext('2d');
 
     if (!ctx) return '';
 
-    // 🎨 2025 Glassmorphism Color Palette - Transparent backgrounds with high contrast text
+    // 🎨 2025 Glassmorphism Color Palette - Matching feature cards with visible gradients
     const colorPalette = [
-      // Purple (AI Tutor Card) - 25% opacity for glassmorphism
+      // Purple (AI Tutor Card) - Increased opacity for visibility
       {
-        start: 'rgba(216, 180, 254, 0.25)',
-        middle: 'rgba(233, 213, 255, 0.20)',
-        end: 'rgba(243, 232, 255, 0.15)',
-        border: 'rgba(216, 180, 254, 0.4)',
+        start: 'rgba(216, 180, 254, 0.85)',
+        middle: 'rgba(233, 213, 255, 0.75)',
+        end: 'rgba(243, 232, 255, 0.65)',
+        border: 'rgba(216, 180, 254, 0.6)',
         text: '#581c87',
         textShadow: 'rgba(255, 255, 255, 0.9)'
       },
       // Pink (Group Chat Card)
       {
-        start: 'rgba(251, 207, 232, 0.25)',
-        middle: 'rgba(252, 231, 243, 0.20)',
-        end: 'rgba(253, 242, 248, 0.15)',
-        border: 'rgba(251, 207, 232, 0.4)',
+        start: 'rgba(251, 207, 232, 0.85)',
+        middle: 'rgba(252, 231, 243, 0.75)',
+        end: 'rgba(253, 242, 248, 0.65)',
+        border: 'rgba(251, 207, 232, 0.6)',
         text: '#831843',
         textShadow: 'rgba(255, 255, 255, 0.9)'
       },
       // Blue (Quiz Card)
       {
-        start: 'rgba(191, 219, 254, 0.25)',
-        middle: 'rgba(219, 234, 254, 0.20)',
-        end: 'rgba(239, 246, 255, 0.15)',
-        border: 'rgba(191, 219, 254, 0.4)',
+        start: 'rgba(191, 219, 254, 0.85)',
+        middle: 'rgba(219, 234, 254, 0.75)',
+        end: 'rgba(239, 246, 255, 0.65)',
+        border: 'rgba(191, 219, 254, 0.6)',
         text: '#1e3a8a',
         textShadow: 'rgba(255, 255, 255, 0.9)'
       },
-      // Yellow (Games Card)
+      // Yellow/Green (Games Card)
       {
-        start: 'rgba(254, 240, 138, 0.25)',
-        middle: 'rgba(254, 249, 195, 0.20)',
-        end: 'rgba(254, 252, 232, 0.15)',
-        border: 'rgba(254, 240, 138, 0.4)',
+        start: 'rgba(254, 240, 138, 0.85)',
+        middle: 'rgba(254, 249, 195, 0.75)',
+        end: 'rgba(254, 252, 232, 0.65)',
+        border: 'rgba(254, 240, 138, 0.6)',
         text: '#713f12',
         textShadow: 'rgba(255, 255, 255, 0.9)'
       },
@@ -110,44 +110,48 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
     // Cycle through colors based on index
     const colors = colorPalette[colorIndex % colorPalette.length];
 
-    // Card dimensions - horizontal card centered in vertical canvas
-    const cardY = 300;  // Position in middle of 900px canvas
-    const cardHeight = 300;  // Height of the card
-    const cardMargin = 40;  // Increased margin for better spacing
-    const cardWidth = 700 - (cardMargin * 2);
-    const cardPadding = 25;  // Internal padding for content
+    // Card dimensions - fill entire canvas with margins
+    const cardMargin = 0;  // No margin - fill entire canvas
+    const cardX = cardMargin;
+    const cardY = cardMargin;
+    const cardWidth = 1680 - (cardMargin * 2);
+    const cardHeight = 2240 - (cardMargin * 2);
+    const cardPadding = 56;  // Internal padding for content (increased proportionally)
 
-    // Fill entire canvas with transparent background
-    ctx.fillStyle = 'rgba(255, 255, 255, 0)';
-    ctx.fillRect(0, 0, 700, 900);
+    // Fill entire canvas with white background first
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 1680, 2240);
 
-    // 🎨 Layer 1: Outer glow shadow for depth (glassmorphism effect)
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.12)';
-    ctx.shadowBlur = 30;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 15;
-
-    // Draw main card background with transparent gradient
+    // 🎨 Glass morphism effect - semi-transparent gradient background
+    // Draw main card outline with rounded corners
     ctx.beginPath();
-    ctx.roundRect(cardMargin, cardY, cardWidth, cardHeight, 24);
+    ctx.roundRect(cardX, cardY, cardWidth, cardHeight, 30);
     ctx.closePath();
 
-    // 🎨 Layer 2: Transparent gradient background (glassmorphism)
-    const gradient = ctx.createLinearGradient(cardMargin, cardY, cardMargin + cardWidth, cardY + cardHeight);
+    // Apply beautiful gradient background with glass opacity (matching feature cards)
+    const gradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
     gradient.addColorStop(0, colors.start);
     gradient.addColorStop(0.5, colors.middle);
     gradient.addColorStop(1, colors.end);
     ctx.fillStyle = gradient;
     ctx.fill();
 
-    // Reset shadow for border
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
+    // Add shadow for depth (matching feature cards shadow-[0_4px_12px_rgba(0,0,0,0.1)])
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 4;
 
-    // 🎨 Layer 3: Subtle border glow (glassmorphism trend)
-    ctx.strokeStyle = colors.border;
+    // 🎨 Glass border (matching feature cards border-white/20)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.lineWidth = 2;
     ctx.stroke();
+
+    // Reset shadow for other elements
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
 
     // Reset shadow for decorative elements
     ctx.shadowColor = 'transparent';
@@ -223,70 +227,70 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
 
-    // Position all content within the horizontal card area (y: 300-600)
-    const contentY = cardY + 80; // Start content 80px from top of card
+    // 🎨 CARD LAYOUT: Task type at top, title (bigger), description (bigger), priority indicator (bigger)
 
-    // Status emoji on the left
-    ctx.font = 'bold 70px Arial';
+    // Task type with emoji at TOP
+    const statusEmoji = task.status === 'inprogress' ? '🔥' : '📝';
+    const statusText = task.status === 'inprogress' ? 'IN PROGRESS' : 'TODO';
+
+    // Draw emoji
+    ctx.font = 'bold 112px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText(task.status === 'inprogress' ? '🔥' : '📝', 50, contentY);
+    ctx.fillText(statusEmoji, cardMargin + 56, cardY + 126);
 
-    // Task title - centered in the card
+    // Draw task type text next to emoji
     ctx.fillStyle = colors.text;
-    ctx.font = 'bold 42px Arial';
+    ctx.font = 'bold 67px Arial';
     ctx.textAlign = 'left';
-    const titleLines = wrapText(ctx, task.title, 480);
-    let textY = contentY - 10;
+    ctx.fillText(statusText, cardMargin + 196, cardY + 119);
+
+    // Task title - BIGGER and PROMINENT
+    const titleY = cardY + 200;
+    ctx.fillStyle = colors.text;
+    ctx.font = 'bold 100px Arial';
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = 1.0;
+    const titleLines = wrapText(ctx, task.title, cardWidth - 120);
+    let centerTextY = titleY;
     titleLines.forEach((line, i) => {
       if (i < 2) { // Max 2 lines for title
-        ctx.fillText(line, 150, textY);
-        textY += 50;
+        ctx.fillText(line, 450, centerTextY);
+        centerTextY += 110;
       }
     });
 
-    // Task description - below title
+    // Task description - BIGGER text
+    const descriptionY = centerTextY + 50;
     if (task.description) {
-      ctx.font = '26px Arial';
+      ctx.font = '400 68px Arial';
       ctx.fillStyle = colors.text;
       ctx.globalAlpha = 0.85;
-      ctx.textAlign = 'left';
-      const descLines = wrapText(ctx, task.description, 480);
+      ctx.textAlign = 'center';
+      const descLines = wrapText(ctx, task.description, cardWidth - 120);
+      let descTextY = descriptionY;
       descLines.forEach((line, i) => {
-        if (i < 2) { // Max 2 lines for description in horizontal layout
-          ctx.fillText(line, 150, textY);
-          textY += 35;
+        if (i < 2) { // Max 2 lines for description
+          ctx.fillText(line, 450, descTextY);
+          descTextY += 78;
         }
       });
       ctx.globalAlpha = 1.0;
     }
 
-    // Priority badge - bottom right of card
-    const badgeX = 450;
-    const badgeY = cardY + cardHeight - 80;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    roundRect(ctx, badgeX, badgeY, 200, 45, 22);
-    ctx.fill();
-
-    ctx.fillStyle = colors.text;
-    ctx.font = 'bold 22px Arial';
-    ctx.textAlign = 'center';
+    // Priority indicator - BIGGER at bottom
     const priorityEmoji = task.priority === 'high' ? '🔴' : task.priority === 'medium' ? '🟡' : '🟢';
-    ctx.fillText(`${priorityEmoji} ${task.priority.toUpperCase()}`, badgeX + 100, badgeY + 30);
+    const priorityText = `Priority: ${task.priority.toUpperCase()}`;
 
-    // Due date badge if present - bottom left of card
-    if (task.dueDate) {
-      const dueDateX = 50;
-      const dueDateY = cardY + cardHeight - 80;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      roundRect(ctx, dueDateX, dueDateY, 180, 45, 22);
-      ctx.fill();
+    // Draw priority emoji - SIGNIFICANTLY LARGER
+    ctx.font = 'bold 64px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(priorityEmoji, cardMargin + 40, cardY + cardHeight - 60);
 
-      ctx.fillStyle = colors.text;
-      ctx.font = 'bold 20px Arial';
-      ctx.textAlign = 'center';
-      const dueText = formatDueDate(task.dueDate);
-      ctx.fillText(`📅 ${dueText}`, dueDateX + 90, dueDateY + 30);
-    }
+    // Draw priority text - SIGNIFICANTLY LARGER
+    ctx.fillStyle = colors.text;
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(priorityText, cardMargin + 120, cardY + cardHeight - 70);
 
     return canvas.toDataURL('image/png');
   };

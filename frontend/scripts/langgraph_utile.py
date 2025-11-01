@@ -8,6 +8,11 @@ from datetime import datetime
 from pathlib import Path
 from collections import Counter
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+import requests
 from mcp import ClientSession
 from mcp.client.stdio import stdio_client, StdioServerParameters
 from mcp.client.streamable_http import streamablehttp_client
@@ -15,14 +20,9 @@ from mcp.client.session import ClientSession  # newer import path
 from langchain_community.tools.tavily_search.tool import TavilySearchResults
 from langchain_community.graphs import Neo4jGraph
 from langchain_community.chains.graph_qa.cypher import GraphCypherQAChain
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
-from prompts.neotj_tool_prompt import *
-
-try:
-    from openai import OpenAI
-except Exception:
-    OpenAI = None
+from neotj_tool_prompt import *
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -196,14 +196,78 @@ class GraphState(TypedDict):
     result: Dict[str, Any]
 
 class LLM:
-    def __init__(self, model: str = "gpt-4o-mini", temperature: float = 0.2):
-        if OpenAI is None:
-            raise ImportError(
-                "openai package not installed. `pip install openai` to use this."
-            )
-        self.client = OpenAI(api_key= os.getenv("OPENAI_API_KEY"))
+    def __init__(self, model: str = "gemini-2.5-flash", temperature: float = 0.2):
+        self.api_key = os.getenv("GEMINI_API_KEY")
+        if not self.api_key:
+            raise RuntimeError("GEMINI_API_KEY not configured for Gemini access.")
         self.model = model
         self.temperature = temperature
+        self.endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
+
+    @staticmethod
+    def _text_parts(content: str) -> List[Dict[str, Any]]:
+        return [{"text": str(content)}]
+
+    @staticmethod
+    def _tool_response_part(name: str, raw_content: Any) -> Dict[str, Any]:
+        if isinstance(raw_content, str):
+            try:
+                parsed = json.loads(raw_content)
+            except json.JSONDecodeError:
+                parsed = {"output": raw_content}
+        elif isinstance(raw_content, dict):
+            parsed = raw_content
+        else:
+            parsed = {"output": raw_content}
+        return {"functionResponse": {"name": name or "tool", "response": parsed}}
+
+    @staticmethod
+    def _convert_tools(tools: Optional[List[Dict[str, Any]]]) -> Optional[List[Dict[str, Any]]]:
+        if not tools:
+            return None
+        declarations: List[Dict[str, Any]] = []
+        for tool in tools:
+            fn = tool.get("function") or {}
+            name = fn.get("name")
+            if not name:
+                continue
+            declarations.append(
+                {
+                    "name": name,
+                    "description": fn.get("description", ""),
+                    "parameters": fn.get("parameters", {"type": "object", "properties": {}}),
+                }
+            )
+        if not declarations:
+            return None
+        return [{"function_declarations": declarations}]
+
+    def _convert_messages(self, messages: List[Dict[str, Any]]) -> Tuple[Optional[Dict[str, Any]], List[Dict[str, Any]]]:
+        system_instruction = None
+        contents: List[Dict[str, Any]] = []
+
+        for msg in messages:
+            role = msg.get("role", "")
+            content = msg.get("content", "")
+
+            if role == "system":
+                # Use the first system message as the Gemini system instruction
+                if content and system_instruction is None:
+                    system_instruction = {"parts": [{"text": str(content)}]}
+                    continue
+                # Any additional system prompts get treated as user context
+                role = "user"
+
+            if role == "assistant":
+                contents.append({"role": "model", "parts": self._text_parts(content)})
+            elif role == "tool":
+                name = msg.get("name") or msg.get("tool_name") or msg.get("tool_call_id") or "tool"
+                part = self._tool_response_part(name, content)
+                contents.append({"role": "user", "parts": [part]})
+            else:
+                contents.append({"role": "user", "parts": self._text_parts(content)})
+
+        return system_instruction, contents
 
     def chat(
         self,
@@ -215,22 +279,87 @@ class LLM:
         max_tokens: int = 1000,
         retry: int = 3,
     ) -> Dict[str, Any]:
-        last_err = None
+        last_err: Optional[Exception] = None
         for _ in range(retry):
             try:
-                resp = self.client.chat.completions.create(
-                    model=self.model,
-                    temperature=temperature if temperature is not None else self.temperature,
-                    messages=messages,
-                    tools=tools,
-                    tool_choice=tool_choice,
-                    max_tokens=max_tokens,
+                system_instruction, contents = self._convert_messages(messages)
+                body: Dict[str, Any] = {
+                    "contents": contents,
+                    "generationConfig": {
+                        "temperature": temperature if temperature is not None else self.temperature,
+                        "maxOutputTokens": max_tokens,
+                    },
+                }
+
+                tools_spec = self._convert_tools(tools)
+                if tools_spec:
+                    body["tools"] = tools_spec
+                    if tool_choice == "auto":
+                        body["toolConfig"] = {
+                            "functionCallingConfig": {
+                                "mode": "AUTO"
+                            }
+                        }
+
+                if system_instruction:
+                    body["systemInstruction"] = system_instruction
+
+                resp = requests.post(
+                    self.endpoint,
+                    params={"key": self.api_key},
+                    json=body,
+                    timeout=60,
                 )
-                return resp.model_dump()
-            except Exception as e:
-                last_err = e
+                if resp.status_code != 200:
+                    raise RuntimeError(f"Gemini API error: {resp.status_code} {resp.text}")
+
+                data = resp.json()
+                if "error" in data:
+                    raise RuntimeError(f"Gemini API error: {data['error']}")
+
+                candidates = data.get("candidates") or []
+                if not candidates:
+                    raise RuntimeError("Gemini API returned no candidates.")
+
+                candidate = candidates[0]
+                finish_reason = candidate.get("finishReason")
+                if finish_reason and finish_reason not in {"STOP", "MAX_TOKENS"}:
+                    raise RuntimeError(f"Generation halted by Gemini (reason={finish_reason}).")
+
+                content_obj = candidate.get("content") or {}
+                parts = content_obj.get("parts") or []
+                text_chunks: List[str] = []
+                tool_calls: List[Dict[str, Any]] = []
+
+                for part in parts:
+                    if "text" in part:
+                        text_chunks.append(part["text"])
+                    if "functionCall" in part:
+                        fc = part["functionCall"] or {}
+                        name = fc.get("name") or "tool"
+                        args = fc.get("args") or {}
+                        tool_calls.append(
+                            {
+                                "id": name,
+                                "type": "function",
+                                "function": {
+                                    "name": name,
+                                    "arguments": json.dumps(args),
+                                },
+                            }
+                        )
+
+                message: Dict[str, Any] = {"content": "\n".join(text_chunks).strip()}
+                if tool_calls:
+                    message["tool_calls"] = tool_calls
+
+                return {"choices": [{"message": message}]}
+
+            except Exception as exc:
+                last_err = exc
                 time.sleep(0.5)
-        raise RuntimeError(f"OpenAI call failed after retries: {last_err}")
+
+        raise RuntimeError(f"Gemini call failed after retries: {last_err}")
 
 COT_PROMPT = (
     "You are a careful reasoner. Solve the user's problem. "
@@ -438,19 +567,22 @@ def _build_neo4j_chain(top_k: int = 10):
         template=QA_PROMPT
     )
 
-    # Use a more capable model for Cypher generation with strict temperature
-    cypher_llm = ChatOpenAI(
-        model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+    gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_api_key:
+        raise RuntimeError("GEMINI_API_KEY not configured for Neo4j tool usage.")
+
+    # Use Gemini for both Cypher generation and QA, mirroring the primary agent
+    cypher_llm = ChatGoogleGenerativeAI(
+        model=gemini_model,
+        google_api_key=gemini_api_key,
         temperature=0.0,
-        api_key=os.getenv("OPENAI_API_KEY"),
-        model_kwargs={"top_p": 0.1}  # Make output more deterministic
     )
-    
-    # Use the same LLM for QA
-    qa_llm = ChatOpenAI(
-        model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+
+    qa_llm = ChatGoogleGenerativeAI(
+        model=gemini_model,
+        google_api_key=gemini_api_key,
         temperature=0.2,
-        api_key=os.getenv("OPENAI_API_KEY"),
     )
 
     # Build the two-step pipeline chain
@@ -663,7 +795,7 @@ def solve_react(state: GraphState) -> Dict[str, Any]:
                 return {"answer": final, "trace": messages}
 
         # Always append the assistant message (with or without tool_calls)
-        # This is required by OpenAI API before tool responses
+        # This mirrors function-calling APIs that expect the assistant turn prior to tool output
         assistant_msg = {"role": "assistant", "content": content}
         if tool_calls:
             assistant_msg["tool_calls"] = tool_calls
@@ -692,6 +824,7 @@ def solve_react(state: GraphState) -> Dict[str, Any]:
                 messages.append(
                     {
                         "role": "tool",
+                        "name": name,
                         "content": out if isinstance(out, str) else json.dumps(out),
                         "tool_call_id": tc.get("id", ""),
                     }

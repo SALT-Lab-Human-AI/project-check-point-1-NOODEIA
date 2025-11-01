@@ -348,11 +348,10 @@ export default function AIAssistantUI() {
           })
         })
 
-        if (!response.ok) {
-          throw new Error('Failed to get AI response')
-        }
-
         const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data?.error || 'Failed to get AI response')
+        }
         const assistantContent = data.response
 
         // Create temporary AI message for immediate display
@@ -706,12 +705,12 @@ export default function AIAssistantUI() {
         }}
       />
 
-      <div className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: 'var(--app-bg)' }}>
+      <div className="flex flex-1 flex-col min-h-0 overflow-visible" style={{ backgroundColor: 'var(--app-bg)' }}>
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           onNotesClick={() => setMarkdownPanelOpen(true)}
         />
-        <main className="flex flex-1 flex-col min-h-0 overflow-hidden" style={{ backgroundColor: 'var(--app-bg)' }}>
+        <main className="flex flex-1 flex-col min-h-0 overflow-visible" style={{ backgroundColor: 'var(--app-bg)' }}>
           <ChatPane
             conversation={selectedConversation}
             currentUser={currentUser}
