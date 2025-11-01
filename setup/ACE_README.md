@@ -1,4 +1,6 @@
-# ACE (Agentic Context Engineering) – Project Integration (Original Workflow)
+# Enhanced Memory Based ACE (Agentic Context Engineering)
+
+## Original Workflow of ACE 
 
 This document captures the current ACE setup exactly as it exists today. Treat it as the “original version” baseline before experimenting with new pruning or retention strategies.
 
