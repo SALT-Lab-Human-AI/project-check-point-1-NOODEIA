@@ -135,10 +135,14 @@ export default function HomePage() {
   };
 
 
+  // Only wait for auth - gallery loads progressively in background
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 flex items-center justify-center">
-        <div className="text-purple-900 text-xl font-black">Loading...</div>
+        <div className="text-center">
+          <div className="text-xl font-black text-gray-600 mb-2">Loading...</div>
+          <div className="text-sm text-gray-500">Please wait</div>
+        </div>
       </div>
     );
   }
@@ -158,7 +162,10 @@ export default function HomePage() {
         </div>
 
         {/* Circular Task Gallery - Swipe through TODO and IN_PROGRESS tasks */}
-        <CircularTaskGallery userId={user?.id} />
+        <CircularTaskGallery 
+          userId={user?.id} 
+          onReady={() => {}} // Callback not needed - page already shown
+        />
 
         {/* Section Title */}
         <div className="mb-4">

@@ -231,8 +231,9 @@ class Media {
   }
 
   createShader() {
+    // Disable mipmaps for better performance with data URLs (they're already optimized)
     const texture = new Texture(this.gl, {
-      generateMipmaps: true
+      generateMipmaps: false
     });
     this.program = new Program(this.gl, {
       depthTest: false,
@@ -296,13 +297,86 @@ class Media {
       },
       transparent: true
     });
+    
+    // Handle empty image strings - don't try to load them
+    // This should never happen if filtering is done correctly, but add safeguard
+    if (!this.image || this.image.trim() === '') {
+      // Create a white/light colored placeholder canvas instead of transparent (less jarring than black)
+      const placeholderCanvas = document.createElement('canvas');
+      placeholderCanvas.width = 800; // Match optimized card dimensions
+      placeholderCanvas.height = 1100;
+      const placeholderCtx = placeholderCanvas.getContext('2d');
+      if (placeholderCtx) {
+        // Fill with a light gradient background similar to card backgrounds
+        const gradient = placeholderCtx.createLinearGradient(0, 0, 800, 1100);
+        gradient.addColorStop(0, 'rgba(243, 232, 255, 0.5)');
+        gradient.addColorStop(1, 'rgba(233, 213, 255, 0.3)');
+        placeholderCtx.fillStyle = gradient;
+        placeholderCtx.fillRect(0, 0, 800, 1100);
+      }
+      texture.image = placeholderCanvas;
+      this.program.uniforms.uImageSizes.value = [800, 1100];
+      return;
+    }
+    
+    // CRITICAL: Initialize texture immediately with light placeholder to prevent black cards
+    // This ensures the texture is never uninitialized during image loading
+    const createLightPlaceholder = () => {
+      const placeholderCanvas = document.createElement('canvas');
+      placeholderCanvas.width = 800; // Match optimized card dimensions
+      placeholderCanvas.height = 1100;
+      const placeholderCtx = placeholderCanvas.getContext('2d');
+      if (placeholderCtx) {
+        const gradient = placeholderCtx.createLinearGradient(0, 0, 800, 1100);
+        gradient.addColorStop(0, 'rgba(243, 232, 255, 0.5)');
+        gradient.addColorStop(1, 'rgba(233, 213, 255, 0.3)');
+        placeholderCtx.fillStyle = gradient;
+        placeholderCtx.fillRect(0, 0, 800, 1100);
+      }
+      return placeholderCanvas;
+    };
+    
+    // Set placeholder immediately so texture is never uninitialized
+    texture.image = createLightPlaceholder();
+    this.program.uniforms.uImageSizes.value = [800, 1100];
+    
+    // Now load the actual image and swap it in when ready
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = this.image;
+    
+    // Set up timeout to prevent hanging on failed loads
+    const timeout = setTimeout(() => {
+      console.warn(`Image load timeout for: ${this.image.substring(0, 50)}...`);
+      // Keep the placeholder if timeout occurs
+      // texture.image is already set to placeholder above
+    }, 10000); // 10 second timeout
+    
     img.onload = () => {
-      texture.image = img;
-      this.program.uniforms.uImageSizes.value = [img.naturalWidth, img.naturalHeight];
+      clearTimeout(timeout);
+      try {
+        // Verify image dimensions are valid before swapping in the actual image
+        if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+          // Swap placeholder with actual image
+          texture.image = img;
+          this.program.uniforms.uImageSizes.value = [img.naturalWidth, img.naturalHeight];
+        } else {
+          console.warn('Image loaded but has invalid dimensions, keeping placeholder');
+          // Keep the placeholder (already set above)
+        }
+      } catch (error) {
+        console.error('Error setting texture image:', error);
+        // Keep the placeholder (already set above)
+      }
     };
+    
+    img.onerror = (error) => {
+      clearTimeout(timeout);
+      console.error(`Failed to load image: ${this.image.substring(0, 50)}...`, error);
+      // Placeholder is already set above, so we just keep it
+      // No need to set it again
+    };
+    
+    img.src = this.image;
   }
 
   createMesh() {
@@ -356,15 +430,16 @@ class Media {
     const viewportOffset = this.viewport.width / 2;
     this.isBefore = this.plane.position.x + planeOffset < -viewportOffset;
     this.isAfter = this.plane.position.x - planeOffset > viewportOffset;
-    // Infinite scrolling disabled - repositioning logic commented out
-    // if (direction === 'right' && this.isBefore) {
-    //   this.extra -= this.widthTotal;
-    //   this.isBefore = this.isAfter = false;
-    // }
-    // if (direction === 'left' && this.isAfter) {
-    //   this.extra += this.widthTotal;
-    //   this.isBefore = this.isAfter = false;
-    // }
+    
+    // Infinite scrolling - wrap around when cards go off screen
+    if (direction === 'right' && this.isBefore) {
+      this.extra -= this.widthTotal;
+      this.isBefore = this.isAfter = false;
+    }
+    if (direction === 'left' && this.isAfter) {
+      this.extra += this.widthTotal;
+      this.isBefore = this.isAfter = false;
+    }
   }
 
   onResize({ screen, viewport }: { screen?: ScreenSize; viewport?: Viewport } = {}) {
@@ -381,7 +456,11 @@ class Media {
     this.plane.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
     this.padding = 2;
     this.width = this.plane.scale.x + this.padding;
+    // For infinite scroll, widthTotal should be based on the original item count
+    // This ensures repositioning wraps correctly
     this.widthTotal = this.width * this.length;
+    // Position items based on their index in the duplicated array
+    // This creates the illusion of infinite scrolling
     this.x = this.width * this.index;
   }
 }
@@ -460,6 +539,18 @@ class App {
     this.onResize();
     this.createGeometry();
     this.createMedias(items, bend, textColor, borderRadius, font);
+    
+    // Initialize scroll position to the middle set of items for infinite scrolling
+    // This allows scrolling in both directions seamlessly
+    if (this.medias && this.medias.length > 0 && this.baseItems.length > 0) {
+      const width = this.medias[0].width;
+      const totalWidth = width * this.baseItems.length;
+      // Start at the beginning of the middle set (one full cycle to the left)
+      this.scroll.current = -totalWidth;
+      this.scroll.target = -totalWidth;
+      this.scroll.last = -totalWidth;
+    }
+    
     this.update();
     this.addEventListeners();
   }
@@ -486,9 +577,11 @@ class App {
   }
 
   createGeometry() {
+    // Reduced geometry segments for better performance (50x100 -> 20x40)
+    // This reduces vertex count from 5,000 to 800, significantly improving render performance
     this.planeGeometry = new Plane(this.gl, {
-      heightSegments: 50,
-      widthSegments: 100
+      heightSegments: 20,
+      widthSegments: 40
     });
   }
 
@@ -551,14 +644,16 @@ class App {
     ];
     const galleryItems = items && items.length ? items : defaultItems;
     this.baseItems = galleryItems;
-    this.mediasImages = galleryItems; // Removed concat to disable infinite scrolling
+    // Duplicate items for infinite scrolling (3 copies: before, current, after)
+    // This ensures seamless wrapping in both directions
+    this.mediasImages = [...galleryItems, ...galleryItems, ...galleryItems];
     this.medias = this.mediasImages.map((data, index) => {
       return new Media({
         geometry: this.planeGeometry,
         gl: this.gl,
         image: data.image,
         index,
-        length: this.mediasImages.length,
+        length: galleryItems.length, // Use original length for positioning calculations
         renderer: this.renderer,
         scene: this.scene,
         screen: this.screen,
@@ -625,6 +720,12 @@ class App {
   onCheck() {
     if (!this.medias || !this.medias[0]) return;
     const width = this.medias[0].width;
+    const baseLength = this.baseItems.length;
+    const totalWidth = width * baseLength;
+    
+    // For infinite scroll, we don't clamp - let it scroll freely
+    // The repositioning logic in update() handles wrapping when cards go off-screen
+    // Just snap to nearest item position for smooth scrolling
     const itemIndex = Math.round(Math.abs(this.scroll.target) / width);
     const item = width * itemIndex;
     this.scroll.target = this.scroll.target < 0 ? -item : item;
@@ -752,6 +853,6 @@ export default function CircularGallery({
       app.destroy();
     };
   }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase, onSelect]);
-  return <div className="w-full h-full overflow-hidden cursor-grab active:cursor-grabbing" ref={containerRef} />;
+  return <div className="w-full h-full overflow-visible cursor-grab active:cursor-grabbing" ref={containerRef} />;
 }
 

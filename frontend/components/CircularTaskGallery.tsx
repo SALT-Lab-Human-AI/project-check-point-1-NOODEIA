@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, useTransition, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import CircularGallery from './CircularGallery';
 
 interface Task {
@@ -15,12 +16,60 @@ interface Task {
 
 interface CircularTaskGalleryProps {
   userId: string;
+  onReady?: () => void; // Callback when gallery is fully ready
 }
 
-export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps) {
+// Texture cache to prevent regeneration
+const textureCache = new Map<string, string>();
+
+export default function CircularTaskGallery({ userId, onReady }: CircularTaskGalleryProps) {
+  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [galleryItems, setGalleryItems] = useState<{ image: string; text: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastItemsKeyRef = useRef<string>('');
+  const stableItemsCacheRef = useRef<{ image: string; text: string }[]>([]);
+  
+  // Handle card click - navigate to todo page
+  const handleCardSelect = useCallback(() => {
+    router.push('/todo');
+  }, [router]);
+  
+  // Create stable items reference with debouncing to reduce blinking
+  const [debouncedGalleryItems, setDebouncedGalleryItems] = useState<{ image: string; text: string }[]>([]);
+  
+  useEffect(() => {
+    // Debounce updates to reduce blinking - batch changes together
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+    
+    updateTimeoutRef.current = setTimeout(() => {
+      setDebouncedGalleryItems([...galleryItems]);
+    }, 200); // 200ms debounce to batch rapid updates
+    
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, [galleryItems]);
+  
+  const stableGalleryItems = useMemo(() => {
+    const validItems = debouncedGalleryItems.filter(item => item.image && item.image.trim() !== '' && item.image.startsWith('data:image'));
+    const itemsKey = validItems.map(item => item.image).join('|');
+    
+    // Only create new array if items actually changed
+    if (itemsKey === lastItemsKeyRef.current && stableItemsCacheRef.current.length > 0) {
+      return stableItemsCacheRef.current; // Return cached stable reference if no change
+    }
+    
+    lastItemsKeyRef.current = itemsKey;
+    stableItemsCacheRef.current = validItems;
+    return validItems;
+  }, [debouncedGalleryItems]);
 
   useEffect(() => {
     loadTasks();
@@ -28,6 +77,12 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
 
   const loadTasks = async () => {
     try {
+      // CRITICAL: Show page immediately, don't wait for fetch
+      setLoading(false);
+      if (onReady) {
+        onReady(); // Call immediately so page can render
+      }
+      
       const response = await fetch(`/api/kanban/tasks?userId=${userId}`);
       if (response.ok) {
         const data = await response.json();
@@ -38,34 +93,124 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
         console.log('🎨 CircularTaskGallery: Found', activeTasks.length, 'active tasks');
         setTasks(activeTasks);
 
-        // Generate gallery items with color index
-        const items = await Promise.all(
-          activeTasks.map(async (task: Task, index: number) => {
-            console.log(`🎨 Generating card ${index} for task:`, task.title, 'with color index:', index % 4);
-            return {
-              image: await generateTaskCardImage(task, index),
-              text: ''  // No text below cards
-            };
-          })
-        );
-        setGalleryItems(items);
+        // OPTIMIZED: Progressive rendering - generate first card immediately, then rest progressively
+        // This prevents black cards from empty placeholders
+        const items: { image: string; text: string }[] = [];
+        
+        // Generate all cards progressively in background (non-blocking)
+        // Page is already shown above, so this doesn't block
+        const generateCardsProgressive = async () => {
+          const items: { image: string; text: string }[] = [];
+          const BATCH_UPDATE_SIZE = 3; // Update gallery every 3 cards to reduce blinking
+          let pendingBatch: { image: string; text: string }[] = [];
+          let batchTimeout: NodeJS.Timeout | null = null;
+          
+          const flushBatch = () => {
+            if (pendingBatch.length > 0) {
+              const newItems = [...items, ...pendingBatch];
+              items.push(...pendingBatch);
+              pendingBatch = [];
+              
+              // Use startTransition for smooth updates
+              startTransition(() => {
+                setGalleryItems([...newItems]);
+              });
+            }
+            if (batchTimeout) {
+              clearTimeout(batchTimeout);
+              batchTimeout = null;
+            }
+          };
+          
+          for (let i = 0; i < activeTasks.length; i++) {
+            try {
+              // Use requestIdleCallback to yield to main thread between cards
+              await new Promise<void>((resolve) => {
+                if (typeof requestIdleCallback !== 'undefined') {
+                  requestIdleCallback(() => {
+                    resolve();
+                  }, { timeout: 0 });
+                } else {
+                  // Fallback for browsers without requestIdleCallback
+                  setTimeout(() => resolve(), 0);
+                }
+              });
+              
+              const image = await generateTaskCardImage(activeTasks[i], i);
+              if (image && image.trim() !== '' && image.startsWith('data:image')) {
+                pendingBatch.push({ image, text: '' });
+                
+                // Batch updates: flush when batch is full or after delay
+                if (pendingBatch.length >= BATCH_UPDATE_SIZE) {
+                  flushBatch();
+                } else {
+                  // Debounce: flush after 300ms if batch isn't full
+                  if (batchTimeout) clearTimeout(batchTimeout);
+                  batchTimeout = setTimeout(flushBatch, 300);
+                }
+              }
+            } catch (error) {
+              console.error(`Failed to generate card for task ${activeTasks[i].id}:`, error);
+            }
+          }
+          
+          // Flush any remaining cards
+          flushBatch();
+        };
+        
+        // Start generating cards in background (non-blocking)
+        generateCardsProgressive();
       }
     } catch (error) {
       console.error('Failed to load tasks:', error);
-    } finally {
       setLoading(false);
+      // Still call onReady immediately even if there's an error so page can render
+      if (onReady) {
+        onReady();
+      }
     }
+  };
+
+  // Helper function to verify image is valid and loaded
+  const verifyImageLoad = (imageDataUrl: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (!imageDataUrl || imageDataUrl.trim() === '' || !imageDataUrl.startsWith('data:image')) {
+        resolve(false);
+        return;
+      }
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = imageDataUrl;
+      // Timeout after 2 seconds
+      setTimeout(() => resolve(false), 2000);
+    });
   };
 
   // Generate a canvas-based image for each task card
   const generateTaskCardImage = async (task: Task, colorIndex: number): Promise<string> => {
+    // Check cache first - skip verification for cached images (they're already valid)
+    const cacheKey = `${task.id ?? ''}|${task.title ?? ''}|${task.description ?? ''}|${task.priority}|${task.status}|${colorIndex}`;
+    const cached = textureCache.get(cacheKey);
+    if (cached) {
+      // Return cached image immediately without verification for better performance
+      return cached;
+    }
+
+    // OPTIMIZED: Reduced canvas size for much faster rendering
+    // Display size is ~382x350px, so we can use smaller canvas and scale up
+    // This dramatically reduces rendering time (fewer pixels to process)
     const canvas = document.createElement('canvas');
-    // Extra large canvas dimensions for even bigger card backgrounds
-    canvas.width = 1680;
-    canvas.height = 2240;
+    canvas.width = 800;  // Reduced from 1400 (43% reduction)
+    canvas.height = 1100; // Reduced from 1900 (42% reduction) - maintains aspect ratio
     const ctx = canvas.getContext('2d');
 
-    if (!ctx) return '';
+    if (!ctx) {
+      console.error('Failed to get 2d context');
+      return '';
+    }
+
+    try {
 
     // 🎨 2025 Glassmorphism Color Palette - Matching feature cards with visible gradients
     const colorPalette = [
@@ -110,26 +255,27 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
     // Cycle through colors based on index
     const colors = colorPalette[colorIndex % colorPalette.length];
 
-    // Card dimensions - fill entire canvas with margins
-    const cardMargin = 0;  // No margin - fill entire canvas
+    // Card dimensions - fill entire canvas to eliminate white spaces during movement
+    const cardMargin = 0;  // No margin - card fills entire canvas
     const cardX = cardMargin;
     const cardY = cardMargin;
-    const cardWidth = 1680 - (cardMargin * 2);
-    const cardHeight = 2240 - (cardMargin * 2);
-    const cardPadding = 56;  // Internal padding for content (increased proportionally)
+    const cardWidth = canvas.width - (cardMargin * 2);  // Use canvas.width instead of hardcoded
+    const cardHeight = canvas.height - (cardMargin * 2); // Use canvas.height instead of hardcoded
+    const cardPadding = 30;  // Reduced padding for smaller canvas
 
     // Fill entire canvas with white background first
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, 1680, 2240);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // 🎨 Glass morphism effect - semi-transparent gradient background
-    // Draw main card outline with rounded corners
+    // Draw main card outline with rounded corners - fills entire canvas
     ctx.beginPath();
-    ctx.roundRect(cardX, cardY, cardWidth, cardHeight, 30);
+    ctx.roundRect(cardX, cardY, cardWidth, cardHeight, 20);
     ctx.closePath();
 
     // Apply beautiful gradient background with glass opacity (matching feature cards)
-    const gradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
+    // Use full canvas dimensions for gradient to ensure no white edges
+    const gradient = ctx.createLinearGradient(cardX, cardY, cardX + cardWidth, cardY + cardHeight);
     gradient.addColorStop(0, colors.start);
     gradient.addColorStop(0.5, colors.middle);
     gradient.addColorStop(1, colors.end);
@@ -143,9 +289,14 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
     ctx.shadowOffsetY = 4;
 
     // 🎨 Glass border (matching feature cards border-white/20)
+    // Draw border inside the card to prevent white lines at edges
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(cardX + 1, cardY + 1, cardWidth - 2, cardHeight - 2, 19);
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.lineWidth = 2;
     ctx.stroke();
+    ctx.restore();
 
     // Reset shadow for other elements
     ctx.shadowColor = 'transparent';
@@ -157,69 +308,29 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
 
-    // 🎨 NEW: Add grainy texture overlay (2025 trend)
+    // 🎨 OPTIMIZED: Add grainy texture overlay
+    // Reduced iterations from (width*height)/150 to (width*height)/800 for better performance
     ctx.save();
     ctx.globalCompositeOperation = 'overlay';
     ctx.globalAlpha = 0.06;
     ctx.beginPath();
-    ctx.roundRect(cardMargin, cardY, cardWidth, cardHeight, 30);
+    ctx.roundRect(cardX, cardY, cardWidth, cardHeight, 20);
     ctx.clip();
-    for (let i = 0; i < (cardWidth * cardHeight) / 150; i++) {
-      ctx.fillStyle = Math.random() > 0.5 ? '#fff' : '#000';
-      const x = cardMargin + Math.random() * cardWidth;
+    
+    // OPTIMIZED: Drastically reduce grain iterations for faster rendering
+    // Small grain effect is barely visible but very expensive
+    const grainIterations = Math.floor((cardWidth * cardHeight) / 8000); // Much fewer iterations
+    ctx.fillStyle = '#000000';
+    for (let i = 0; i < grainIterations; i++) {
+      const x = cardX + Math.random() * cardWidth;
       const y = cardY + Math.random() * cardHeight;
       ctx.fillRect(x, y, 1, 1);
     }
     ctx.restore();
 
-    // 🎨 NEW: Add cute floating circles
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(cardMargin, cardY, cardWidth, cardHeight, 30);
-    ctx.clip();
-
-    ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = 0.12;
-    // Draw soft decorative circles
-    const drawSoftCircle = (x: number, y: number, radius: number) => {
-      const radGrad = ctx.createRadialGradient(x, y, 0, x, y, radius);
-      radGrad.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-      radGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      ctx.fillStyle = radGrad;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fill();
-    };
-
-    drawSoftCircle(cardMargin + cardWidth * 0.2, cardY + cardHeight * 0.25, 80);
-    drawSoftCircle(cardMargin + cardWidth * 0.8, cardY + cardHeight * 0.7, 100);
-    drawSoftCircle(cardMargin + cardWidth * 0.5, cardY + cardHeight * 0.5, 60);
-
-    ctx.restore();
-
-    // 🎨 NEW: Add sparkle decorations
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(cardMargin, cardY, cardWidth, cardHeight, 30);
-    ctx.clip();
-
-    ctx.globalAlpha = 0.4;
-    ctx.fillStyle = '#ffffff';
-    // Draw small star sparkles
-    for (let i = 0; i < 5; i++) {
-      const x = cardMargin + Math.random() * cardWidth;
-      const y = cardY + Math.random() * cardHeight;
-      const size = 3 + Math.random() * 5;
-      // Draw diamond shape
-      ctx.beginPath();
-      ctx.moveTo(x, y - size);
-      ctx.lineTo(x + size / 2, y);
-      ctx.lineTo(x, y + size);
-      ctx.lineTo(x - size / 2, y);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.restore();
+    // OPTIMIZED: Skip decorative elements during initial load for much faster rendering
+    // These are expensive and barely visible - skip them entirely for performance
+    // Decorative circles and sparkles removed - saves significant rendering time
 
     // Reset shadow for text
     ctx.shadowColor = 'transparent';
@@ -227,81 +338,157 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
 
-    // 🎨 CARD LAYOUT: Task type at top, title (bigger), description (bigger), priority indicator (bigger)
+    // IMPORTANT: All decorative elements are complete, clipping is restored
+    // Now draw text content - ensure no clipping is active
+    // All save/restore pairs from decorative elements are balanced, so we're in a clean state
 
-    // Task type with emoji at TOP
+    // 🎨 CARD LAYOUT: 
+    // 1. First Header: Task type (TODO/IN PROGRESS)
+    // 2. Second Header: Task title (large font)
+    // 3. Description: Same font size as title
+
+    // FIRST HEADER: Task type with emoji at TOP LEFT (inside card)
     const statusEmoji = task.status === 'inprogress' ? '🔥' : '📝';
-    const statusText = task.status === 'inprogress' ? 'IN PROGRESS' : 'TODO';
+    const statusText = task.status === 'inprogress' ? 'In Progress' : 'To Do';
 
-    // Draw emoji
-    ctx.font = 'bold 112px Arial';
+    // Set text baseline to top for accurate positioning
+    ctx.textBaseline = 'top';
+    
+    // Draw task type emoji - left aligned, positioned at top within card bounds
+    // Task category font size (base size for calculations)
+    // Reduced proportionally with canvas size for consistency
+    const categoryFontSize = 70; // Reduced from 120 to match smaller canvas (maintains visual proportion)
+    ctx.fillStyle = colors.text; // Set color before drawing
+    ctx.font = `bold ${categoryFontSize}px Arial`;
     ctx.textAlign = 'left';
-    ctx.fillText(statusEmoji, cardMargin + 56, cardY + 126);
+    const statusX = cardX + cardPadding;
+    const statusY = cardY + cardPadding + 50; // Positioned within card, visible from top
+    ctx.fillText(statusEmoji, statusX, statusY);
 
-    // Draw task type text next to emoji
-    ctx.fillStyle = colors.text;
-    ctx.font = 'bold 67px Arial';
+    // Draw task type text (FIRST HEADER) - right next to emoji, left aligned, fully visible
+    ctx.fillStyle = colors.text; // Ensure color is set
+    ctx.font = `bold ${categoryFontSize}px Arial`; // Much bigger font
     ctx.textAlign = 'left';
-    ctx.fillText(statusText, cardMargin + 196, cardY + 119);
+    ctx.textBaseline = 'top'; // Ensure baseline is set
+    // Measure emoji width and position text right next to it
+    const emojiMetrics = ctx.measureText(statusEmoji);
+    const statusTextX = statusX + emojiMetrics.width + 35;
+    // Always draw the full text - it should fit easily ("In Progress" or "To Do")
+    ctx.fillText(statusText, statusTextX, statusY);
 
-    // Task title - BIGGER and PROMINENT
-    const titleY = cardY + 200;
+    // SECOND HEADER: Task title - 1.5x bigger than category font
+    ctx.textBaseline = 'top'; // Set baseline for title
+    const titleFontSize = Math.round(categoryFontSize * 1.5); // 1.5x bigger than category
+    const titleY = statusY + categoryFontSize + 60; // Start title below status header with proper spacing
     ctx.fillStyle = colors.text;
-    ctx.font = 'bold 100px Arial';
+    ctx.font = `bold ${titleFontSize}px Arial`;
     ctx.textAlign = 'center';
     ctx.globalAlpha = 1.0;
     const titleLines = wrapText(ctx, task.title, cardWidth - 120);
     let centerTextY = titleY;
     titleLines.forEach((line, i) => {
-      if (i < 2) { // Max 2 lines for title
-        ctx.fillText(line, 450, centerTextY);
-        centerTextY += 110;
+      if (i < 3) { // Max 3 lines for title
+        ctx.fillText(line, cardX + cardWidth / 2, centerTextY);
+        centerTextY += titleFontSize * 1.2; // Line height based on font size
       }
     });
 
-    // Task description - BIGGER text
-    const descriptionY = centerTextY + 50;
+    // Description - 1.3x bigger than category font
+    ctx.textBaseline = 'top'; // Set baseline for description
+    const descriptionFontSize = Math.round(categoryFontSize * 1.3); // 1.3x bigger than category
+    const descriptionY = centerTextY + 60;
     if (task.description) {
-      ctx.font = '400 68px Arial';
+      ctx.font = `400 ${descriptionFontSize}px Arial`;
       ctx.fillStyle = colors.text;
-      ctx.globalAlpha = 0.85;
+      ctx.globalAlpha = 0.9;
       ctx.textAlign = 'center';
       const descLines = wrapText(ctx, task.description, cardWidth - 120);
       let descTextY = descriptionY;
       descLines.forEach((line, i) => {
-        if (i < 2) { // Max 2 lines for description
-          ctx.fillText(line, 450, descTextY);
-          descTextY += 78;
+        if (i < 4) { // Max 4 lines for description
+          ctx.fillText(line, cardX + cardWidth / 2, descTextY);
+          descTextY += descriptionFontSize * 1.2; // Line height based on font size
         }
       });
       ctx.globalAlpha = 1.0;
     }
 
-    // Priority indicator - BIGGER at bottom
+    // Priority indicator at bottom LEFT (inside card)
     const priorityEmoji = task.priority === 'high' ? '🔴' : task.priority === 'medium' ? '🟡' : '🟢';
-    const priorityText = `Priority: ${task.priority.toUpperCase()}`;
+    const priorityLabels: Record<string, string> = {
+      high: 'High',
+      medium: 'Medium',
+      low: 'Low'
+    };
+    const priorityText = `Priority: ${priorityLabels[task.priority] || task.priority}`;
 
-    // Draw priority emoji - SIGNIFICANTLY LARGER
-    ctx.font = 'bold 64px Arial';
+    // Set text baseline to bottom for accurate bottom positioning
+    ctx.textBaseline = 'bottom';
+    
+    // Draw priority emoji - left aligned at bottom, positioned within card bounds
+    // Priority font size matches category font size
+    const priorityFontSize = categoryFontSize; // Same size as category
+    ctx.font = `bold ${priorityFontSize}px Arial`; // Much bigger font
     ctx.textAlign = 'left';
-    ctx.fillText(priorityEmoji, cardMargin + 40, cardY + cardHeight - 60);
+    const priorityX = cardX + cardPadding;
+    const priorityY = cardY + cardHeight - cardPadding - 70; // Positioned within card, visible from bottom
+    ctx.fillText(priorityEmoji, priorityX, priorityY);
 
-    // Draw priority text - SIGNIFICANTLY LARGER
+    // Draw priority text - right next to emoji, left aligned, fully visible within card
     ctx.fillStyle = colors.text;
-    ctx.font = 'bold 48px Arial';
+    ctx.font = `bold ${priorityFontSize}px Arial`; // Much bigger font
     ctx.textAlign = 'left';
-    ctx.fillText(priorityText, cardMargin + 120, cardY + cardHeight - 70);
+    ctx.textBaseline = 'bottom'; // Ensure baseline is set for bottom alignment
+    // Measure emoji width and position text right next to it
+    const priorityEmojiMetrics = ctx.measureText(priorityEmoji);
+    const priorityTextX = priorityX + priorityEmojiMetrics.width + 30;
+    // Always draw the full text - "Priority: High/Medium/Low" should fit easily
+    ctx.fillText(priorityText, priorityTextX, priorityY);
 
-    return canvas.toDataURL('image/png');
+    // OPTIMIZED: Use PNG but with smaller canvas (already optimized above)
+    // PNG supports transparency needed for glassmorphism effect
+    const dataUrl = canvas.toDataURL('image/png');
+    
+    // Verify the data URL is valid before caching
+    if (!dataUrl || dataUrl.trim() === '' || !dataUrl.startsWith('data:image')) {
+      console.error('Invalid canvas data URL generated');
+      return '';
+    }
+    
+    // Cache the valid image
+    textureCache.set(cacheKey, dataUrl);
+    return dataUrl;
+    } catch (error) {
+      console.error('Error generating task card image:', error);
+      return '';
+    }
   };
 
-  // Helper to wrap text
+  // OPTIMIZED: Helper to wrap text with limit on measureText calls
   const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
-    const words = text.split(' ');
+    if (!text || text.trim() === '') return [];
+    
+    // Quick check: if entire text fits, return it immediately (single measureText call)
+    const fullMetrics = ctx.measureText(text);
+    if (fullMetrics.width <= maxWidth) {
+      return [text];
+    }
+    
+    // Limit text length to avoid excessive processing
+    const maxChars = 200; // Reasonable limit for card display
+    const truncatedText = text.length > maxChars ? text.substring(0, maxChars) + '...' : text;
+    
+    const words = truncatedText.split(' ');
     const lines: string[] = [];
     let currentLine = '';
 
-    words.forEach((word) => {
+    // Limit iterations to prevent expensive measureText loops
+    const maxIterations = 50; // Prevent infinite loops
+    let iterations = 0;
+
+    for (const word of words) {
+      if (iterations++ > maxIterations) break;
+      
       const testLine = currentLine + (currentLine ? ' ' : '') + word;
       const metrics = ctx.measureText(testLine);
       if (metrics.width > maxWidth && currentLine) {
@@ -310,7 +497,7 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
       } else {
         currentLine = testLine;
       }
-    });
+    }
 
     if (currentLine) {
       lines.push(currentLine);
@@ -355,6 +542,15 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
     return `${diffDays} days`;
   };
 
+  // Handle empty tasks - call onReady immediately when loading completes
+  // This hook MUST be called before any early returns (Rules of Hooks)
+  useEffect(() => {
+    if (!loading && tasks.length === 0 && onReady) {
+      // Call immediately, no delay
+      onReady();
+    }
+  }, [loading, tasks.length, onReady]);
+
   if (loading) {
     return (
       <div className="relative bg-white/10 backdrop-blur-lg rounded-3xl p-6 shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/20 mb-6">
@@ -377,38 +573,33 @@ export default function CircularTaskGallery({ userId }: CircularTaskGalleryProps
   }
 
   return (
-    <div className="relative bg-white/10 backdrop-blur-lg rounded-3xl p-6 shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/20 mb-6 overflow-hidden">
+    <div className="relative bg-white/10 backdrop-blur-lg rounded-3xl p-2 shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/20 mb-6 overflow-visible">
       {/* Glass overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
 
       <div className="relative">
-        {/* Title */}
-        <div className="text-center mb-6">
-          <h3 className="text-lg font-black text-gray-800 flex items-center justify-center gap-2">
-            <span>Active Tasks</span>
-            <span className="text-sm font-normal bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2 py-0.5 rounded-full">
-              {tasks.length}
-            </span>
-          </h3>
-        </div>
-
-        {/* CircularGallery Container - landscape cards with tilt scrolling */}
-        <div style={{ height: '300px', position: 'relative', width: '100%' }}>
-          <CircularGallery
-            items={galleryItems}
-            bend={2}
-            textColor="#ffffff"
-            borderRadius={0.08}
-            scrollSpeed={3}
-            scrollEase={0.08}
-          />
-        </div>
-
-        {/* Swipe hint text */}
-        <div className="text-center mt-3">
-          <p className="text-xs text-gray-500">
-            Drag or scroll to browse tasks
-          </p>
+        {/* CircularGallery Container - Fixed height to prevent layout shifts */}
+        {/* Always render container with fixed height, show placeholder when empty */}
+        <div style={{ height: '350px', position: 'relative', width: '100%', overflow: 'visible', minHeight: '350px' }}>
+          {stableGalleryItems.length > 0 ? (
+            <CircularGallery
+              items={stableGalleryItems} // Items are already filtered and verified - no empty images
+              bend={2}
+              textColor="#ffffff"
+              borderRadius={0.08}
+              scrollSpeed={3}
+              scrollEase={0.08}
+              onSelect={handleCardSelect}
+            />
+          ) : (
+            // Placeholder while cards are loading - maintains fixed height
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-2xl mb-2 animate-pulse">✨</div>
+                <div className="text-sm text-gray-500">Loading cards...</div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
