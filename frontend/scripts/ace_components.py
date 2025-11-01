@@ -209,19 +209,34 @@ class Curator:
                 tags = ["lesson"]
             memory_type, concept = self._infer_memory_attributes(content, tags)
 
+            normalized_tags = []
+            for tag in tags:
+                lowered = tag.lower()
+                if lowered in {"semantic", "episodic", "procedural"}:
+                    continue
+                normalized_tags.append(tag)
+
+            helpful = 1
+            semantic_strength = helpful if memory_type == "semantic" else 0.0
+            episodic_strength = helpful if memory_type == "episodic" else 0.0
+            procedural_strength = helpful if memory_type == "procedural" else 0.0
+
             bullet = Bullet(
                 id="",
                 content=content,
-                tags=tags,
-                helpful_count=1,
+                tags=normalized_tags,
+                helpful_count=helpful,
                 learner_id=learner_id,
                 topic=topic,
                 concept=concept,
                 memory_type=memory_type,
+                semantic_strength=float(semantic_strength),
+                episodic_strength=float(episodic_strength),
+                procedural_strength=float(procedural_strength),
             )
             delta.new_bullets.append(bullet)
             print(
-                f"[Curator][Heuristic New {idx}] type={memory_type} tags={tags} content={content}",
+                f"[Curator][Heuristic New {idx}] type={memory_type} tags={normalized_tags} content={content}",
                 flush=True,
             )
         delta.metadata = {

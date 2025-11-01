@@ -56,6 +56,34 @@ from prompts.neo4j_prompts import CYPHER_PROMPT, QA_PROMPT
 3. **Reusability**: Prompts can be imported and reused across multiple modules
 4. **Maintainability**: Centralized location makes updates easier and reduces duplication
 
+## Verification & Testing
+
+To verify that all prompts are correctly imported and working:
+
+```bash
+cd unitTests/prompts/
+./verify_all.sh
+```
+
+**Expected Output:**
+```
+🎉 ALL TESTS PASSED!
+✅ The prompts migration is working correctly.
+✅ The AI agent is ready for use.
+✅ No issues detected.
+```
+
+**Test Files Location:** All prompts-related tests are in `unitTests/prompts/`:
+- `test_prompts_integration.py` - Integration tests for prompt imports
+- `test_api_simulation.py` - Simulates API environment for testing
+- `verify_all.sh` - Complete verification script
+
+**When to Run Tests:**
+- After modifying any prompt file
+- Before deploying to production
+- After updating Python dependencies
+- After changing import paths in ace_components.py or langgraph_utile.py
+
 ## Original Locations
 
 These prompts were extracted from:

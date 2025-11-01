@@ -343,13 +343,13 @@ Check out [`feedback/README.rst`](feedback/README.rst) to see how we address eac
 
 ## 💡 Inspiration and Disclosures
 
-The logo image is inspired by [FREEP!K](https://www.freepik.com/premium-vector/tree-with-lines-dots-vector-design-ai-generate_328598955.htm) and referenced by similar generated images. 
-
-We utilized Claude Code to temporalily log and document the set up steps during the developing phase and we will be modifying and editing them in the later phases.
+The logo image is inspired by [FREEP!K](https://www.freepik.com/premium-vector/tree-with-lines-dots-vector-design-ai-generate_328598955.htm) and referenced by similar generated images.
 
 We also incorporated AI generated images for demonstration purpose for our proposed features.
 
 We draft task descriptions and example prompts for the three scenarios and ask AI to suggest a standardized protocol structure to ensure consistency across tools.  
+
+
 
 All AI-generated content was **critically reviewed, edited, and adapted by human team members** before inclusion.
 

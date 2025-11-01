@@ -15,6 +15,7 @@ export default function AIAssistantUI() {
   const [isClient, setIsClient] = useState(false)
   const [userId, setUserId] = useState(null)
   const [currentUser, setCurrentUser] = useState(null)
+  const [authToken, setAuthToken] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
@@ -83,9 +84,10 @@ export default function AIAssistantUI() {
         }
 
         if (userData) {
-          handleAuthSuccess(userData)
+          await handleAuthSuccess(userData, session)
         }
       } else if (event === 'SIGNED_OUT') {
+        setAuthToken(null)
         setIsLoading(false)
       }
     })
@@ -115,7 +117,7 @@ export default function AIAssistantUI() {
         }
 
         if (userData) {
-          await handleAuthSuccess(userData)
+          await handleAuthSuccess(userData, session)
         } else {
           // Only fail authentication if we couldn't create the user
           console.error('Failed to create user in database')
@@ -132,7 +134,7 @@ export default function AIAssistantUI() {
     }
   }
 
-  async function handleAuthSuccess(userData) {
+  async function handleAuthSuccess(userData, session) {
     // Fetch user's XP and level
     let xp = userData.xp || 0
     let level = userData.level || 1
@@ -153,6 +155,9 @@ export default function AIAssistantUI() {
       xp,
       level
     })
+    if (session?.access_token) {
+      setAuthToken(session.access_token)
+    }
     setUserId(userData.id)
     setIsAuthenticated(true)
     setIsLoading(false)
@@ -165,6 +170,7 @@ export default function AIAssistantUI() {
     setIsAuthenticated(false)
     setCurrentUser(null)
     setUserId(null)
+    setAuthToken(null)
     setConversations([])
     setSelectedId(null)
     setIsLoading(false)
@@ -176,6 +182,22 @@ export default function AIAssistantUI() {
       xp: prev.xp,
       level: prev.level
     }))
+  }
+
+  async function getAccessToken() {
+    if (authToken) {
+      return authToken
+    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.access_token) {
+        setAuthToken(session.access_token)
+        return session.access_token
+      }
+    } catch (error) {
+      console.error('Failed to retrieve auth token:', error)
+    }
+    return null
   }
 
   async function loadConversations(uid) {
@@ -339,12 +361,20 @@ export default function AIAssistantUI() {
       // Get AI response
       setIsThinking(true)
       try {
+        const token = await getAccessToken()
+        if (!token) {
+          throw new Error('Missing auth token')
+        }
         const response = await fetch('/api/ai/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
           body: JSON.stringify({
             message: content,
-            conversationHistory: conversation?.messages || []
+            conversationHistory: conversation?.messages || [],
+            conversationId: convId
           })
         })
 
@@ -457,12 +487,20 @@ export default function AIAssistantUI() {
         // Build the correct conversation history with the edited message
         const historyUpToEdit = conversation.messages.slice(0, messageIndex).map(msg => msg)
 
+        const token = await getAccessToken()
+        if (!token) {
+          throw new Error('Missing auth token')
+        }
         const response = await fetch('/api/ai/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
           body: JSON.stringify({
             message: content,
-            conversationHistory: historyUpToEdit // Send history before the edited message
+            conversationHistory: historyUpToEdit, // Send history before the edited message
+            conversationId: conversation.id
           })
         })
 
@@ -567,12 +605,20 @@ export default function AIAssistantUI() {
         // Build conversation history up to the resent message
         const historyUpToMessage = conversation.messages.slice(0, messageIndex)
 
+        const token = await getAccessToken()
+        if (!token) {
+          throw new Error('Missing auth token')
+        }
         const response = await fetch('/api/ai/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
           body: JSON.stringify({
             message: message.content,
-            conversationHistory: historyUpToMessage
+            conversationHistory: historyUpToMessage,
+            conversationId: conversation.id
           })
         })
 

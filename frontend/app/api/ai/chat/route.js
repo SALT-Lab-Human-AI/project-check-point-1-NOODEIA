@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { spawn } from 'child_process'
 import path from 'path'
+import { createClient } from '@supabase/supabase-js'
+import { neo4jService } from '../../../../lib/neo4j.js'
 
 async function ensureEnvLoaded() {
   if (process.env.GEMINI_API_KEY) return
@@ -27,11 +29,28 @@ const SYSTEM_PROMPT = `You are a Socratic AI tutor. Your role is to guide studen
 
 IMPORTANT: Never give away the complete answer immediately. Guide step-by-step with questions and hints.`
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
 export async function POST(request) {
   try {
     await ensureEnvLoaded()
 
-    const { message, conversationHistory } = await request.json()
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const token = authHeader.replace('Bearer ', '').trim()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { message, conversationHistory, conversationId } = body || {}
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
@@ -39,6 +58,34 @@ export async function POST(request) {
 
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({ error: 'GEMINI_API_KEY is not configured on the server' }, { status: 500 })
+    }
+
+    if (conversationId) {
+      const session = neo4jService.getSession()
+      try {
+        const result = await session.run(
+          `
+          MATCH (u:User {id: $userId})-[:HAS]->(s:Session {id: $sessionId})
+          RETURN s.id AS id
+          `,
+          { userId: user.id, sessionId: conversationId }
+        )
+
+        if (result.records.length === 0) {
+          return NextResponse.json(
+            { error: 'Conversation not found or unauthorized' },
+            { status: 403 }
+          )
+        }
+      } catch (dbError) {
+        console.error('[ACE Route] Failed to verify conversation ownership:', dbError)
+        return NextResponse.json(
+          { error: 'Failed to verify conversation ownership' },
+          { status: 500 }
+        )
+      } finally {
+        await session.close()
+      }
     }
 
     const contextSummary = []
@@ -67,6 +114,10 @@ export async function POST(request) {
       role: 'user',
       content: message
     })
+    const scratch = {
+      learner_id: user.id,
+      conversation_id: conversationId ?? null
+    }
 
     const scriptPath = path.join(process.cwd(), 'scripts', 'run_ace_agent.py')
     const scriptCwd = path.join(process.cwd(), 'scripts')
@@ -124,7 +175,12 @@ export async function POST(request) {
         return resolve(out)
       })
 
-      py.stdin.write(JSON.stringify({ messages }))
+      const threadId = conversationId ? `ace-thread-${conversationId}` : undefined
+      const payload = { messages, scratch }
+      if (threadId) {
+        payload.thread_id = threadId
+      }
+      py.stdin.write(JSON.stringify(payload))
       py.stdin.end()
     })
 
@@ -140,7 +196,9 @@ export async function POST(request) {
       contextCount: contextSummary.length,
       metadata: {
         mode: parsed.mode,
-        scratch: parsed.scratch
+        scratch: parsed.scratch,
+        conversationId: conversationId ?? null,
+        userId: user.id
       }
     })
   } catch (error) {

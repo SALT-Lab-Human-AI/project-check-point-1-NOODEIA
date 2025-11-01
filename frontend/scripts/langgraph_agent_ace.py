@@ -11,17 +11,36 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph_utile import *
 from typing import Any, Dict, List, Optional
+from pathlib import Path
 import time
 import os
+import re
 
 # Import ACE components
 from ace_memory import ACEMemory
 from ace_components import ACEPipeline, ExecutionTrace
+from ace_memory_store import Neo4jMemoryStore
 
 
-# Global ACE components
-_ACE_MEMORY = None
-_ACE_PIPELINE = None
+# Global ACE caches keyed by learner identifier
+_ACE_CACHE: Dict[str, Dict[str, Any]] = {}
+
+
+def _sanitize_key(value: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9._-]", "_", value)
+
+
+def _memory_file_for(key: str) -> str:
+    """Compute a per-learner memory file path for local fallback."""
+    base = Path(os.getenv("ACE_MEMORY_FILE", "ace_memory.json"))
+    if key == "global":
+        return str(base)
+    sanitized = _sanitize_key(key)
+    suffix = base.suffix or ".json"
+    stem = base.stem or "ace_memory"
+    directory = base.parent
+    filename = f"{stem}_{sanitized}{suffix}"
+    return str(directory / filename)
 
 
 def _infer_topic(question: str) -> Optional[str]:
@@ -37,39 +56,57 @@ def _infer_topic(question: str) -> Optional[str]:
     return None
 
 
-def get_ace_system():
-    """Get or create the global ACE system"""
-    global _ACE_MEMORY, _ACE_PIPELINE
-    
-    if _ACE_MEMORY is None:
-        _ACE_MEMORY = ACEMemory(
-            memory_file="ace_memory.json",
-            max_bullets=100,
-            dedup_threshold=0.85,
-            prune_threshold=0.3,
-        )
-    
+def get_ace_system(learner_id: Optional[str] = None):
+    """Get or create the ACE system for a specific learner."""
+    key = learner_id or "global"
+    entry = _ACE_CACHE.get(key)
+    if entry is None:
+        entry = {}
+        _ACE_CACHE[key] = entry
+
     target_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     try:
         target_temperature = float(os.getenv("ACE_LLM_TEMPERATURE", "0.2"))
     except ValueError:
         target_temperature = 0.2
 
-    needs_pipeline = (
-        _ACE_PIPELINE is None
-        or getattr(_ACE_PIPELINE, "_llm_model", None) != target_model
-        or getattr(_ACE_PIPELINE, "_llm_temperature", None) != target_temperature
-    )
+    memory = entry.get("memory")
+    if memory is None:
+        storage = None
+        if learner_id:
+            try:
+                storage = Neo4jMemoryStore(learner_id)
+            except Exception as exc:
+                print(
+                    f"[ACE Memory] Warning: Neo4j storage unavailable for learner={learner_id}: {exc}",
+                    flush=True,
+                )
+                storage = None
+        memory_file = _memory_file_for(key)
+        memory = ACEMemory(
+            memory_file=memory_file,
+            max_bullets=100,
+            dedup_threshold=0.85,
+            prune_threshold=0.3,
+            storage=storage,
+        )
+        entry["memory"] = memory
 
-    if needs_pipeline:
+    pipeline = entry.get("pipeline")
+    if (
+        pipeline is None
+        or getattr(pipeline, "_llm_model", None) != target_model
+        or getattr(pipeline, "_llm_temperature", None) != target_temperature
+    ):
         from langgraph_utile import LLM
-        llm = LLM(model=target_model, temperature=target_temperature)
-        _ACE_PIPELINE = ACEPipeline(llm, _ACE_MEMORY)
-        # Stash configuration for hot reloads
-        _ACE_PIPELINE._llm_model = target_model
-        _ACE_PIPELINE._llm_temperature = target_temperature
 
-    return _ACE_MEMORY, _ACE_PIPELINE
+        llm = LLM(model=target_model, temperature=target_temperature)
+        pipeline = ACEPipeline(llm, memory)
+        pipeline._llm_model = target_model
+        pipeline._llm_temperature = target_temperature
+        entry["pipeline"] = pipeline
+
+    return memory, pipeline
 
 
 def router_node(state: GraphState) -> GraphState:
@@ -87,7 +124,8 @@ def router_node(state: GraphState) -> GraphState:
         state["scratch"] = scratch
 
     # Get ACE memory for context-aware routing
-    memory, _ = get_ace_system()
+    memory, _ = get_ace_system(learner_id)
+    memory.reload_from_storage()
 
     # Retrieve relevant bullets to inform routing decision
     relevant_bullets = memory.retrieve_relevant_bullets(
@@ -164,7 +202,7 @@ def solver_node_with_ace(state: GraphState) -> GraphState:
         state["scratch"] = scratch
     
     # Get ACE system
-    memory, pipeline = get_ace_system()
+    memory, pipeline = get_ace_system(learner_id)
 
     # Enrich messages with ACE context if enabled
     if scratch.get("use_ace_context", True):
@@ -265,6 +303,8 @@ def ace_learning_node(state: GraphState) -> GraphState:
         messages = state.get("messages", [])
         result = state.get("result", {})
         mode = state.get("mode", "unknown")
+        scratch = state.get("scratch", {})
+        learner_id = scratch.get("learner_id")
         
         user_messages = [m.get("content", "") for m in messages if m.get("role") == "user"]
         question = " ".join(user_messages).strip()
@@ -276,7 +316,7 @@ def ace_learning_node(state: GraphState) -> GraphState:
         success = bool(model_answer and model_answer != "(no final)")
         
         # Get ground truth from scratch if available (for supervised learning)
-        ground_truth = state.get("scratch", {}).get("ground_truth")
+        ground_truth = scratch.get("ground_truth")
         
         # Create execution trace
         trace = ExecutionTrace(
@@ -287,16 +327,16 @@ def ace_learning_node(state: GraphState) -> GraphState:
             trace_messages=result.get("trace", messages),  # ReAct mode has trace
             metadata={
                 "mode": mode,
-                "scratch": state.get("scratch", {}),
+                "scratch": scratch,
             }
         )
         
         # Get ACE pipeline
-        _, pipeline = get_ace_system()
+        _, pipeline = get_ace_system(learner_id)
         
         # Process execution through ACE pipeline
         # Only apply if we want online learning (can be controlled via config)
-        apply_update = state.get("scratch", {}).get("ace_online_learning", True)
+        apply_update = scratch.get("ace_online_learning", True)
         
         delta = pipeline.process_execution(trace, apply_update=apply_update)
         

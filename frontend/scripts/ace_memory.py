@@ -81,6 +81,11 @@ class Bullet:
         """Generate unique ID from content"""
         normalized = content.lower().strip()
         return hashlib.md5(normalized.encode()).hexdigest()[:12]
+
+    @staticmethod
+    def _compute_hash(text: str) -> str:
+        normalized = re.sub(r"\s+", " ", (text or "").strip().lower())
+        return hashlib.sha256(normalized.encode()).hexdigest()
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -180,6 +185,7 @@ class ACEMemory:
         dedup_threshold: float = 0.85,
         prune_threshold: float = 0.3,
         decay_rates: Optional[Dict[str, float]] = None,
+        storage: Optional[Any] = None,
     ):
         self.memory_file = Path(memory_file)
         self.max_bullets = max_bullets
@@ -194,6 +200,7 @@ class ACEMemory:
             default_decay.update(decay_rates)
         self.decay_rates = {k: max(0.0, min(1.0, v)) for k, v in default_decay.items()}
         self.access_clock = 0
+        self._storage = storage
         
         self.bullets: Dict[str, Bullet] = {}  # id -> Bullet
         self.categories: Dict[str, List[str]] = defaultdict(list)  # tag -> [bullet_ids]
@@ -343,50 +350,106 @@ class ACEMemory:
         self._touch_bullet(bullet)
         bullet.content_hash = bullet.content_hash or self._normalized_hash(bullet.content)
     
+    def _populate_from_data(self, data: Dict[str, Any]):
+        """Hydrate in-memory structures from a serialized payload."""
+        self.bullets.clear()
+        self.categories = defaultdict(list)
+        self.hash_index = defaultdict(set)
+
+        for bullet_data in data.get("bullets", []):
+            bullet = Bullet.from_dict(bullet_data)
+            if bullet.semantic_strength > 0 and bullet.semantic_access_index is None:
+                bullet.semantic_access_index = 0
+            if bullet.episodic_strength > 0 and bullet.episodic_access_index is None:
+                bullet.episodic_access_index = 0
+            if bullet.procedural_strength > 0 and bullet.procedural_access_index is None:
+                bullet.procedural_access_index = 0
+            self._ensure_memory_tags(bullet)
+            self.bullets[bullet.id] = bullet
+            for tag in bullet.tags:
+                self.categories[tag].append(bullet.id)
+            self._register_bullet(bullet)
+
+        self.access_clock = int(data.get("access_clock", len(self.bullets)))
+        for bullet in self.bullets.values():
+            if bullet.semantic_strength > 0 and (bullet.semantic_access_index is None or bullet.semantic_access_index == 0):
+                bullet.semantic_access_index = self.access_clock
+            if bullet.episodic_strength > 0 and (bullet.episodic_access_index is None or bullet.episodic_access_index == 0):
+                bullet.episodic_access_index = self.access_clock
+            if bullet.procedural_strength > 0 and (bullet.procedural_access_index is None or bullet.procedural_access_index == 0):
+                bullet.procedural_access_index = self.access_clock
+    
     def _load_memory(self):
-        """Load memory from disk"""
+        """Load memory from the configured storage backend."""
+        if self._storage:
+            try:
+                stored = self._storage.load()
+            except Exception as exc:  # pragma: no cover - defensive logging
+                print(f"[ACE Memory] Warning: Storage load failed: {exc}", flush=True)
+            else:
+                if stored:
+                    self._populate_from_data(stored)
+                    learner = getattr(self._storage, "learner_id", "unknown")
+                    print(
+                        f"[ACE Memory] Loaded {len(self.bullets)} bullets from Neo4j for learner={learner}",
+                        flush=True,
+                    )
+                else:
+                    learner = getattr(self._storage, "learner_id", "unknown")
+                    print(
+                        f"[ACE Memory] No existing Neo4j memory for learner={learner}; starting fresh",
+                        flush=True,
+                    )
+                return
+
         if self.memory_file.exists():
             try:
                 with open(self.memory_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    for bullet_data in data.get("bullets", []):
-                        bullet = Bullet.from_dict(bullet_data)
-                        if bullet.semantic_strength > 0 and bullet.semantic_access_index is None:
-                            bullet.semantic_access_index = 0
-                        if bullet.episodic_strength > 0 and bullet.episodic_access_index is None:
-                            bullet.episodic_access_index = 0
-                        if bullet.procedural_strength > 0 and bullet.procedural_access_index is None:
-                            bullet.procedural_access_index = 0
-                        self._ensure_memory_tags(bullet)
-                        self.bullets[bullet.id] = bullet
-                        for tag in bullet.tags:
-                            self.categories[tag].append(bullet.id)
-                        self._register_bullet(bullet)
-                    self.access_clock = int(data.get("access_clock", len(self.bullets)))
-                    for bullet in self.bullets.values():
-                        if bullet.semantic_strength > 0 and (bullet.semantic_access_index is None or bullet.semantic_access_index == 0):
-                            bullet.semantic_access_index = self.access_clock
-                        if bullet.episodic_strength > 0 and (bullet.episodic_access_index is None or bullet.episodic_access_index == 0):
-                            bullet.episodic_access_index = self.access_clock
-                        if bullet.procedural_strength > 0 and (bullet.procedural_access_index is None or bullet.procedural_access_index == 0):
-                            bullet.procedural_access_index = self.access_clock
-                print(f"[ACE Memory] Loaded {len(self.bullets)} bullets from {self.memory_file}")
+                    self._populate_from_data(data)
+                print(f"[ACE Memory] Loaded {len(self.bullets)} bullets from {self.memory_file}", flush=True)
             except Exception as e:
-                print(f"[ACE Memory] Warning: Could not load memory: {e}")
+                print(f"[ACE Memory] Warning: Could not load memory: {e}", flush=True)
+    
+    def reload_from_storage(self):
+        """Refresh the in-memory snapshot from Neo4j if a storage adapter is present."""
+        if not self._storage:
+            return
+        try:
+            stored = self._storage.load()
+        except Exception as exc:  # pragma: no cover - defensive logging
+            print(f"[ACE Memory] Warning: Storage reload failed: {exc}", flush=True)
+            return
+        if not stored:
+            return
+        self._populate_from_data(stored)
+        learner = getattr(self._storage, "learner_id", "unknown")
+        print(
+            f"[ACE Memory] Reloaded {len(self.bullets)} bullets from Neo4j for learner={learner}",
+            flush=True,
+        )
     
     def _save_memory(self):
-        """Save memory to disk"""
+        """Persist memory to storage (Neo4j or local file)."""
+        data = {
+            "bullets": [bullet.to_dict() for bullet in self.bullets.values()],
+            "version": "1.0",
+            "last_updated": datetime.now().isoformat(),
+            "access_clock": self.access_clock,
+        }
+
+        if self._storage:
+            try:
+                self._storage.save(data)
+            except Exception as exc:  # pragma: no cover - defensive logging
+                print(f"[ACE Memory] Warning: Could not save memory to storage: {exc}", flush=True)
+            return
+
         try:
-            data = {
-                "bullets": [bullet.to_dict() for bullet in self.bullets.values()],
-                "version": "1.0",
-                "last_updated": datetime.now().isoformat(),
-                "access_clock": self.access_clock,
-            }
             with open(self.memory_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            print(f"[ACE Memory] Warning: Could not save memory: {e}")
+            print(f"[ACE Memory] Warning: Could not save memory: {e}", flush=True)
     
     def apply_delta(self, delta: DeltaUpdate):
         """
