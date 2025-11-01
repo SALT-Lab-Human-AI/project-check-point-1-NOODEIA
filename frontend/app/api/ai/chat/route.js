@@ -2,6 +2,16 @@ import { NextResponse } from 'next/server'
 import { spawn } from 'child_process'
 import path from 'path'
 
+async function ensureEnvLoaded() {
+  if (process.env.GEMINI_API_KEY) return
+  try {
+    const { config: loadEnv } = await import('dotenv')
+    loadEnv({ path: path.join(process.cwd(), '.env.local'), override: false })
+  } catch (err) {
+    console.warn('[ACE Route] Failed to load .env.local:', err?.message || err)
+  }
+}
+
 const SYSTEM_PROMPT = `You are a Socratic AI tutor. Your role is to guide students to discover answers themselves through:
 
 1. Ask clarifying questions to understand what the student already knows
@@ -19,10 +29,16 @@ IMPORTANT: Never give away the complete answer immediately. Guide step-by-step w
 
 export async function POST(request) {
   try {
+    await ensureEnvLoaded()
+
     const { message, conversationHistory } = await request.json()
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json({ error: 'GEMINI_API_KEY is not configured on the server' }, { status: 500 })
     }
 
     const contextSummary = []
@@ -59,13 +75,18 @@ export async function POST(request) {
       pythonPathParts.push(process.env.PYTHONPATH)
     }
 
+    const childEnv = {
+      ...process.env,
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+      GEMINI_MODEL: process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
+      ACE_LLM_TEMPERATURE: process.env.ACE_LLM_TEMPERATURE ?? '0.2',
+      PYTHONPATH: pythonPathParts.join(path.delimiter)
+    }
+
     const stdout = await new Promise((resolve, reject) => {
       const py = spawn('python3', [scriptPath], {
         cwd: scriptCwd,
-        env: {
-          ...process.env,
-          PYTHONPATH: pythonPathParts.join(path.delimiter)
-        }
+        env: childEnv
       })
 
       let out = ''
@@ -76,7 +97,10 @@ export async function POST(request) {
       })
 
       py.stderr.on('data', (data) => {
-        err += data.toString()
+        const text = data.toString()
+        err += text
+        // Surface ACE runner logs in the Next.js console for visibility
+        process.stderr.write(text)
       })
 
       py.on('error', (spawnError) => reject(spawnError))

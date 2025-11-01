@@ -85,6 +85,10 @@ Where:
   ```
   Values are clamped to `[0.0, 1.0]`. Lower rates retain knowledge longer; higher rates forget faster.
 * **Default ordering** – During pruning bullets are ordered by the decay score and then `helpful_count` to resolve ties. Tag indices remain consistent when entries are removed.
+* **Pipeline LLM** – The ACE pipeline now reads the same Gemini configuration (`GEMINI_MODEL`, `ACE_LLM_TEMPERATURE`) used by the primary agent, so reflector/curator calls stay on the supported model set.
+* **Thought logging** – The CoT/ToT/ReAct solvers emit `[ACE Thought]` lines showing scratchpads, branch scores, and tool outputs, mirroring the agent’s reasoning in the terminal while user-facing replies stay concise.
+* **Memory logging** – Context injection prints each retrieved bullet (ID, decay score, helpful/harmful counts, tags, content). Pruning and delta application log every removal/addition/update so you can watch the playbook evolve in real time.
+* **Lesson/delta logging** – After reflection the pipeline lists every lesson; delta creation dumps the raw curator payload (when it fails) and logs each new/updated/removed bullet plus metadata so you can trace exactly what changed.
 
 ### Key Implementation Snippets
 
@@ -117,11 +121,33 @@ class ACEMemory:
 
     def _ensure_memory_tags(self, bullet):
         ...  # Ensures semantic/episodic/procedural tags exist when strengths are non-zero
+
+    def _prune_bullets(self):
+        now = datetime.now()
+        bullets_list = sorted(
+            self.bullets.values(),
+            key=lambda b: (self._compute_score(b, now), b.helpful_count),
+            reverse=True,
+        )
+        to_keep = set(b.id for b in bullets_list[: self.max_bullets])
+        ...
+
+    def apply_delta(self, delta: DeltaUpdate):
+        for bullet in delta.new_bullets:
+            if bullet.id not in self.bullets:
+                self._normalise_bullet(bullet)
+                self.bullets[bullet.id] = bullet
+                self._sync_categories(bullet)
+            else:
+                existing = self.bullets[bullet.id]
+                ...  # merge helpful/harmful counts, strengths, keep tags synced
+                self._touch_bullet(existing)
 ```
 
 * `access_clock` increments on every retrieval or update, making `t` the number of accesses since last use.
 * Each memory component stores its own access index so its decay is independent.
 * `_ensure_memory_tags` keeps the bullet labelled with the correct memory types, and `_sync_categories` mirrors those labels inside the tag index.
+* Pruning and deltas now rely on `_compute_score`, so the retention window and merge logic honour semantic/episodic/procedural decay instead of simple helpful ratios.
 
 ### Memory Types Reference
 
@@ -174,6 +200,7 @@ These files were copied verbatim from `../ace memory` with only two syntax fixes
   ```bash
   export GEMINI_API_KEY="sk-..."            # required
   export GEMINI_MODEL="gemini-2.5-flash"    # optional override
+  export ACE_LLM_TEMPERATURE="0.2"          # optional override for ACE pipeline LLM
   export ACE_MEMORY_FILE="frontend/scripts/ace_memory.json"  # optional override
 
   # Optional Neo4j tool configuration

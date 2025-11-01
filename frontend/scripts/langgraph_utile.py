@@ -677,6 +677,18 @@ def _extract_final(text: str) -> Optional[str]:
     m = re.search(r"<final>(.*?)</final>", text, flags=re.DOTALL | re.IGNORECASE)
     return m.group(1).strip() if m else None
 
+
+def _finalize_answer(text: str) -> str:
+    final = _extract_final(text)
+    if final:
+        return final.strip()
+    cleaned = re.sub(r"<scratchpad>.*?</scratchpad>", "", text, flags=re.DOTALL)
+    stripped = cleaned.strip()
+    if not stripped:
+        return ""
+    lines = [ln.strip() for ln in stripped.splitlines() if ln.strip()]
+    return lines[-1] if lines else stripped
+
 def solve_cot(state: GraphState) -> Dict[str, Any]:
     params = state["scratch"]
     k = int(params.get("k", 1))
@@ -686,14 +698,20 @@ def solve_cot(state: GraphState) -> Dict[str, Any]:
     if k == 1:
         resp = llm.chat(base_msgs)
         text = resp["choices"][0]["message"]["content"]
-        return {"answer": _extract_final(text) or text, "raw": text}
+        for thought in re.findall(r"<scratchpad>(.*?)</scratchpad>", text, flags=re.DOTALL):
+            print("[ACE Thought][CoT]", thought.strip(), flush=True)
+        cleaned = re.sub(r"<scratchpad>.*?</scratchpad>", "", text, flags=re.DOTALL)
+        return {"answer": _finalize_answer(cleaned), "raw": text}
     answers: List[str] = []
     raws: List[str] = []
     for _ in range(k):
         resp = llm.chat(base_msgs, temperature=temp)
         text = resp["choices"][0]["message"]["content"]
+        for thought in re.findall(r"<scratchpad>(.*?)</scratchpad>", text, flags=re.DOTALL):
+            print("[ACE Thought][CoT]", thought.strip(), flush=True)
+        cleaned = re.sub(r"<scratchpad>.*?</scratchpad>", "", text, flags=re.DOTALL)
         raws.append(text)
-        answers.append(_extract_final(text) or text.strip())
+        answers.append(_finalize_answer(cleaned))
     from collections import Counter
     def norm(s: str) -> str:
         return re.sub(r"\s+", " ", s.strip().lower())
@@ -745,6 +763,7 @@ def solve_tot(state: GraphState) -> Dict[str, Any]:
                     next_thoughts = [text.strip().split("\n")[0]]
             for thought in next_thoughts:
                 new_pad = (scratchpad + "\n" if scratchpad else "") + f"Thought: {thought}"
+                print("[ACE Thought][ToT Expand]", new_pad.strip(), flush=True)
                 val_msgs = [
                     {"role": "system", "content": "You are a strict evaluator."},
                     {"role": "user", "content": user},
@@ -756,10 +775,12 @@ def solve_tot(state: GraphState) -> Dict[str, Any]:
                     score = float(re.findall(r"-?\d+(?:\.\d+)?", score_text)[0])
                 except Exception:
                     score = 5.0
+                print(f"[ACE Thought][ToT Score] {score_text.strip()} -> {score}", flush=True)
                 candidates.append((new_pad, score))
         candidates.sort(key=lambda x: x[1], reverse=True)
         beam = candidates[:breadth] if candidates else beam
     best_pad = beam[0][0]
+    print("[ACE Thought][ToT Selected]", best_pad.strip(), flush=True)
     final_msgs = [
         {"role": "system", "content": COT_PROMPT},
         {"role": "user", "content": user},
@@ -767,7 +788,10 @@ def solve_tot(state: GraphState) -> Dict[str, Any]:
     ]
     fin = llm.chat(final_msgs, temperature=0.0)
     text = fin["choices"][0]["message"]["content"]
-    return {"answer": _extract_final(text) or text, "scratchpad": best_pad}
+    for thought in re.findall(r"<scratchpad>(.*?)</scratchpad>", text, flags=re.DOTALL):
+        print("[ACE Thought][ToT Final]", thought.strip(), flush=True)
+    text = re.sub(r"<scratchpad>.*?</scratchpad>", "", text, flags=re.DOTALL)
+    return {"answer": _finalize_answer(text), "scratchpad": best_pad}
 
 
 def solve_react(state: GraphState) -> Dict[str, Any]:
@@ -786,6 +810,9 @@ def solve_react(state: GraphState) -> Dict[str, Any]:
         choice = resp["choices"][0]["message"]
         content = choice.get("content") or ""
         tool_calls = choice.get("tool_calls") or []
+
+        if content:
+            print(f"[ACE Thought][ReAct turn {turn+1}] {content.strip()}", flush=True)
 
         # Check for final answer before appending message
         if content:
@@ -829,6 +856,8 @@ def solve_react(state: GraphState) -> Dict[str, Any]:
                         "tool_call_id": tc.get("id", ""),
                     }
                 )
+                log_payload = out if isinstance(out, str) else json.dumps(out)
+                print(f"[ACE Thought][Tool {name}] {log_payload}", flush=True)
             
             # After tool results, if approaching max turns, prompt for final answer
             if turn >= max_turns - 2:
@@ -838,7 +867,7 @@ def solve_react(state: GraphState) -> Dict[str, Any]:
                 })
 
     # If we exhausted all turns, try to extract an answer from the last content
-    return {"answer": content.strip() if content else "(no final)", "trace": messages}
+    return {"answer": _finalize_answer(content) if content else "(no final)", "trace": messages}
 
 
 

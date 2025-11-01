@@ -278,52 +278,92 @@ class Curator:
         
         # Call LLM
         messages = [{"role": "user", "content": prompt}]
-        
-        try:
+        max_rounds = 3
+        delta_data = None
+        content = ""
+
+        for round_idx in range(max_rounds):
             response = self.llm.chat(
                 messages,
                 temperature=0.2,
                 max_tokens=2000,
             )
-            
             content = response["choices"][0]["message"]["content"]
-            
-            # Parse JSON response
             delta_data = self._parse_json_response(content)
-            
-            if not delta_data:
-                print("[Curator] Failed to parse delta update")
-                return DeltaUpdate()
-            
-            # Convert to DeltaUpdate object
-            delta = DeltaUpdate()
-            
-            # New bullets
-            for bullet_data in delta_data.get("new_bullets", []):
+            if delta_data:
+                break
+
+            snippet = content.strip().replace("\n", " ")
+            if len(snippet) > 500:
+                snippet = snippet[:500] + "..."
+            print(f"[Curator] Failed to parse delta update (round {round_idx + 1})", flush=True)
+            print(f"[Curator] Raw response: {snippet}", flush=True)
+
+            if round_idx < max_rounds - 1:
+                messages.append({"role": "assistant", "content": content})
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        "Your previous response was not valid JSON. Please respond with ONLY the JSON object matching the required schema."
+                    ),
+                })
+
+        if not delta_data:
+            print("[Curator] Falling back to deterministic delta generation", flush=True)
+            fallback = DeltaUpdate()
+            for idx, lesson in enumerate(lessons, 1):
+                lesson_content = (lesson.get("content") or "").strip()
+                if not lesson_content:
+                    continue
+                tags = list(dict.fromkeys((lesson.get("tags") or []) + ([lesson.get("type")] if lesson.get("type") else [])))
+                if not tags:
+                    tags = ["lesson"]
                 bullet = Bullet(
-                    id="",  # Will be auto-generated
-                    content=bullet_data["content"],
-                    tags=bullet_data.get("tags", []),
-                    helpful_count=1,  # Start with 1 since it came from a successful reflection
+                    id="",
+                    content=lesson_content,
+                    tags=tags,
+                    helpful_count=1,
                 )
-                delta.new_bullets.append(bullet)
-            
-            # Update existing bullets
-            delta.update_bullets = delta_data.get("update_bullets", {})
-            
-            # Remove bullets
-            delta.remove_bullets = set(delta_data.get("remove_bullets", []))
-            
-            delta.metadata = {
-                "reasoning": delta_data.get("reasoning", ""),
+                fallback.new_bullets.append(bullet)
+                print(
+                    f"[Curator][Fallback New {idx}] tags={tags} content={lesson_content}",
+                    flush=True,
+                )
+            fallback.metadata = {
+                "reasoning": "fallback_from_unparsed_curator",
                 "num_lessons": len(lessons),
+                "json_rounds": round_idx + 1,
+                "raw_response": content.strip(),
             }
-            
-            return delta
-            
-        except Exception as e:
-            print(f"[Curator] Error: {e}")
-            return DeltaUpdate()
+            return fallback
+
+        # Convert to DeltaUpdate object
+        delta = DeltaUpdate()
+
+        # New bullets
+        for bullet_data in delta_data.get("new_bullets", []):
+            bullet = Bullet(
+                id="",  # Will be auto-generated
+                content=bullet_data["content"],
+                tags=bullet_data.get("tags", []),
+                helpful_count=1,  # Start with 1 since it came from a successful reflection
+            )
+            delta.new_bullets.append(bullet)
+
+        # Update existing bullets
+        delta.update_bullets = delta_data.get("update_bullets", {})
+
+        # Remove bullets
+        delta.remove_bullets = set(delta_data.get("remove_bullets", []))
+
+        delta.metadata = {
+            "reasoning": delta_data.get("reasoning", ""),
+            "num_lessons": len(lessons),
+            "json_rounds": round_idx + 1,
+            "raw_response": content.strip(),
+        }
+
+        return delta
     
     def _parse_json_response(self, content: str) -> Optional[Dict[str, Any]]:
         """Parse JSON from LLM response"""
@@ -381,6 +421,14 @@ class ACEPipeline:
             return None
         
         print(f"[ACE Pipeline] Extracted {len(lessons)} lessons")
+        for idx, lesson in enumerate(lessons, 1):
+            content = lesson.get("content", "").strip()
+            ltype = lesson.get("type", "unknown")
+            tags = lesson.get("tags", [])
+            print(
+                f"[ACE Pipeline][Lesson {idx}] type={ltype} tags={tags} content={content}",
+                flush=True,
+            )
         
         # Step 2: Curator creates delta update
         print("[ACE Pipeline] Step 2: Curating delta update...")
@@ -388,6 +436,26 @@ class ACEPipeline:
         
         print(f"[ACE Pipeline] Created delta: {len(delta.new_bullets)} new, "
               f"{len(delta.update_bullets)} updates, {len(delta.remove_bullets)} removals")
+        if not delta.new_bullets and not delta.update_bullets and not delta.remove_bullets:
+            print("[ACE Pipeline][Delta] No changes to apply (likely curator parse failure or neutral lessons)", flush=True)
+        if delta.new_bullets:
+            for idx, bullet in enumerate(delta.new_bullets, 1):
+                print(
+                    f"[ACE Pipeline][Delta New {idx}] content={bullet.content} "
+                    f"tags={bullet.tags} helpful={bullet.helpful_count}",
+                    flush=True,
+                )
+        if delta.update_bullets:
+            for bid, updates in delta.update_bullets.items():
+                print(
+                    f"[ACE Pipeline][Delta Update] id={bid} changes={updates}",
+                    flush=True,
+                )
+        if delta.remove_bullets:
+            for bid in delta.remove_bullets:
+                print(f"[ACE Pipeline][Delta Remove] id={bid}", flush=True)
+        if delta.metadata:
+            print(f"[ACE Pipeline][Delta Metadata] {delta.metadata}", flush=True)
         
         # Step 3: Apply delta to memory
         if apply_update:

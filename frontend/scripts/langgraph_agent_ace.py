@@ -12,6 +12,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph_utile import *
 from typing import Any, Dict, List
 import time
+import os
 
 # Import ACE components
 from ace_memory import ACEMemory
@@ -35,11 +36,26 @@ def get_ace_system():
             prune_threshold=0.3,
         )
     
-    if _ACE_PIPELINE is None:
+    target_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    try:
+        target_temperature = float(os.getenv("ACE_LLM_TEMPERATURE", "0.2"))
+    except ValueError:
+        target_temperature = 0.2
+
+    needs_pipeline = (
+        _ACE_PIPELINE is None
+        or getattr(_ACE_PIPELINE, "_llm_model", None) != target_model
+        or getattr(_ACE_PIPELINE, "_llm_temperature", None) != target_temperature
+    )
+
+    if needs_pipeline:
         from langgraph_utile import LLM
-        llm = LLM(model="gpt-4o-mini", temperature=0.2)
+        llm = LLM(model=target_model, temperature=target_temperature)
         _ACE_PIPELINE = ACEPipeline(llm, _ACE_MEMORY)
-    
+        # Stash configuration for hot reloads
+        _ACE_PIPELINE._llm_model = target_model
+        _ACE_PIPELINE._llm_temperature = target_temperature
+
     return _ACE_MEMORY, _ACE_PIPELINE
 
 
@@ -118,31 +134,44 @@ def solver_node_with_ace(state: GraphState) -> GraphState:
     
     # Get ACE system
     memory, pipeline = get_ace_system()
-    
+
     # Enrich messages with ACE context if enabled
     if scratch.get("use_ace_context", True):
-        context = memory.format_context(question, top_k=10)
-        
-        if context:
-            # Inject context into the first system message or user message
+        retrieved_bullets = memory.retrieve_relevant_bullets(question, top_k=10)
+        if retrieved_bullets:
+            print(
+                f"[ACE Memory][Inject] Retrieved {len(retrieved_bullets)} bullets for question: {question.strip()}",
+                flush=True,
+            )
+            for idx, bullet in enumerate(retrieved_bullets, 1):
+                score = memory._compute_score(bullet)  # type: ignore
+                print(
+                    f"[ACE Memory][Bullet {idx}] id={bullet.id} score={score:.3f}"
+                    f" helpful={bullet.helpful_count} harmful={bullet.harmful_count}"
+                    f" tags={bullet.tags}"
+                    f" content={bullet.content}",
+                    flush=True,
+                )
+
+            context_parts = ["=== Relevant Strategies and Lessons ==="]
+            for idx, bullet in enumerate(retrieved_bullets, 1):
+                context_parts.append(f"{idx}. {bullet.format_for_prompt()}")
+            context_parts.append("=" * 50)
+            context = "\n".join(context_parts)
+
             messages = state.get("messages", [])
-            
-            # Find system message or first user message
             context_injected = False
             for i, msg in enumerate(messages):
                 if msg.get("role") == "system":
-                    # Prepend to system message
                     messages[i]["content"] = f"{context}\n\n{msg['content']}"
                     context_injected = True
                     break
-            
+
             if not context_injected and messages:
-                # Prepend to first user message
                 if messages[0].get("role") == "user":
                     messages[0]["content"] = f"{context}\n\n{messages[0]['content']}"
-            
+
             state["messages"] = messages
-            print(f"[ACE Solver] Injected {len(memory.retrieve_relevant_bullets(question, top_k=10))} relevant bullets into context")
     
     # Call the original solver
     from langgraph_utile import solve_cot, solve_tot, solve_react

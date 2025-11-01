@@ -19,8 +19,9 @@ import json
 import sys
 import time
 from pathlib import Path
-from contextlib import redirect_stdout
 import io
+import re
+from contextlib import redirect_stdout
 
 # Ensure local modules are available when spawned with a different cwd
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -28,6 +29,21 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from langgraph_agent_ace import build_ace_graph  # noqa: E402
+from langgraph_utile import _extract_final  # noqa: E402
+
+
+def _clean_answer(answer: Optional[str]) -> Optional[str]:
+    if not answer:
+        return answer
+    final = _extract_final(answer)
+    if final:
+        return final.strip()
+    cleaned = re.sub(r"<scratchpad>.*?</scratchpad>", "", answer, flags=re.DOTALL)
+    stripped_lines = [ln.strip() for ln in cleaned.splitlines() if ln.strip()]
+    if stripped_lines:
+        return stripped_lines[-1]
+    cleaned_stripped = cleaned.strip()
+    return cleaned_stripped or answer
 
 
 def _log(message: str) -> None:
@@ -114,7 +130,7 @@ def main() -> int:
             _log(f"  {line}")
 
     response = {
-        "answer": output.get("result", {}).get("answer"),
+        "answer": _clean_answer(output.get("result", {}).get("answer")),
         "mode": output.get("mode"),
         "result": output.get("result", {}),
         "scratch": output.get("scratch", {}),

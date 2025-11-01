@@ -327,6 +327,11 @@ class ACEMemory:
                 self._normalise_bullet(bullet)
                 self.bullets[bullet.id] = bullet
                 self._sync_categories(bullet)
+                print(
+                    f"[ACE Memory][Delta Add] id={bullet.id} helpful={bullet.helpful_count} "
+                    f"harmful={bullet.harmful_count} tags={bullet.tags} content={bullet.content}",
+                    flush=True,
+                )
             else:
                 # Bullet already exists, merge with existing
                 existing = self.bullets[bullet.id]
@@ -338,6 +343,11 @@ class ACEMemory:
                 self._ensure_memory_tags(existing)
                 self._sync_categories(existing)
                 self._touch_bullet(existing)
+                print(
+                    f"[ACE Memory][Delta Merge] id={existing.id} helpful={existing.helpful_count} "
+                    f"harmful={existing.harmful_count} tags={existing.tags}",
+                    flush=True,
+                )
         
         # Update existing bullets
         for bullet_id, updates in delta.update_bullets.items():
@@ -346,6 +356,11 @@ class ACEMemory:
                 bullet.helpful_count += updates.get("helpful", 0)
                 bullet.harmful_count += updates.get("harmful", 0)
                 self._touch_bullet(bullet)
+                print(
+                    f"[ACE Memory][Delta Update] id={bullet_id} applied={updates} "
+                    f"new_helpful={bullet.helpful_count} new_harmful={bullet.harmful_count}",
+                    flush=True,
+                )
         
         # Remove bullets
         for bullet_id in delta.remove_bullets:
@@ -354,6 +369,10 @@ class ACEMemory:
                 for tag in bullet.tags:
                     if bullet_id in self.categories[tag]:
                         self.categories[tag].remove(bullet_id)
+                print(
+                    f"[ACE Memory][Delta Remove] id={bullet_id} tags={bullet.tags} content={bullet.content}",
+                    flush=True,
+                )
         
         # Grow-and-refine: deduplicate and prune if needed
         self._refine()
@@ -547,10 +566,20 @@ class ACEMemory:
         to_remove = set(self.bullets.keys()) - to_keep
         for bullet_id in to_remove:
             bullet = self.bullets.pop(bullet_id)
+            try:
+                score = self._compute_score(bullet, now)
+            except Exception:
+                score = bullet.score()
+            print(
+                f"[ACE Memory][Prune] Removing id={bullet_id} score={score:.3f} "
+                f"helpful={bullet.helpful_count} harmful={bullet.harmful_count} "
+                f"tags={bullet.tags} content={bullet.content}",
+                flush=True,
+            )
             for tag in bullet.tags:
                 if bullet_id in self.categories[tag]:
                     self.categories[tag].remove(bullet_id)
-        
+
         if to_remove:
             print(f"[ACE Memory] Pruned {len(to_remove)} low-quality bullets")
     
