@@ -97,7 +97,7 @@ LTMBSE ACE Framework (Proposed Method)
                         |
                         v
           +--------------------------------------------+
-          | Prompt = Transcript + Per-Learner Notes   |<-------------+
+          | Prompt = Transcript + Per-Learner Notes   |<--------------+
           |      (user's memory across all chats)      |              |
           +--------------------------------------------+              |
                         |                                             |
