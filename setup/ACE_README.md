@@ -1,13 +1,160 @@
 #  Long Term Memory Based Agentic Context Engineering
 
+### Visual Overview
+
+```text
+Traditional Memory Agent (Transcript Replay)
+
+                +--------------------+
+                | User Question      |
+                | "I keep messing up |
+                | 1/2 + 1/3."        |
+                +--------------------+
+                             |
+                             v
+         +--------------------------------------------+
+         | Prompt Transcript                          |
+         | (entire chat replayed; tutor restates the  |
+         | fraction steps inside the prompt)          |
+         +--------------------------------------------+
+                             |
+                             v
+                      +--------------+
+                      |   LLM Model  |
+                      +--------------+
+                             |
+                             v
+                +------------------------+
+                |      Model's Output    |
+                | (answers based only on |
+                | this single session)   |
+                +------------------------+
+```
+
+```text
+ACE Framework (Baseline)
+
+              +--------------------+
+              |  User Question     |
+              +---------+----------+
+                        |
+                        v
+          +------------------------------+
+          | Prompt = Transcript + Notes  |<-----------------+
+          +------------------------------+                  |
+                        |                                   |
+                        v                          retrieved notes
+                  +--------------+                          |
+                  |   LLM Model  |                          |
+                  +--------------+                          |
+                        |                                   |
+                        v                                   |
+              +------------------------+                    |
+              |    Model's Output      |                    |
+              +------------------------+                    |
+                        |                                   |
+                        v                                   |
+                  +------------+                            |
+                  | Reflector  |                            |
+                  | (writes a  |                            |
+                  | plain recap|                            |
+                  | of actions)|                            |
+                  +-----+------+                            |
+                        |                                   |
+                        v                                   |
+                  +------------+                            |
+                  | Generator  |                            |
+                  | (plans out |                            |
+                  |  a detailed|                            |
+                  |  approach) |                            |
+                  +-----+------+                            |
+                        |                                   |
+                        v                                   |
+                  +-------------+                           |
+                  |  Curator    |                           |
+                  | (turns that |                           |
+                  | recap into  |                           |
+                  | handy notes)|                           |
+                  +-----+-------+                           |
+                        |                                   |
+                        +----------------+                  |
+                                         |                  |
+                                         v                  |
+                                  +--------------------+    |
+                                  |   Memory Store     |----+
+                                  |  (learning notes)  |
+                                  +--------------------+
+```
+
+```text
+LTMB ACE Framework (Long-Term Memory Based)
+
+              +--------------------+
+              |  User Question     |
+              +---------+----------+
+                        |
+                        v
+          +--------------------------------------------+
+          | Prompt = Transcript + Per-Learner Notes   |<-------------+
+          |      (user's memory across all chats)      |              |
+          +--------------------------------------------+              |
+                        |                                             |
+                        v                                    personalised notes
+                  +--------------+                                    |
+                  |   LLM Model  |                                    |
+                  +--------------+                                    |
+                        |                                             |
+                        v                                             |
+              +--------------------------+                            |
+              | Model's Output (sanitised|                            |
+              |      and logged)         |                            |
+              +--------------------------+                            |
+                        |                                             |
+                        v                                             |
+                  +------------+                                      |
+                  | Reflector  |                                      |
+                  | (explains  |                                      |
+                  | in plain   |                                      |
+                  | words what |                                      |
+                  | happened)  |                                      |
+                  +-----+------+                                      |
+                        |                                             |
+                        v                                             |
+                  +------------+                                      |
+                  | Generator  |                                      |
+                  | (plans out |                                      |
+                  | a detailed |                                      |
+                  | approach)  |                                      |
+                  +-----+------+                                      |
+                        |                                             |
+                        v                                             |
+                  +------------+                                      |
+                  |  Curator   |                                      |
+                  | (adds that |                                      |
+                  | lesson to  |                                      |
+                  | long-term  |                                      |
+                  |  memory)   |                                      |
+                  +-----+------+                                      |
+                        |                                             |
+                        +----------------+                            |
+                                         |                            |
+                                         v                            |
+                                  +------------------------+          |
+                                  |  LTMB Memory Store     |----------+
+                                  |  (Merge similar notes) |
+                                  +------------------------+
+```
+
 ## Current agent memory system
 
-Before the introduction of ACE, the memory systems for agents were simply the adding conversations into the context window where sthe model retrive the latest  messages and resent the entire thread to the model. That yields short term context memory when the chat is active. However, it has significant significant limits:
+Before ACE, the agent “memory” just appended every exchange to the prompt: the model re-read the entire conversation transcript on each turn. This yields short-lived context while the chat is active, but it comes with major limitations:
 
 - **No consolidation** – Notes disappear once the thread ends; past sessions provide no signal for future ones.
 - **Token bloat** – Long chats exhaust the model’s context window because raw transcripts are replayed verbatim.
-- **Zero personalisation** – We can’t capture the user's information and perference in a reusable way.
+- **Zero personalisation** – We can’t capture the user's information and preference in a reusable way.
 - **No learning** – The agent never reflects on success/failure, so it can’t refine its strategy.
+
+**Traditional Memory Agent example:** imagine a tutoring session where the student says, “I get confused when adding fractions with different denominators—please remind me that 1/2 becomes 3/6.” In the traditional setup, that fact only lives inside the running transcript. If the student opens a fresh conversation later, the prompt starts from scratch, the model never sees the earlier remark, and it has to rebuild the same context manually. That is the baseline this LTMB upgrade replaces.
 
 The rest of this document explains how ACE replaces that transient transcript with a structured, per-learner memory that actively enriches prompts and learns over time.
 
@@ -15,58 +162,67 @@ The rest of this document explains how ACE replaces that transient transcript wi
 
 ### Current Pruning Behaviour(Create and Delete)
 
-The playbook is capped by `ACEMemory._prune_bullets()`. The exact logic is:
+The playbook is capped by `ACEMemory._prune_bullets()`. Each line below is commented so it is easy to follow:
 
 ```python
 def _prune_bullets(self):
-    # Rank bullets by helpful ratio (score) and how often they've been marked helpful.
-    bullets_list = sorted(
+    now = datetime.now()  # snapshot once so every log line shares the same timestamp
+    bullets_list = sorted(  # rank bullets by decay-aware score, then helpful count for tiebreaks
         self.bullets.values(),
-        key=lambda b: (b.score(), b.helpful_count),
-        reverse=True
+        key=lambda b: (self._compute_score(b, now), b.helpful_count),
+        reverse=True,
     )
-
-    # Retain only the IDs in the top window defined by max_bullets.
-    to_keep = set(b.id for b in bullets_list[: self.max_bullets])
-    # Everything else falls outside the window and should be removed.
-    to_remove = set(self.bullets.keys()) - to_keep
-
-    # Delete each pruned bullet and clean up any tag indices that reference it.
+    to_keep = set(b.id for b in bullets_list[: self.max_bullets])  # keep only the strongest window
+    to_remove = set(self.bullets.keys()) - to_keep  # everything else falls outside the window
     for bullet_id in to_remove:
-        bullet = self.bullets.pop(bullet_id)
+        bullet = self.bullets.pop(bullet_id)  # drop the bullet from the main dictionary
+        try:
+            score = self._compute_score(bullet, now)  # log the decay-aware score that triggered pruning
+        except Exception:
+            score = bullet.score()  # fallback for legacy bullets that predate the new counters
+        print(
+            f"[ACE Memory][Prune] Removing id={bullet_id} score={score:.3f} "
+            f"helpful={bullet.helpful_count} harmful={bullet.harmful_count} "
+            f"tags={bullet.tags} content={bullet.content}",
+            flush=True,
+        )
         for tag in bullet.tags:
             if bullet_id in self.categories[tag]:
-                self.categories[tag].remove(bullet_id)
-
-    # Report how many bullets were pruned so the logs show retention events.
+                self.categories[tag].remove(bullet_id)  # keep the tag index in sync
+        self._unregister_bullet(bullet_id)  # release the normalised hash so dedupe stays accurate
     if to_remove:
-        print(f"[ACE Memory] Pruned {len(to_remove)} low-quality bullets")
+        print(f"[ACE Memory] Pruned {len(to_remove)} low-quality bullets")  # surface the retention event
 ```
 
-Scoring is defined in `Bullet.score()`:
+Scoring comes from the component-strength equation implemented in `_compute_score`:
 
 ```python
-def score(self) -> float:
-    total = self.helpful_count + self.harmful_count
-    if total == 0:
-        return 0.5
-    return self.helpful_count / total
+def _component_score(self, strength, last_index, decay_key):
+    if strength <= 0:
+        return 0.0  # nothing to decay for this component
+    decay_rate = self.decay_rates.get(decay_key, 0.0)
+    base = max(0.0, min(1.0, 1.0 - decay_rate))  # clamp 1 - r between 0 and 1
+    last_index = last_index if last_index is not None else self.access_clock  # default to current index
+    t = max(self.access_clock - last_index, 0)  # accesses since the memory was last touched
+    return strength * base**t  # S(1-r)^t / E(1-r)^t / P(1-r)^t
 ```
 
 Behaviour summary:
 
-1. **Ranking** – Bullets are sorted by helpful ratio first and then by raw helpful count. Untouched bullets default to `0.5`.
-2. **Retention window** – Only the first `max_bullets` survive; the rest are removed in one sweep.
-3. **Tag cleanup** – Removed bullets are also dropped from every tag bucket in `self.categories`.
-4. **Logging** – Pruning emits `[ACE Memory] Pruned …` which the runner now surfaces in stderr logs.
+1. **Ranking** – Bullets are sorted by the exponential decay score and then by raw helpful count to choose a survivor set.
+2. **Retention window** – Only the first `max_bullets` survive; the rest are removed in one sweep, so the playbook never grows beyond the configured capacity.
+3. **Tag cleanup** – Removed bullets are dropped from every tag bucket and the dedupe hash index, keeping retrieval and merge logic stable.
+4. **Logging** – Every removal emits `[ACE Memory][Prune] …`; the runner forwards this to stderr so you can observe which entries leave the playbook.
 
-`prune_threshold` is not used in pruning; it only filters retrieval results in `retrieve_relevant_bullets()`. Any new pruning strategy should document how these rules change.
+`prune_threshold` does not participate in pruning; it filters retrieval results in `retrieve_relevant_bullets()`. Any new pruning strategy should document how these rules change.
 
 This README represents the original, unmodified ACE workflow in this repository. Use it as the baseline before experimenting with custom pruning heuristics.
 
 ---
 
 ## Proposed Method: Long Term Memory Based Agentic Context Engineering
+
+To deliver long-term personalisation we extend the baseline ACE stack with an LTMB-ACE layer. Authenticated Supabase users keep the same `learner_id`, so every new conversation reuses the existing AceMemory state. The Next.js API populates `scratch["learner_id"]`, and the LangGraph nodes read/write the corresponding Neo4j `AceMemoryState`, allowing prior lessons to inform future sessions even when `conversationId` changes.
 
 Building on the baseline, the playbook now applies an exponential decay model inspired by human memory systems:
 
@@ -249,17 +405,36 @@ def _merge_bullet_into(self, keep, drop):
 
 ```python
 # frontend/scripts/ace_components.py
-existing = self.memory.find_similar_bullet(
-    content, learner_id=learner_id, topic=topic, threshold=0.9
+existing, score = self.memory.find_similar_bullet(
+    content,
+    learner_id=learner_id,
+    topic=topic,
+    threshold=0.9,
+    return_score=True,
 )
 if existing:
     entry = delta.update_bullets.setdefault(existing.id, {"helpful": 0, "harmful": 0})
-    entry["helpful"] += 1                              # increment helpful instead of cloning
-    print(f"[Curator][Heuristic Reinforce] id={existing.id} content={content}")
+    entry["helpful"] += 1  # increment helpful instead of cloning
+    print(f"[Curator][Heuristic Reinforce] id={existing.id} score={score:.3f} content={content}")
     continue
 ```
-* The curator now bumps `helpful` on semantically similar bullets instead of adding near-duplicates.
-* Memory growth stabilises (few new bullets per session).
+* The curator now bumps `helpful` on semantically similar bullets instead of adding near-duplicates, and caps new bullet creation (`ACE_CURATOR_MAX_NEW`, default 2). When the cap is hit, lessons fall back to reinforcement and the overflow is logged as `Heuristic ReinforceOverflow`.
+* Tags are normalised to snake_case and stripped of class keywords so retrieval filters stay consistent.
+
+#### Sanitised outputs & telemetry
+
+```python
+# frontend/scripts/run_ace_agent.py
+response = {
+    "answer": _sanitize_answer(_clean_answer(output.get(\"result\", {}).get(\"answer\"))),
+    ...
+}
+_log(f\"[ACE Runner] Memory delta summary new={ace_delta.get('num_new_bullets', 0)} updates={ace_delta.get('num_updates', 0)} removals={ace_delta.get('num_removals', 0)}\")
+```
+* `_sanitize_answer` trims stray numeric fragments (e.g., a lone `10`) before the response is sent.
+* Each turn logs the totals for new bullets, reinforcements, and removals so latency regressions can be correlated with memory growth.
+
+#### Reflection fallback
 
 #### Safer logging previews
 
@@ -273,9 +448,9 @@ def _preview(text: Any, limit: int = 120) -> str:
 ```
 * Logs remain readable without losing the ability to gauge full message size.
 
-### Comparison: Traditional ACE Framework vs. Proposed LMB-ACE Framework
+### Comparison: Traditional ACE Framework vs. Proposed LTMB-ACE Framework
 
-| Area | ACE Framework | Noodeia (`frontend/scripts/`) |
+| Area | ACE Framework | LTMB-ACE Framework |
 |------|--------------------------|-------------------------------|
 | Storage | JSON file shared by all sessions | Per-learner `AceMemoryState` node in Neo4j; JSON fallback only in local dev |
 | Memory load cadence | Reloaded on every access | Single reload per turn (`_ace_memory_loaded` guard) |
@@ -313,7 +488,7 @@ def _preview(text: Any, limit: int = 120) -> str:
 | Memory analysis helpers | `frontend/scripts/analyze_ace_memory.py`, `compare_memory_systems.py`, `test_memory_comparison.py` |
 | Stored bullets (runtime) | `frontend/scripts/ace_memory.json` |
 
-These files were copied verbatim from `../ace memory` with only two syntax fixes in `langgraph_agent_ace.py` (missing `]`). Everything else is unchanged from the upstream version.
+These modules were sourced from `../ace memory` and then extended here with the LTMB upgrades (Neo4j persistence, merge-on-write dedupe, curator reinforcement heuristics, cleanup tooling, and logging improvements) described in the following sections.
 
 ---
 
@@ -370,17 +545,35 @@ python3 analyze_ace_memory.py                  # Inspect learned bullets
 
 ## 5. Inspection & Maintenance Tools
 
+- `python3 analyze_ace_memory.py` – full stats/top/recent summaries.
+- `python3 analyze_ace_memory.py search "<query>"` – semantic search.
+- `python3 analyze_ace_memory.py export` – dump bullets to text for auditing.
+- `python3 analyze_ace_memory.py cleanup [--dry-run]` – cluster near-duplicates and merge older bullets into the newest survivor (use `--dry-run` to preview without writing).
+
+### Built-in cleanup command
+
+```python
+# Example: dry run
+python3 analyze_ace_memory.py cleanup --dry-run
+
+# Example: apply merges
+python3 analyze_ace_memory.py cleanup
+```
+
+* Checks cosine similarity ≥ 0.90, keeps the newest/highest-signal bullet (based on created_at/helpful-harmful), and merges older entries into it via the same `_merge_bullet_into` helper used at runtime.
+* After non-dry runs the tool saves the updated `ace_memory.json` (or Neo4j state if configured), so take a backup before large cleanups.
+
 ## Observability & Testing
 
 * **Expected logs** (when `npm run dev` forwards stderr):
   ```
-  [ACE Memory] Loaded 8 bullets from Neo4j for learner=...
-  [ACE Memory][Inject] Retrieved 6 bullets for question: ...
-  [Curator][Heuristic Reinforce] id=... content=...
-  [ACE Memory][Dedup Merge] kept=... merged=...
-  [ACE Memory][Delta Add] id=...
+  [ACE Memory] Loaded N bullets from Neo4j for learner=...
+  [ACE Memory][Inject] Retrieved K bullets for question: ...
+  [Curator][Heuristic Reinforce] id=... score=0.9xx content=...
+  [ACE Memory][Delta Merge] kept=... merged_score=0.9xx
+  [ACE Runner] Memory delta summary new=1 updates=4 removals=0
   ```
-  You should see exactly one “Loaded …” line per HTTP request; repeated “Reloaded …” lines indicate the scratch memoisation guard is missing.
+  You should see exactly one “Loaded …” line per HTTP request; repeated “Reloaded …” lines indicate the scratch memoisation guard is missing. The delta summary should show mostly updates with new ≤ 2 per turn.
 * **CLI inspection**:
   ```bash
   cd frontend/scripts
@@ -397,6 +590,7 @@ python3 analyze_ace_memory.py                  # Inspect learned bullets
     -d '{"message":"I keep messing up 1/2 + 1/3.","conversationId":"<session-id>"}'
   ```
   Expect the response JSON to include `metadata.scratch.ace_delta`.
+* Sanitised replies should no longer emit isolated numeric lines (for example, a lone `10`). If they do, review `_sanitize_answer` and ensure premature reveals are still masked in the tutoring plan.
 
 | Command | Purpose |
 |---------|---------|
@@ -404,6 +598,7 @@ python3 analyze_ace_memory.py                  # Inspect learned bullets
 | `python3 analyze_ace_memory.py search "division"` | Keyword search |
 | `python3 analyze_ace_memory.py export` | Export bullets to text |
 | `python3 analyze_ace_memory.py interactive` | Guided CLI exploration |
+| `python3 analyze_ace_memory.py cleanup [--dry-run]` | Merge older duplicates into newest survivor |
 | `python3 compare_memory_systems.py` | Original vs ACE comparison |
 | `python3 test_memory_comparison.py` | Side-by-side agent run |
 

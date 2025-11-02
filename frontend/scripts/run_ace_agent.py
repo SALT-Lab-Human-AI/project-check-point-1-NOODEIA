@@ -47,6 +47,16 @@ def _clean_answer(answer: Optional[str]) -> Optional[str]:
     return cleaned_stripped or answer
 
 
+def _sanitize_answer(answer: Optional[str]) -> Optional[str]:
+    if not answer:
+        return answer
+    lines = answer.splitlines()
+    filtered = [ln for ln in lines if not re.fullmatch(r"\s*\d+\s*", ln)]
+    if filtered:
+        return "\n".join(filtered).strip()
+    return answer.strip()
+
+
 def _log(message: str) -> None:
     """Write structured logs to stderr so Next.js dev server shows the workflow."""
     sys.stderr.write(f"[ACE Runner] {message}\n")
@@ -141,7 +151,7 @@ def main() -> int:
             _log(f"  {line}")
 
     response = {
-        "answer": _clean_answer(output.get("result", {}).get("answer")),
+        "answer": _sanitize_answer(_clean_answer(output.get("result", {}).get("answer"))),
         "mode": output.get("mode"),
         "result": output.get("result", {}),
         "scratch": output.get("scratch", {}),
@@ -154,6 +164,12 @@ def main() -> int:
         f"answer_preview={str(response.get('answer'))[:120]!r} | "
         f"ace_delta={ace_delta or 'n/a'}"
     )
+    if isinstance(ace_delta, dict):
+        _log(
+            f"[ACE Runner] Memory delta summary new={ace_delta.get('num_new_bullets', 0)} "
+            f"updates={ace_delta.get('num_updates', 0)} "
+            f"removals={ace_delta.get('num_removals', 0)}"
+        )
 
     json.dump(response, sys.stdout, ensure_ascii=False)
     sys.stdout.write("\n")

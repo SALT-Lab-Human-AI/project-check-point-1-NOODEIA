@@ -190,6 +190,23 @@ class Curator:
             concept = "numerator"
         return memory_type, concept
 
+    @staticmethod
+    def _normalise_tags(tags: List[str]) -> List[str]:
+        normalised: List[str] = []
+        seen = set()
+        for tag in tags:
+            if not tag:
+                continue
+            slug = re.sub(r"[^a-z0-9]+", "_", tag.strip().lower()).strip("_")
+            if not slug:
+                continue
+            if slug in {"semantic", "episodic", "procedural"}:
+                continue
+            if slug not in seen:
+                normalised.append(slug)
+                seen.add(slug)
+        return normalised
+
     def _lessons_to_delta(
         self,
         lessons: List[Dict[str, Any]],
@@ -197,15 +214,19 @@ class Curator:
         topic: Optional[str] = None,
     ) -> DeltaUpdate:
         delta = DeltaUpdate()
+        max_new = int(os.getenv("ACE_CURATOR_MAX_NEW", "2"))
+        similarity_threshold = float(os.getenv("ACE_CURATOR_SIMILARITY", "0.9"))
+        new_added = 0
         for idx, lesson in enumerate(lessons, 1):
             content = (lesson.get("content") or "").strip()
             if not content:
                 continue
-            existing_bullet = self.memory.find_similar_bullet(
+            existing_bullet, similarity = self.memory.find_similar_bullet(
                 content,
                 learner_id=learner_id,
                 topic=topic,
-                threshold=0.9,
+                threshold=similarity_threshold,
+                return_score=True,
             )
             if existing_bullet:
                 entry = delta.update_bullets.setdefault(existing_bullet.id, {"helpful": 0, "harmful": 0})
@@ -215,6 +236,28 @@ class Curator:
                     flush=True,
                 )
                 continue
+            if new_added >= max_new:
+                fallback_bullet, fallback_score = self.memory.find_similar_bullet(
+                    content,
+                    learner_id=learner_id,
+                    topic=topic,
+                    threshold=0.0,
+                    return_score=True,
+                )
+                if fallback_bullet:
+                    entry = delta.update_bullets.setdefault(fallback_bullet.id, {"helpful": 0, "harmful": 0})
+                    entry["helpful"] += 1
+                    print(
+                        f"[Curator][Heuristic ReinforceOverflow] id={fallback_bullet.id} "
+                        f"score={fallback_score:.3f} content={content}",
+                        flush=True,
+                    )
+                else:
+                    print(
+                        f"[Curator][Heuristic SkipOverflow] skipped content={content}",
+                        flush=True,
+                    )
+                continue
             tags = lesson.get("tags") or []
             ltype = lesson.get("type")
             if ltype:
@@ -223,12 +266,7 @@ class Curator:
                 tags = ["lesson"]
             memory_type, concept = self._infer_memory_attributes(content, tags)
 
-            normalized_tags = []
-            for tag in tags:
-                lowered = tag.lower()
-                if lowered in {"semantic", "episodic", "procedural"}:
-                    continue
-                normalized_tags.append(tag)
+            normalized_tags = self._normalise_tags(tags)
 
             helpful = 1
             semantic_strength = helpful if memory_type == "semantic" else 0.0
@@ -253,6 +291,7 @@ class Curator:
                 f"[Curator][Heuristic New {idx}] type={memory_type} tags={normalized_tags} content={content}",
                 flush=True,
             )
+            new_added += 1
         delta.metadata = {
             "reasoning": "heuristic_lessons_to_bullets",
             "num_lessons": len(lessons),
@@ -444,6 +483,30 @@ class ACEPipeline:
         self.memory = memory
         self.reflector = Reflector(llm)
         self.curator = Curator(llm, memory)
+
+    @staticmethod
+    def _fallback_lessons(trace: ExecutionTrace) -> List[Dict[str, Any]]:
+        lessons: List[Dict[str, Any]] = []
+        messages = trace.trace_messages or []
+        user_messages = [m.get("content", "") for m in messages if m.get("role") == "user"]
+        last_user = (user_messages[-1] if user_messages else trace.question) or ""
+        lower_last = last_user.lower()
+        if any(token in lower_last for token in ["hard", "don't know", "do not know", "confused"]):
+            lessons.append({
+                "content": (
+                    "When a learner says the task is hard, acknowledge the feeling and restate the very first step in simpler words."
+                ),
+                "type": "success",
+                "tags": ["empathy", "scaffolding", "fallback"]
+            })
+        lessons.append({
+            "content": (
+                "Break multi-number addition into single two-number steps and confirm the sum before introducing the next addend."
+            ),
+            "type": "success",
+            "tags": ["problem_decomposition", "counting_on", "fallback"]
+        })
+        return lessons
     
     def process_execution(
         self,
@@ -467,8 +530,9 @@ class ACEPipeline:
         lessons = self.reflector.reflect(trace)
         
         if not lessons:
-            print("[ACE Pipeline] No lessons extracted")
-            return None
+            print("[ACE Pipeline] No lessons extracted; using heuristic fallback")
+            lessons = self._fallback_lessons(trace)
+        
         
         print(f"[ACE Pipeline] Extracted {len(lessons)} lessons")
         for idx, lesson in enumerate(lessons, 1):
@@ -551,6 +615,8 @@ class ACEPipeline:
             return f"{base_prompt}\n\n{context}\n\nQuestion: {question}"
         else:
             return f"{base_prompt}\n\nQuestion: {question}"
+
+
 def _infer_topic_from_text(text: str) -> Optional[str]:
     lowered = (text or "").lower()
     if "fraction" in lowered or "/" in lowered:

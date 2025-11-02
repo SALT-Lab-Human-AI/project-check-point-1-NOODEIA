@@ -204,6 +204,7 @@ def interactive_mode():
     print("  recent   - Show recently added bullets")
     print("  search <query>  - Search for bullets")
     print("  export   - Export memory to text file")
+    print("  cleanup [--dry-run] - Merge near-duplicate bullets")
     print("  quit     - Exit")
     print()
     
@@ -259,6 +260,11 @@ def interactive_mode():
             elif command == "export":
                 export_memory(memory_file=memory_file)
             
+            elif command.startswith("cleanup"):
+                parts = command.split()
+                dry_run = "--dry-run" in parts
+                cleanup_memory(memory_file=memory_file, dry_run=dry_run)
+            
             else:
                 print("Unknown command. Type 'quit' to exit.")
         
@@ -267,6 +273,61 @@ def interactive_mode():
             break
         except Exception as e:
             print(f"Error: {e}")
+
+
+def cleanup_memory(memory_file: str = "ace_memory.json", similarity: float = 0.9, dry_run: bool = False):
+    """Merge near-duplicate bullets, keeping the newest/highest-signal entry."""
+    if not Path(memory_file).exists():
+        print(f"❌ Memory file not found: {memory_file}")
+        return
+
+    memory = ACEMemory(memory_file=memory_file)
+    bullets = list(memory.bullets.values())
+    if not bullets:
+        print("📭 Memory is empty.")
+        return
+
+    bullets_sorted = sorted(
+        bullets,
+        key=lambda b: memory._parse_created_at(b),
+        reverse=True  # newest first
+    )
+
+    visited = set()
+    merges = 0
+    for idx, keep in enumerate(bullets_sorted):
+        if keep.id in visited:
+            continue
+        cluster = [keep]
+        for other in bullets_sorted[idx + 1:]:
+            if other.id in visited:
+                continue
+            score = memory._text_similarity(keep.content, other.content)
+            if score >= similarity:
+                cluster.append(other)
+                visited.add(other.id)
+        if len(cluster) <= 1:
+            continue
+        print(f"[Cleanup] Cluster size={len(cluster)} keep={keep.id}")
+        if dry_run:
+            for dup in cluster[1:]:
+                print(f"  - would merge {dup.id} into {keep.id}")
+            continue
+        for dup in cluster[1:]:
+            memory._merge_bullet_into(keep, dup)
+            memory._touch_bullet(keep)
+            for tag in dup.tags:
+                if dup.id in memory.categories.get(tag, []):
+                    memory.categories[tag].remove(dup.id)
+            memory._unregister_bullet(dup.id)
+            memory.bullets.pop(dup.id, None)
+            merges += 1
+    if dry_run:
+        print("✅ Dry run complete.")
+        return
+    if merges:
+        memory._save_memory()
+    print(f"✅ Cleanup complete. Merged {merges} bullets.")
 
 
 if __name__ == "__main__":
@@ -282,11 +343,15 @@ if __name__ == "__main__":
             export_memory()
         elif command == "interactive":
             interactive_mode()
+        elif command == "cleanup":
+            dry_run = "--dry-run" in sys.argv[2:]
+            cleanup_memory(dry_run=dry_run)
         else:
             print("Usage:")
             print("  python analyze_ace_memory.py                  # Full analysis")
             print("  python analyze_ace_memory.py search <query>   # Search memory")
             print("  python analyze_ace_memory.py export           # Export to text")
             print("  python analyze_ace_memory.py interactive      # Interactive mode")
+            print("  python analyze_ace_memory.py cleanup [--dry-run] # Merge duplicates")
     else:
         analyze_memory()

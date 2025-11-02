@@ -18,6 +18,7 @@ from pathlib import Path
 from collections import defaultdict
 import numpy as np
 import math
+import os
 
 
 @dataclass
@@ -391,16 +392,60 @@ class ACEMemory:
         self._sync_categories(keep)
         self._register_bullet(keep)
 
+    def _merge_or_add_bullet(self, bullet: Bullet) -> Tuple[Bullet, bool]:
+        """Upsert a bullet, merging into an existing one when possible."""
+        self._finalize_bullet(bullet)
+        duplicate_id = self._is_duplicate(bullet)
+        existing = None
+        if duplicate_id:
+            existing = self.bullets.get(duplicate_id)
+        else:
+            candidates = list(self.hash_index.get(bullet.content_hash, []))
+            if candidates:
+                existing = self.bullets.get(candidates[0])
+        if not existing:
+            existing, score = self.find_similar_bullet(
+                bullet.content,
+                learner_id=bullet.learner_id,
+                topic=bullet.topic,
+                threshold=float(os.getenv("ACE_MEMORY_SIMILARITY_MERGE", "0.9")),
+                return_score=True,
+            )
+        else:
+            score = 1.0
+
+        if existing:
+            self._merge_bullet_into(existing, bullet)
+            self._touch_bullet(existing)
+            print(
+                f"[ACE Memory][Delta Merge] id={existing.id} helpful={existing.helpful_count} "
+                f"harmful={existing.harmful_count} tags={existing.tags} merged_score={score:.3f}",
+                flush=True,
+            )
+            return existing, False
+
+        self._normalise_bullet(bullet)
+        self.bullets[bullet.id] = bullet
+        self._sync_categories(bullet)
+        self._register_bullet(bullet)
+        print(
+            f"[ACE Memory][Delta Add] id={bullet.id} helpful={bullet.helpful_count} "
+            f"harmful={bullet.harmful_count} tags={bullet.tags} content={bullet.content}",
+            flush=True,
+        )
+        return bullet, True
+
     def find_similar_bullet(
         self,
         content: str,
         learner_id: Optional[str] = None,
         topic: Optional[str] = None,
         threshold: float = 0.9,
-    ) -> Optional[Bullet]:
-        """Return an existing bullet with similar content if one exists."""
+        return_score: bool = False,
+    ):
+        """Return an existing bullet with similar content (and optionally the score)."""
         if not content:
-            return None
+            return (None, 0.0) if return_score else None
         best = None
         best_score = threshold
         for bullet in self.bullets.values():
@@ -412,6 +457,8 @@ class ACEMemory:
             if score >= best_score:
                 best = bullet
                 best_score = score
+        if return_score:
+            return best, (best_score if best is not None else 0.0)
         return best
     
     def _populate_from_data(self, data: Dict[str, Any]):
@@ -522,48 +569,7 @@ class ACEMemory:
         """
         # Add new bullets
         for bullet in delta.new_bullets:
-            duplicate_id = self._is_duplicate(bullet)
-            if duplicate_id:
-                print(
-                    f"[ACE Memory][Delta Dedup] Skipping duplicate matching id={duplicate_id} "
-                    f"content={bullet.content}",
-                    flush=True,
-                )
-                continue
-
-            if bullet.id not in self.bullets:
-                self._normalise_bullet(bullet)
-                self.bullets[bullet.id] = bullet
-                self._sync_categories(bullet)
-                self._register_bullet(bullet)
-                print(
-                    f"[ACE Memory][Delta Add] id={bullet.id} helpful={bullet.helpful_count} "
-                    f"harmful={bullet.harmful_count} tags={bullet.tags} content={bullet.content}",
-                    flush=True,
-                )
-            else:
-                # Bullet already exists, merge with existing
-                existing = self.bullets[bullet.id]
-                existing.helpful_count += bullet.helpful_count
-                existing.harmful_count += bullet.harmful_count
-                if bullet.learner_id and not existing.learner_id:
-                    existing.learner_id = bullet.learner_id
-                if bullet.topic and not existing.topic:
-                    existing.topic = bullet.topic
-                if bullet.concept and not existing.concept:
-                    existing.concept = bullet.concept
-                if not existing.memory_type and bullet.memory_type:
-                    existing.memory_type = bullet.memory_type
-                existing.tags = list(dict.fromkeys(existing.tags + bullet.tags))
-                self._finalize_bullet(existing)
-                self._sync_categories(existing)
-                self._touch_bullet(existing)
-                self._register_bullet(existing)
-                print(
-                    f"[ACE Memory][Delta Merge] id={existing.id} helpful={existing.helpful_count} "
-                    f"harmful={existing.harmful_count} tags={existing.tags}",
-                    flush=True,
-                )
+            self._merge_or_add_bullet(bullet)
         
         # Update existing bullets
         for bullet_id, updates in delta.update_bullets.items():
