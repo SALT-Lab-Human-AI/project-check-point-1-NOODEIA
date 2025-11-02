@@ -82,7 +82,9 @@ ACE Framework (Baseline)
                                          v                  |
                                   +--------------------+    |
                                   |   Memory Store     |----+
-                                  |  (learning notes)  |
+                                  |  (fixed approach   |
+                                  |  to update and     |
+                                  |   delete notes)    |      
                                   +--------------------+
 ```
 
@@ -99,7 +101,7 @@ LTMB ACE Framework (Long-Term Memory Based)
           |      (user's memory across all chats)      |              |
           +--------------------------------------------+              |
                         |                                             |
-                        v                                    personalised notes
+                        v                                    retrieved notes
                   +--------------+                                    |
                   |   LLM Model  |                                    |
                   +--------------+                                    |
@@ -141,7 +143,10 @@ LTMB ACE Framework (Long-Term Memory Based)
                                          v                            |
                                   +------------------------+          |
                                   |  LTMB Memory Store     |----------+
-                                  |  (Merge similar notes) |
+                                  |  (Merge similar notes  |
+                                  |  and proposed method   |
+                                  |  to dynamically update | 
+                                  |    and delete notes)   |
                                   +------------------------+
 ```
 
