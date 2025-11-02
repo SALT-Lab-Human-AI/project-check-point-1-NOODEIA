@@ -1,4 +1,4 @@
-#  Long Term Memory Based Agentic Context Engineering
+#  Long Term Memory Based Self Evolving Agentic Context Engineering
 
 ### Visual Overview
 
@@ -89,7 +89,7 @@ ACE Framework (Baseline)
 ```
 
 ```text
-LTMB ACE Framework (Long-Term Memory Based)
+LTMBSE ACE Framework (Proposed Method)
 
               +--------------------+
               |  User Question     |
@@ -225,7 +225,7 @@ This README represents the original, unmodified ACE workflow in this repository.
 
 ---
 
-## Proposed Method: Long Term Memory Based Agentic Context Engineering
+## Proposed Method: Long Term Memory Based Self Evolving Agentic Context Engineering
 
 To deliver long-term personalisation we extend the baseline ACE stack with an LTMB-ACE layer. Authenticated Supabase users keep the same `learner_id`, so every new conversation reuses the existing AceMemory state. The Next.js API populates `scratch["learner_id"]`, and the LangGraph nodes read/write the corresponding Neo4j `AceMemoryState`, allowing prior lessons to inform future sessions even when `conversationId` changes.
 
@@ -455,7 +455,7 @@ def _preview(text: Any, limit: int = 120) -> str:
 
 ### Comparison: Traditional ACE Framework vs. Proposed LTMB-ACE Framework
 
-| Area | ACE Framework | LTMB-ACE Framework |
+| Area | ACE Framework | LTMBSE ACE Framework |
 |------|--------------------------|-------------------------------|
 | Storage | JSON file shared by all sessions | Per-learner `AceMemoryState` node in Neo4j; JSON fallback only in local dev |
 | Memory load cadence | Reloaded on every access | Single reload per turn (`_ace_memory_loaded` guard) |
