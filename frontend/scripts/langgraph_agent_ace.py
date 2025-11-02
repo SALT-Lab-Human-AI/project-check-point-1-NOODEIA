@@ -125,7 +125,10 @@ def router_node(state: GraphState) -> GraphState:
 
     # Get ACE memory for context-aware routing
     memory, _ = get_ace_system(learner_id)
-    memory.reload_from_storage()
+    if not scratch.get("_ace_memory_loaded"):
+        memory.reload_from_storage()
+        scratch["_ace_memory_loaded"] = True
+        state["scratch"] = scratch
 
     # Retrieve relevant bullets to inform routing decision
     relevant_bullets = memory.retrieve_relevant_bullets(

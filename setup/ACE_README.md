@@ -1,10 +1,17 @@
-# Memory Enhanced ACE (Agentic Context Engineering)
+#  Long Term Memory Based Agentic Context Engineering
 
-## Current Agent memory system
+## Current agent memory system
 
+Before the introduction of ACE, the memory systems for agents were simply the adding conversations into the context window where sthe model retrive the latest  messages and resent the entire thread to the model. That yields short term context memory when the chat is active. However, it has significant significant limits:
 
+- **No consolidation** – Notes disappear once the thread ends; past sessions provide no signal for future ones.
+- **Token bloat** – Long chats exhaust the model’s context window because raw transcripts are replayed verbatim.
+- **Zero personalisation** – We can’t capture the user's information and perference in a reusable way.
+- **No learning** – The agent never reflects on success/failure, so it can’t refine its strategy.
 
-## Baseline: Original Workflow in ACE 
+The rest of this document explains how ACE replaces that transient transcript with a structured, per-learner memory that actively enriches prompts and learns over time.
+
+## Baseline: Agentic Context Engineering
 
 ### Current Pruning Behaviour(Create and Delete)
 
@@ -59,7 +66,7 @@ This README represents the original, unmodified ACE workflow in this repository.
 
 ---
 
-## Proposed Method: Memory Enhanced ACE
+## Proposed Method: Long Term Memory Based Agentic Context Engineering
 
 Building on the baseline, the playbook now applies an exponential decay model inspired by human memory systems:
 
@@ -189,6 +196,99 @@ class ACEPipeline:
         self.memory.apply_delta(delta)  # Every delta application prints add/update/remove + dedupe logs
 ```
 
+#### Neo4j-backed, per-learner memory store
+
+```python
+# frontend/scripts/ace_memory_store.py
+with driver.session(database=self._database) as session:
+    record = session.run(
+        """
+        MATCH (u:User {id: $userId})
+        MERGE (u)-[:HAS_ACE_MEMORY]->(m:AceMemoryState)  # ensure node + rel exist
+        ON CREATE SET                                           # bootstrap payload once
+            m.id = coalesce($memoryId, randomUUID()),
+            m.memory_json = $emptyPayload,
+            m.access_clock = 0,
+            m.created_at = datetime(),
+            m.updated_at = datetime()
+        RETURN m.memory_json AS memory_json,
+               m.access_clock AS access_clock
+        """,
+        {...},
+    ).single()
+```
+* Learner-specific playbooks persist in Neo4j so Render dynos share state.
+* The `MERGE` ensures the relationship and node exist before reads, eliminating warning spam.
+* Each turn reloads at most once (`router_node` tags `_ace_memory_loaded` in `scratch`).
+
+#### Canonical dedup & taxonomy cleanup
+
+```python
+# frontend/scripts/ace_memory.py
+def _select_canonical_bullet(self, a, b):
+    score_a = (a.helpful_count - a.harmful_count)
+    score_b = (b.helpful_count - b.harmful_count)
+    if score_a != score_b:
+        return (a, b) if score_a > score_b else (b, a)  # keep higher-signal bullet
+    created_a = self._parse_created_at(a)
+    created_b = self._parse_created_at(b)
+    return (a, b) if created_a >= created_b else (b, a)  # newest wins tie
+
+def _merge_bullet_into(self, keep, drop):
+    keep.helpful_count += drop.helpful_count            # accumulate counters
+    keep.harmful_count += drop.harmful_count
+    if not keep.learner_id:
+        keep.learner_id = drop.learner_id               # prefer survivor metadata
+    ...
+    self._finalize_bullet(keep)                         # enforce single memory class + hash
+```
+* Only one memory class (semantic/episodic/procedural) is retained per bullet.
+* Duplicate content merges into the newest/highest-signal bullet, keeping IDs stable.
+
+#### Reinforce-over-clone curator heuristics
+
+```python
+# frontend/scripts/ace_components.py
+existing = self.memory.find_similar_bullet(
+    content, learner_id=learner_id, topic=topic, threshold=0.9
+)
+if existing:
+    entry = delta.update_bullets.setdefault(existing.id, {"helpful": 0, "harmful": 0})
+    entry["helpful"] += 1                              # increment helpful instead of cloning
+    print(f"[Curator][Heuristic Reinforce] id={existing.id} content={content}")
+    continue
+```
+* The curator now bumps `helpful` on semantically similar bullets instead of adding near-duplicates.
+* Memory growth stabilises (few new bullets per session).
+
+#### Safer logging previews
+
+```python
+# frontend/scripts/run_ace_agent.py
+def _preview(text: Any, limit: int = 120) -> str:
+    text = str(text)
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit]}… [len={len(text)}]"  # show head + full length
+```
+* Logs remain readable without losing the ability to gauge full message size.
+
+### Comparison: Traditional ACE Framework vs. Proposed LMB-ACE Framework
+
+| Area | ACE Framework | Noodeia (`frontend/scripts/`) |
+|------|--------------------------|-------------------------------|
+| Storage | JSON file shared by all sessions | Per-learner `AceMemoryState` node in Neo4j; JSON fallback only in local dev |
+| Memory load cadence | Reloaded on every access | Single reload per turn (`_ace_memory_loaded` guard) |
+| Dedup policy | Jaccard similarity kept first bullet it saw | Canonical survivor = highest helpful/ newest; merges transfer metadata and tags |
+| Bullet taxonomy | Tags often carried `semantic/episodic/procedural` simultaneously | `_sync_strengths` enforces one class; tags stripped of class keywords |
+| Curator heuristic | Always appended new bullet for each lesson | Reinforces existing bullets (`helpful += 1`) when content ≈ 90% similar |
+| Latency profile | Single process, JSON I/O | Neo4j reads/writes with request cache; duplicate reads removed to cut I/O |
+| Logging | Truncated strings without length info | `_preview()` prints prefix + `[len=…]`; easier to spot truncated contexts |
+| Safety rails | No learner-specific guardrails | `/api/ai/chat` validates Supabase token + conversation ownership before invoking ACE |
+| Documentation | Focused on baseline ACE internals | Adds per-learner workflow, Neo4j bootstrap, canonical dedup, reinforcement logic |
+
+> **Migration tip**: If you copy these enhancements back upstream, ensure the `AceMemoryState` schema and hash uniqueness constraint exist (`CREATE CONSTRAINT ace_bullet_hash_unique IF NOT EXISTS FOR (b:AceBullet) REQUIRE b.hash IS UNIQUE;`) before deploying.
+
 ### Memory Types Reference
 
 | Type | Stores | Human Analogy | Agent Analogy | Default Decay per Access |
@@ -269,6 +369,34 @@ python3 analyze_ace_memory.py                  # Inspect learned bullets
 ---
 
 ## 5. Inspection & Maintenance Tools
+
+## Observability & Testing
+
+* **Expected logs** (when `npm run dev` forwards stderr):
+  ```
+  [ACE Memory] Loaded 8 bullets from Neo4j for learner=...
+  [ACE Memory][Inject] Retrieved 6 bullets for question: ...
+  [Curator][Heuristic Reinforce] id=... content=...
+  [ACE Memory][Dedup Merge] kept=... merged=...
+  [ACE Memory][Delta Add] id=...
+  ```
+  You should see exactly one “Loaded …” line per HTTP request; repeated “Reloaded …” lines indicate the scratch memoisation guard is missing.
+* **CLI inspection**:
+  ```bash
+  cd frontend/scripts
+  python3 analyze_ace_memory.py summary                 # overview
+  python3 analyze_ace_memory.py search "fraction"       # filter by keyword
+  ```
+* **End-to-end smoke test**:
+  ```bash
+  npm run dev
+  # In another terminal
+  curl -s http://localhost:3001/api/ai/chat \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer <SUPABASE_ACCESS_TOKEN>" \
+    -d '{"message":"I keep messing up 1/2 + 1/3.","conversationId":"<session-id>"}'
+  ```
+  Expect the response JSON to include `metadata.scratch.ace_delta`.
 
 | Command | Purpose |
 |---------|---------|

@@ -22,6 +22,7 @@ from pathlib import Path
 import io
 import re
 from contextlib import redirect_stdout
+from typing import Any, Optional
 
 # Ensure local modules are available when spawned with a different cwd
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -85,6 +86,16 @@ def _ensure_messages(messages: list | None) -> list:
     return normalised
 
 
+def _preview(text: Any, limit: int = 120) -> str:
+    if text is None:
+        return ""
+    text = str(text)
+    length = len(text)
+    if length <= limit:
+        return text
+    return f"{text[:limit]}… [len={length}]"
+
+
 def main() -> int:
     """Execute the ACE agent and emit the response as JSON."""
     payload = _load_payload()
@@ -99,7 +110,7 @@ def main() -> int:
 
     thread_id = payload.get("thread_id") or f"ace-thread-{int(time.time() * 1000)}"
     truncated_msgs = [
-        f"{m.get('role', '?')}: {str(m.get('content', ''))[:120]}"
+        f"{m.get('role', '?')}: {_preview(m.get('content', ''))}"
         for m in messages
     ]
     _log(

@@ -201,6 +201,20 @@ class Curator:
             content = (lesson.get("content") or "").strip()
             if not content:
                 continue
+            existing_bullet = self.memory.find_similar_bullet(
+                content,
+                learner_id=learner_id,
+                topic=topic,
+                threshold=0.9,
+            )
+            if existing_bullet:
+                entry = delta.update_bullets.setdefault(existing_bullet.id, {"helpful": 0, "harmful": 0})
+                entry["helpful"] += 1
+                print(
+                    f"[Curator][Heuristic Reinforce] id={existing_bullet.id} content={content}",
+                    flush=True,
+                )
+                continue
             tags = lesson.get("tags") or []
             ltype = lesson.get("type")
             if ltype:

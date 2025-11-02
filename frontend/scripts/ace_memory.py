@@ -292,26 +292,36 @@ class ACEMemory:
             bullet.procedural_access_index = idx
 
     @staticmethod
+    def _sync_strengths(bullet: Bullet):
+        """Normalise strength values so only the active memory type carries weight."""
+        valid = {"semantic", "episodic", "procedural"}
+        mt = (bullet.memory_type or "semantic").lower()
+        if mt not in valid:
+            mt = "semantic"
+        bullet.memory_type = mt
+        magnitude = max(1.0, float(bullet.helpful_count or 1))
+        if mt == "semantic":
+            bullet.semantic_strength = max(float(bullet.semantic_strength or 0.0), magnitude)
+            bullet.episodic_strength = 0.0
+            bullet.procedural_strength = 0.0
+        elif mt == "episodic":
+            bullet.episodic_strength = max(float(bullet.episodic_strength or 0.0), magnitude)
+            bullet.semantic_strength = 0.0
+            bullet.procedural_strength = 0.0
+        else:
+            bullet.procedural_strength = max(float(bullet.procedural_strength or 0.0), magnitude)
+            bullet.semantic_strength = 0.0
+            bullet.episodic_strength = 0.0
+
+    @staticmethod
     def _ensure_memory_tags(bullet: Bullet):
-        """Guarantee that memory-type strengths are reflected in the bullet tags."""
-        tag_set = {tag.lower() for tag in bullet.tags}
-        changed = False
-        if bullet.semantic_strength > 0 and "semantic" not in tag_set:
-            bullet.tags.append("semantic")
-            changed = True
-        if bullet.episodic_strength > 0 and "episodic" not in tag_set:
-            bullet.tags.append("episodic")
-            changed = True
-        if bullet.procedural_strength > 0 and "procedural" not in tag_set:
-            bullet.tags.append("procedural")
-            changed = True
-        if bullet.memory_type and bullet.memory_type.lower() not in tag_set:
-            bullet.tags.append(bullet.memory_type.lower())
-            changed = True
-        if changed:
-            # Keep tags unique while preserving order
-            seen = set()
-            bullet.tags = [t for t in bullet.tags if not (t.lower() in seen or seen.add(t.lower()))]
+        """Guarantee a single memory-type tag is present while removing duplicates."""
+        valid = {"semantic", "episodic", "procedural"}
+        tags = [t for t in bullet.tags if t.lower() not in valid]
+        if bullet.memory_type:
+            tags.insert(0, bullet.memory_type)
+        seen = set()
+        bullet.tags = [t for t in tags if not (t.lower() in seen or seen.add(t.lower()))]
 
     def _sync_categories(self, bullet: Bullet):
         """Ensure category index contains the bullet for every tag."""
@@ -321,34 +331,88 @@ class ACEMemory:
 
     def _normalise_bullet(self, bullet: Bullet):
         """Ensure strengths and timestamps are initialised according to tags."""
-        # Tag-driven defaults for memory strengths.
         tag_set = {tag.lower() for tag in bullet.tags}
-        if "procedural" in tag_set and bullet.procedural_strength <= 0:
-            bullet.procedural_strength = max(1.0, float(bullet.helpful_count or 1))
-            bullet.semantic_strength = bullet.semantic_strength or 0.0
-        if "episodic" in tag_set and bullet.episodic_strength <= 0:
-            bullet.episodic_strength = max(1.0, float(bullet.helpful_count or 1))
-        if "semantic" in tag_set and bullet.semantic_strength <= 0:
-            bullet.semantic_strength = max(1.0, float(bullet.helpful_count or 1))
-        # If still no strengths, fall back to semantic default.
-        if (
-            bullet.semantic_strength == 0.0
-            and bullet.episodic_strength == 0.0
-            and bullet.procedural_strength == 0.0
-        ):
-            bullet.semantic_strength = max(1.0, float(bullet.helpful_count or 1))
-        if not bullet.memory_type or bullet.memory_type.lower() not in {"semantic", "episodic", "procedural"}:
-            if bullet.procedural_strength > 0:
-                bullet.memory_type = "procedural"
-            elif bullet.episodic_strength > 0:
+        valid = {"semantic", "episodic", "procedural"}
+        if not bullet.memory_type or bullet.memory_type.lower() not in valid:
+            if "episodic" in tag_set:
                 bullet.memory_type = "episodic"
+            elif "procedural" in tag_set:
+                bullet.memory_type = "procedural"
             else:
                 bullet.memory_type = "semantic"
-        else:
-            bullet.memory_type = bullet.memory_type.lower()
+        bullet.memory_type = bullet.memory_type.lower()
+        self._sync_strengths(bullet)
         self._ensure_memory_tags(bullet)
         self._touch_bullet(bullet)
         bullet.content_hash = bullet.content_hash or self._normalized_hash(bullet.content)
+
+    def _finalize_bullet(self, bullet: Bullet):
+        """Apply canonical formatting for memory type, strengths, tags, and hash."""
+        self._sync_strengths(bullet)
+        self._ensure_memory_tags(bullet)
+        bullet.content_hash = self._normalized_hash(bullet.content)
+
+    @staticmethod
+    def _parse_created_at(bullet: Bullet) -> datetime:
+        try:
+            return datetime.fromisoformat(bullet.created_at)
+        except Exception:
+            return datetime.fromtimestamp(0)
+
+    def _select_canonical_bullet(self, a: Bullet, b: Bullet) -> Tuple[Bullet, Bullet]:
+        """Choose which bullet should be kept when merging duplicates."""
+        score_a = (a.helpful_count - a.harmful_count)
+        score_b = (b.helpful_count - b.harmful_count)
+        if score_a != score_b:
+            return (a, b) if score_a > score_b else (b, a)
+        created_a = self._parse_created_at(a)
+        created_b = self._parse_created_at(b)
+        if created_a >= created_b:
+            return a, b
+        return b, a
+
+    def _merge_bullet_into(self, keep: Bullet, drop: Bullet):
+        """Merge the drop bullet's metadata into the canonical keep bullet."""
+        keep.helpful_count += drop.helpful_count
+        keep.harmful_count += drop.harmful_count
+
+        if not keep.learner_id:
+            keep.learner_id = drop.learner_id
+        if not keep.topic:
+            keep.topic = drop.topic
+        if not keep.concept:
+            keep.concept = drop.concept
+
+        if not keep.memory_type and drop.memory_type:
+            keep.memory_type = drop.memory_type
+
+        keep.tags = list(dict.fromkeys(keep.tags + drop.tags))
+        self._finalize_bullet(keep)
+        self._sync_categories(keep)
+        self._register_bullet(keep)
+
+    def find_similar_bullet(
+        self,
+        content: str,
+        learner_id: Optional[str] = None,
+        topic: Optional[str] = None,
+        threshold: float = 0.9,
+    ) -> Optional[Bullet]:
+        """Return an existing bullet with similar content if one exists."""
+        if not content:
+            return None
+        best = None
+        best_score = threshold
+        for bullet in self.bullets.values():
+            if learner_id and bullet.learner_id and bullet.learner_id != learner_id:
+                continue
+            if topic and bullet.topic and bullet.topic != topic:
+                continue
+            score = self._text_similarity(content, bullet.content)
+            if score >= best_score:
+                best = bullet
+                best_score = score
+        return best
     
     def _populate_from_data(self, data: Dict[str, Any]):
         """Hydrate in-memory structures from a serialized payload."""
@@ -482,19 +546,16 @@ class ACEMemory:
                 existing = self.bullets[bullet.id]
                 existing.helpful_count += bullet.helpful_count
                 existing.harmful_count += bullet.harmful_count
-                existing.semantic_strength = max(existing.semantic_strength, bullet.semantic_strength)
-                existing.episodic_strength = max(existing.episodic_strength, bullet.episodic_strength)
-                existing.procedural_strength = max(existing.procedural_strength, bullet.procedural_strength)
                 if bullet.learner_id and not existing.learner_id:
                     existing.learner_id = bullet.learner_id
                 if bullet.topic and not existing.topic:
                     existing.topic = bullet.topic
                 if bullet.concept and not existing.concept:
                     existing.concept = bullet.concept
-                if bullet.memory_type:
+                if not existing.memory_type and bullet.memory_type:
                     existing.memory_type = bullet.memory_type
                 existing.tags = list(dict.fromkeys(existing.tags + bullet.tags))
-                self._ensure_memory_tags(existing)
+                self._finalize_bullet(existing)
                 self._sync_categories(existing)
                 self._touch_bullet(existing)
                 self._register_bullet(existing)
@@ -510,6 +571,7 @@ class ACEMemory:
                 bullet = self.bullets[bullet_id]
                 bullet.helpful_count += updates.get("helpful", 0)
                 bullet.harmful_count += updates.get("harmful", 0)
+                self._finalize_bullet(bullet)
                 self._touch_bullet(bullet)
                 self._register_bullet(bullet)
                 print(
@@ -557,7 +619,6 @@ class ACEMemory:
         """
         bullets_list = list(self.bullets.values())
         to_remove = set()
-        now = datetime.now()
         
         for i in range(len(bullets_list)):
             if bullets_list[i].id in to_remove:
@@ -574,130 +635,15 @@ class ACEMemory:
                 )
                 
                 if similarity > self.dedup_threshold:
-                    # Merge into the one with better score
-                    if self._compute_score(bullets_list[i], now) >= self._compute_score(bullets_list[j], now):
-                        # Merge j into i
-                        bullets_list[i].helpful_count += bullets_list[j].helpful_count
-                        bullets_list[i].harmful_count += bullets_list[j].harmful_count
-                        bullets_list[i].semantic_strength = max(
-                            bullets_list[i].semantic_strength,
-                            bullets_list[j].semantic_strength,
-                        )
-                        bullets_list[i].episodic_strength = max(
-                            bullets_list[i].episodic_strength,
-                            bullets_list[j].episodic_strength,
-                        )
-                        bullets_list[i].procedural_strength = max(
-                            bullets_list[i].procedural_strength,
-                            bullets_list[j].procedural_strength,
-                        )
-                        if not bullets_list[i].learner_id:
-                            bullets_list[i].learner_id = bullets_list[j].learner_id
-                        if not bullets_list[i].topic:
-                            bullets_list[i].topic = bullets_list[j].topic
-                        if not bullets_list[i].concept:
-                            bullets_list[i].concept = bullets_list[j].concept
-                        bullets_list[i].tags = list(
-                            dict.fromkeys(bullets_list[i].tags + bullets_list[j].tags)
-                        )
-                        access_candidates = [
-                            idx
-                            for idx in [
-                                bullets_list[i].semantic_access_index,
-                                bullets_list[j].semantic_access_index,
-                            ]
-                            if idx is not None
-                        ]
-                        bullets_list[i].semantic_access_index = max(access_candidates) if access_candidates else None
-                        access_candidates = [
-                            idx
-                            for idx in [
-                                bullets_list[i].episodic_access_index,
-                                bullets_list[j].episodic_access_index,
-                            ]
-                            if idx is not None
-                        ]
-                        bullets_list[i].episodic_access_index = max(access_candidates) if access_candidates else None
-                        access_candidates = [
-                            idx
-                            for idx in [
-                                bullets_list[i].procedural_access_index,
-                                bullets_list[j].procedural_access_index,
-                            ]
-                            if idx is not None
-                        ]
-                        bullets_list[i].procedural_access_index = max(access_candidates) if access_candidates else None
-                        self._ensure_memory_tags(bullets_list[i])
-                        self._sync_categories(bullets_list[i])
-                        bullets_list[i].content_hash = self._normalized_hash(bullets_list[i].content)
-                        self._register_bullet(bullets_list[i])
-                        print(
-                            f"[ACE Memory][Dedup Merge] kept={bullets_list[i].id} merged={bullets_list[j].id}",
-                            flush=True,
-                        )
-                        to_remove.add(bullets_list[j].id)
-                    else:
-                        # Merge i into j
-                        bullets_list[j].helpful_count += bullets_list[i].helpful_count
-                        bullets_list[j].harmful_count += bullets_list[i].harmful_count
-                        bullets_list[j].semantic_strength = max(
-                            bullets_list[i].semantic_strength,
-                            bullets_list[j].semantic_strength,
-                        )
-                        bullets_list[j].episodic_strength = max(
-                            bullets_list[i].episodic_strength,
-                            bullets_list[j].episodic_strength,
-                        )
-                        bullets_list[j].procedural_strength = max(
-                            bullets_list[i].procedural_strength,
-                            bullets_list[j].procedural_strength,
-                        )
-                        if not bullets_list[j].learner_id:
-                            bullets_list[j].learner_id = bullets_list[i].learner_id
-                        if not bullets_list[j].topic:
-                            bullets_list[j].topic = bullets_list[i].topic
-                        if not bullets_list[j].concept:
-                            bullets_list[j].concept = bullets_list[i].concept
-                        bullets_list[j].tags = list(
-                            dict.fromkeys(bullets_list[j].tags + bullets_list[i].tags)
-                        )
-                        access_candidates = [
-                            idx
-                            for idx in [
-                                bullets_list[i].semantic_access_index,
-                                bullets_list[j].semantic_access_index,
-                            ]
-                            if idx is not None
-                        ]
-                        bullets_list[j].semantic_access_index = max(access_candidates) if access_candidates else None
-                        access_candidates = [
-                            idx
-                            for idx in [
-                                bullets_list[i].episodic_access_index,
-                                bullets_list[j].episodic_access_index,
-                            ]
-                            if idx is not None
-                        ]
-                        bullets_list[j].episodic_access_index = max(access_candidates) if access_candidates else None
-                        access_candidates = [
-                            idx
-                            for idx in [
-                                bullets_list[i].procedural_access_index,
-                                bullets_list[j].procedural_access_index,
-                            ]
-                            if idx is not None
-                        ]
-                        bullets_list[j].procedural_access_index = max(access_candidates) if access_candidates else None
-                        self._ensure_memory_tags(bullets_list[j])
-                        self._sync_categories(bullets_list[j])
-                        bullets_list[j].content_hash = self._normalized_hash(bullets_list[j].content)
-                        self._register_bullet(bullets_list[j])
-                        print(
-                            f"[ACE Memory][Dedup Merge] kept={bullets_list[j].id} merged={bullets_list[i].id}",
-                            flush=True,
-                        )
-                        to_remove.add(bullets_list[i].id)
-                        break
+                    keep, drop = self._select_canonical_bullet(bullets_list[i], bullets_list[j])
+                    self._merge_bullet_into(keep, drop)
+                    print(
+                        f"[ACE Memory][Dedup Merge] kept={keep.id} merged={drop.id}",
+                        flush=True,
+                    )
+                    to_remove.add(drop.id)
+                    if keep is bullets_list[j]:
+                        bullets_list[i], bullets_list[j] = bullets_list[j], bullets_list[i]
         
         # Remove duplicates
         for bullet_id in to_remove:
