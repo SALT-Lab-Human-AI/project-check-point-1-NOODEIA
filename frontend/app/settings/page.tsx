@@ -15,7 +15,8 @@ import {
   FileText,
   Home,
   LayoutGrid,
-  Trophy
+  Trophy,
+  BarChart2
 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { supabase } from '@/lib/supabase'
@@ -555,6 +556,21 @@ export default function SettingsPage() {
                   <div className="text-left">
                     <span className="font-medium text-gray-800 drop-shadow-md block text-sm sm:text-base">Explore all the features in Noodeia</span>
                     <span className="text-xs sm:text-sm text-gray-600">View our complete task flow guide</span>
+                  </div>
+                </div>
+                <ChevronLeft className="w-5 h-5 text-gray-600 group-hover:text-gray-800 group-hover:-translate-x-1 transition-all duration-300 drop-shadow-md rotate-180" />
+              </button>
+              <button
+                onClick={() => router.push('/administrator')}
+                className="w-full flex items-center justify-between p-3 sm:p-4 rounded-3xl hover:bg-white/10 transition-all duration-300 group backdrop-blur-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-all duration-300 backdrop-blur-sm border border-white/20">
+                    <BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-800 drop-shadow-md" />
+                  </div>
+                  <div className="text-left">
+                    <span className="font-medium text-gray-800 drop-shadow-md block text-sm sm:text-base">Administrator Mode</span>
+                    <span className="text-xs sm:text-sm text-gray-600">View student activity and quiz metrics</span>
                   </div>
                 </div>
                 <ChevronLeft className="w-5 h-5 text-gray-600 group-hover:text-gray-800 group-hover:-translate-x-1 transition-all duration-300 drop-shadow-md rotate-180" />

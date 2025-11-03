@@ -473,6 +473,217 @@ class Neo4jDataService {
       await session.close()
     }
   }
+
+  async getDailyAndWeeklyForStudent(studentKey) {
+    const session = neo4jService.getSession()
+    try {
+      // Find user by id, name, or email
+      const userResult = await session.run(
+        `
+        MATCH (u:User)
+        WHERE u.id = $studentKey 
+           OR toLower(u.name) = toLower($studentKey)
+           OR toLower(u.email) = toLower($studentKey)
+        RETURN u.id as userId
+        LIMIT 1
+        `,
+        { studentKey }
+      )
+
+      if (userResult.records.length === 0) {
+        return { days: [], weeks: [] }
+      }
+
+      const userId = userResult.records[0].get('userId')
+
+      // Get daily stats for last 14 days
+      const dailyResult = await session.run(
+        `
+        MATCH (u:User {id: $userId})-[:COMPLETED]->(qs:QuizSession)
+        WHERE qs.completedAt >= datetime() - duration({days: 14})
+        WITH date(qs.completedAt) as day,
+             avg(toFloat(qs.score) / toFloat(qs.totalQuestions)) as avgCorrect,
+             count(qs) as attempts
+        RETURN day as date, avgCorrect, attempts
+        ORDER BY day ASC
+        `,
+        { userId }
+      )
+
+      const days = dailyResult.records.map(record => {
+        const date = record.get('date')
+        const avgCorrect = neo4jService.toNumber(record.get('avgCorrect')) || 0
+        const attempts = neo4jService.toNumber(record.get('attempts')) || 0
+        
+        // Format date as YYYY-MM-DD
+        let dateStr = ''
+        if (date) {
+          if (typeof date === 'object' && 'year' in date) {
+            // Neo4j Date object
+            dateStr = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
+          } else if (date.toStandardDate) {
+            // Neo4j DateTime converted to Date
+            const jsDate = date.toStandardDate()
+            dateStr = jsDate.toISOString().split('T')[0]
+          } else {
+            // String or other format
+            dateStr = String(date)
+          }
+        }
+        
+        return {
+          date: dateStr,
+          avgCorrect: avgCorrect,
+          attempts: attempts
+        }
+      })
+
+      // Get weekly stats - group by ISO week (all weeks)
+      const weeklyResult = await session.run(
+        `
+        MATCH (u:User {id: $userId})-[:COMPLETED]->(qs:QuizSession)
+        WITH 
+          date(qs.completedAt) as day,
+          toFloat(qs.score) / toFloat(qs.totalQuestions) * 100 as pct,
+          qs.id as sessionId
+        WITH 
+          day.year as year,
+          day.week as week,
+          pct,
+          sessionId
+        WITH 
+          year,
+          week,
+          max(pct) as best,
+          min(pct) as worst,
+          count(pct) as attempts,
+          collect(sessionId) as sessionIds
+        RETURN 
+          year,
+          week,
+          toString(year) + '-W' + 
+          CASE 
+            WHEN week < 10 THEN '0' + toString(week)
+            ELSE toString(week)
+          END as weekLabel,
+          round(best) as best,
+          round(worst) as worst,
+          attempts,
+          sessionIds
+        ORDER BY year DESC, week DESC
+        `,
+        { userId }
+      )
+
+      // Helper function to get ISO week date range
+      const getISOWeekRange = (year, week) => {
+        // Calculate the date of the Monday of the ISO week
+        // ISO week 1 is the week containing Jan 4
+        const jan4 = new Date(year, 0, 4)
+        const jan4Day = jan4.getDay() || 7 // Convert Sunday (0) to 7
+        const daysToMonday = jan4Day - 1
+        const week1Monday = new Date(jan4)
+        week1Monday.setDate(jan4.getDate() - daysToMonday)
+        
+        // Calculate the Monday of the target week
+        const targetMonday = new Date(week1Monday)
+        targetMonday.setDate(week1Monday.getDate() + (week - 1) * 7)
+        
+        // Calculate Sunday (end of week)
+        const targetSunday = new Date(targetMonday)
+        targetSunday.setDate(targetMonday.getDate() + 6)
+        
+        // Format dates as YYYY-MM-DD
+        const formatDate = (date) => {
+          const y = date.getFullYear()
+          const m = String(date.getMonth() + 1).padStart(2, '0')
+          const d = String(date.getDate()).padStart(2, '0')
+          return `${y}-${m}-${d}`
+        }
+        
+        return {
+          start: formatDate(targetMonday),
+          end: formatDate(targetSunday)
+        }
+      }
+
+      const weeks = weeklyResult.records.map(record => {
+        const year = neo4jService.toNumber(record.get('year'))
+        const week = neo4jService.toNumber(record.get('week'))
+        const weekLabel = record.get('weekLabel') || ''
+        const best = neo4jService.toNumber(record.get('best')) || 0
+        const worst = neo4jService.toNumber(record.get('worst')) || 0
+        const attempts = neo4jService.toNumber(record.get('attempts')) || 0
+        const sessionIds = record.get('sessionIds') || []
+        
+        const dateRange = getISOWeekRange(year, week)
+        
+        return {
+          year,
+          week,
+          week: weekLabel,
+          weekRange: `${dateRange.start} to ${dateRange.end}`,
+          best: best,
+          worst: worst,
+          attempts: attempts,
+          sessionIds: sessionIds
+        }
+      })
+
+      // Get individual quiz sessions for each week
+      const quizDetails = {}
+      for (const weekData of weeks) {
+        if (weekData.sessionIds && weekData.sessionIds.length > 0) {
+          const sessionsResult = await session.run(
+            `
+            MATCH (u:User {id: $userId})-[:COMPLETED]->(qs:QuizSession)
+            WHERE qs.id IN $sessionIds
+            RETURN qs.id as id,
+                   qs.score as score,
+                   qs.totalQuestions as totalQuestions,
+                   qs.streak as streak,
+                   qs.xpEarned as xpEarned,
+                   qs.nodeType as nodeType,
+                   qs.completedAt as completedAt
+            ORDER BY qs.completedAt ASC
+            `,
+            { userId, sessionIds: weekData.sessionIds }
+          )
+
+          quizDetails[weekData.week] = sessionsResult.records.map(record => {
+            const completedAt = record.get('completedAt')
+            let dateStr = ''
+            if (completedAt) {
+              if (completedAt.toStandardDate) {
+                const jsDate = completedAt.toStandardDate()
+                dateStr = jsDate.toISOString()
+              } else {
+                dateStr = String(completedAt)
+              }
+            }
+
+            return {
+              id: record.get('id'),
+              score: neo4jService.toNumber(record.get('score')) || 0,
+              totalQuestions: neo4jService.toNumber(record.get('totalQuestions')) || 0,
+              streak: neo4jService.toNumber(record.get('streak')) || 0,
+              xpEarned: neo4jService.toNumber(record.get('xpEarned')) || 0,
+              nodeType: record.get('nodeType') || 'common',
+              completedAt: dateStr,
+              percentage: Math.round(((neo4jService.toNumber(record.get('score')) || 0) / (neo4jService.toNumber(record.get('totalQuestions')) || 1)) * 100)
+            }
+          })
+        }
+      }
+
+      return { days, weeks, quizDetails }
+    } catch (error) {
+      console.error('Error getting daily and weekly stats:', error)
+      throw error
+    } finally {
+      await session.close()
+    }
+  }
 }
 
 export const neo4jDataService = new Neo4jDataService()
