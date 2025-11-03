@@ -658,3 +658,18 @@
   background-size: 200% 200%;
   animation: gradient 15s ease infinite;
 }
+
+/* Gallery fade-in animation */
+@keyframes fadeInGallery {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.gallery-fade-in {
+  animation: fadeInGallery 0.6s ease-out forwards;
+  opacity: 0;
+}

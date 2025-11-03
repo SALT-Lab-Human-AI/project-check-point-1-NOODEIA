@@ -20,6 +20,8 @@ import numpy as np
 import math
 import os
 
+DEFAULT_MEMORY_STRENGTH = float(os.getenv("ACE_MEMORY_BASE_STRENGTH", "100.0"))
+
 
 @dataclass
 class Bullet:
@@ -56,13 +58,31 @@ class Bullet:
         if not self.id:
             self.id = self._generate_id(self.content)
         # Initialize strengths if none provided
-        if (
+        all_zero = (
             self.semantic_strength == 0.0
             and self.episodic_strength == 0.0
             and self.procedural_strength == 0.0
-        ):
-            # Default to semantic memory with unit strength
-            self.semantic_strength = max(1.0, float(self.helpful_count or 1))
+        )
+        if not self.memory_type:
+            self.memory_type = "semantic"
+        else:
+            self.memory_type = self.memory_type.lower()
+
+        if all_zero:
+            baseline = self._baseline_strength()
+            if self.memory_type == "episodic":
+                self.episodic_strength = baseline
+                self.semantic_strength = 0.0
+                self.procedural_strength = 0.0
+            elif self.memory_type == "procedural":
+                self.procedural_strength = baseline
+                self.semantic_strength = 0.0
+                self.episodic_strength = 0.0
+            else:
+                self.semantic_strength = baseline
+                self.episodic_strength = 0.0
+                self.procedural_strength = 0.0
+
         # Ensure access timestamps exist for active components
         now_iso = datetime.now().isoformat()
         if self.semantic_strength > 0 and not self.semantic_last_access:
@@ -71,10 +91,6 @@ class Bullet:
             self.episodic_last_access = self.last_used or now_iso
         if self.procedural_strength > 0 and not self.procedural_last_access:
             self.procedural_last_access = self.last_used or now_iso
-        if not self.memory_type:
-            self.memory_type = "semantic"
-        else:
-            self.memory_type = self.memory_type.lower()
         self.content_hash = self.content_hash or self._compute_hash(self.content)
     
     @staticmethod
@@ -155,6 +171,10 @@ class Bullet:
         score_str = f"[+{self.helpful_count}/-{self.harmful_count}]"
         return f"{score_str} {self.content}"
 
+    def _baseline_strength(self) -> float:
+        delta = max(self.helpful_count - self.harmful_count, 0)
+        return max(DEFAULT_MEMORY_STRENGTH, DEFAULT_MEMORY_STRENGTH + float(delta))
+
 
 @dataclass
 class DeltaUpdate:
@@ -181,14 +201,19 @@ class ACEMemory:
     
     def __init__(
         self,
-        memory_file: str = "ace_memory.json",
         max_bullets: int = 100,
         dedup_threshold: float = 0.85,
         prune_threshold: float = 0.3,
         decay_rates: Optional[Dict[str, float]] = None,
-        storage: Optional[Any] = None,
+        storage: Any = None,
     ):
-        self.memory_file = Path(memory_file)
+        # Require Neo4j storage - no JSON fallback
+        if storage is None:
+            raise ValueError(
+                "[ACE Memory] Error: storage adapter is required. "
+                "Pass Neo4jMemoryStore instance. JSON fallback has been removed."
+            )
+        self._storage = storage
         self.max_bullets = max_bullets
         self.dedup_threshold = dedup_threshold  # Cosine similarity threshold for deduplication
         self.prune_threshold = prune_threshold  # Score threshold for pruning low-quality bullets
@@ -201,18 +226,29 @@ class ACEMemory:
             default_decay.update(decay_rates)
         self.decay_rates = {k: max(0.0, min(1.0, v)) for k, v in default_decay.items()}
         self.access_clock = 0
-        self._storage = storage
         
         self.bullets: Dict[str, Bullet] = {}  # id -> Bullet
         self.categories: Dict[str, List[str]] = defaultdict(list)  # tag -> [bullet_ids]
         self.hash_index: Dict[str, Set[str]] = defaultdict(set)  # normalized content hash -> bullet ids
+        self._fresh_from_init = False
+        self._loaded_once = False
         
         self._load_memory()
+        self._fresh_from_init = True
+        self._loaded_once = True
 
     @staticmethod
     def _normalized_hash(text: str) -> str:
         normalized = re.sub(r"\s+", " ", text.strip().lower())
         return hashlib.sha256(normalized.encode()).hexdigest()
+
+    def consume_fresh_init_flag(self) -> bool:
+        fresh = bool(getattr(self, "_fresh_from_init", False))
+        self._fresh_from_init = False
+        return fresh
+
+    def is_loaded(self) -> bool:
+        return bool(getattr(self, "_loaded_once", False))
 
     def _register_bullet(self, bullet: Bullet):
         bullet.content_hash = bullet.content_hash or self._normalized_hash(bullet.content)
@@ -300,17 +336,17 @@ class ACEMemory:
         if mt not in valid:
             mt = "semantic"
         bullet.memory_type = mt
-        magnitude = max(1.0, float(bullet.helpful_count or 1))
+        baseline = bullet._baseline_strength()
         if mt == "semantic":
-            bullet.semantic_strength = max(float(bullet.semantic_strength or 0.0), magnitude)
+            bullet.semantic_strength = max(float(bullet.semantic_strength or 0.0), baseline)
             bullet.episodic_strength = 0.0
             bullet.procedural_strength = 0.0
         elif mt == "episodic":
-            bullet.episodic_strength = max(float(bullet.episodic_strength or 0.0), magnitude)
+            bullet.episodic_strength = max(float(bullet.episodic_strength or 0.0), baseline)
             bullet.semantic_strength = 0.0
             bullet.procedural_strength = 0.0
         else:
-            bullet.procedural_strength = max(float(bullet.procedural_strength or 0.0), magnitude)
+            bullet.procedural_strength = max(float(bullet.procedural_strength or 0.0), baseline)
             bullet.semantic_strength = 0.0
             bullet.episodic_strength = 0.0
 
@@ -511,37 +547,38 @@ class ACEMemory:
                         f"[ACE Memory] No existing Neo4j memory for learner={learner}; starting fresh",
                         flush=True,
                     )
+                self._loaded_once = True
                 return
 
-        if self.memory_file.exists():
-            try:
-                with open(self.memory_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    self._populate_from_data(data)
-                print(f"[ACE Memory] Loaded {len(self.bullets)} bullets from {self.memory_file}", flush=True)
-            except Exception as e:
-                print(f"[ACE Memory] Warning: Could not load memory: {e}", flush=True)
+        # JSON file fallback removed - Neo4j only storage
     
     def reload_from_storage(self):
-        """Refresh the in-memory snapshot from Neo4j if a storage adapter is present."""
-        if not self._storage:
-            return
+        """Refresh the in-memory snapshot from Neo4j storage."""
         try:
             stored = self._storage.load()
-        except Exception as exc:  # pragma: no cover - defensive logging
-            print(f"[ACE Memory] Warning: Storage reload failed: {exc}", flush=True)
-            return
+        except Exception as exc:
+            print(f"[ACE Memory] ERROR: Storage reload failed: {exc}", flush=True)
+            raise  # Re-raise to alert on reload failures
+
         if not stored:
+            learner = getattr(self._storage, "learner_id", "unknown")
+            print(
+                f"[ACE Memory] No existing Neo4j memory for learner={learner}; starting fresh",
+                flush=True,
+            )
             return
+
         self._populate_from_data(stored)
         learner = getattr(self._storage, "learner_id", "unknown")
         print(
             f"[ACE Memory] Reloaded {len(self.bullets)} bullets from Neo4j for learner={learner}",
             flush=True,
         )
+        self._loaded_once = True
+        self._fresh_from_init = False
     
     def _save_memory(self):
-        """Persist memory to storage (Neo4j or local file)."""
+        """Persist memory to Neo4j storage."""
         data = {
             "bullets": [bullet.to_dict() for bullet in self.bullets.values()],
             "version": "1.0",
@@ -549,18 +586,12 @@ class ACEMemory:
             "access_clock": self.access_clock,
         }
 
-        if self._storage:
-            try:
-                self._storage.save(data)
-            except Exception as exc:  # pragma: no cover - defensive logging
-                print(f"[ACE Memory] Warning: Could not save memory to storage: {exc}", flush=True)
-            return
-
+        # Always save to Neo4j storage (JSON fallback removed)
         try:
-            with open(self.memory_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            print(f"[ACE Memory] Warning: Could not save memory: {e}", flush=True)
+            self._storage.save(data)
+        except Exception as exc:
+            print(f"[ACE Memory] ERROR: Failed to save memory to Neo4j: {exc}", flush=True)
+            raise  # Re-raise to alert on save failures
     
     def apply_delta(self, delta: DeltaUpdate):
         """
@@ -733,19 +764,12 @@ class ACEMemory:
         learner_id: Optional[str] = None,
         topic: Optional[str] = None,
         memory_types: Optional[List[str]] = None,
+        facets: Optional[Dict[str, Any]] = None,
     ) -> List[Bullet]:
-        """
-        Retrieve relevant bullets for a query.
-        
-        Args:
-            query: The user query or context
-            top_k: Number of bullets to retrieve
-            tags: Optional filter by tags
-            min_score: Minimum bullet score threshold
-        
-        Returns:
-            List of relevant bullets, ranked by relevance
-        """
+        """Retrieve relevant bullets using structured facets."""
+
+        facets = facets or {}
+
         # Filter by tags if provided
         if tags:
             candidate_ids = set()
@@ -759,35 +783,71 @@ class ACEMemory:
             allowed = {mt.lower() for mt in memory_types}
             candidates = [b for b in candidates if (b.memory_type or "semantic") in allowed]
 
+        if learner_id:
+            filtered = []
+            for bullet in candidates:
+                if bullet.learner_id and bullet.learner_id != learner_id:
+                    continue
+                filtered.append(bullet)
+            candidates = filtered
+
+        if topic:
+            candidates = [b for b in candidates if not b.topic or b.topic == topic]
+
         score_cache = {b.id: self._compute_score(b) for b in candidates}
-        # Filter by score
         candidates = [b for b in candidates if score_cache.get(b.id, 0.0) >= min_score]
 
         if not candidates:
             return []
-        
-        # Rank by relevance to query (simple text similarity)
+
+        query_terms: List[str] = []
+        if query:
+            query_terms.append(query)
+        persona = facets.get("persona_request")
+        if persona:
+            query_terms.append(str(persona))
+        fractions = facets.get("fractions")
+        if fractions:
+            query_terms.extend(fractions)
+        if facets.get("next_step_flag"):
+            query_terms.append("next step")
+
+        query_text = " ".join(term for term in query_terms if term).strip()
+
+        memory_weight = {"procedural": 1.0, "episodic": 0.7, "semantic": 0.4}
+
         scored_bullets = []
-        memory_weight = {"procedural": 0.6, "episodic": 0.4, "semantic": 0.1}
         for bullet in candidates:
-            relevance = self._text_similarity(query, bullet.content)
-            combined_score = 0.6 * relevance + 0.4 * score_cache.get(bullet.id, 0.0)
-            if learner_id:
-                if bullet.learner_id == learner_id:
-                    combined_score += 0.6
-                elif bullet.learner_id:
-                    combined_score -= 0.2
-            if topic:
-                if bullet.topic == topic:
-                    combined_score += 0.3
             mt = (bullet.memory_type or "semantic").lower()
-            combined_score += memory_weight.get(mt, 0.0)
+            bullet_tags = {t.lower() for t in bullet.tags}
+            base_score = score_cache.get(bullet.id, 0.0)
+            normalized_strength = base_score / max(DEFAULT_MEMORY_STRENGTH, 1.0)
+
+            relevance = self._text_similarity(query_text, bullet.content) if query_text else 0.0
+            type_priority = memory_weight.get(mt, 0.3)
+
+            bonus = 0.0
+            if facets.get("needs_visual") and ("visual" in bullet_tags or "diagram" in bullet_tags or "picture" in bullet.content.lower()):
+                bonus += 0.2
+            if persona and persona in bullet_tags:
+                bonus += 0.1
+            if fractions:
+                if any(frac in bullet.content for frac in fractions):
+                    bonus += 0.05
+            for misconception in facets.get("misconceptions", []):
+                if misconception in bullet_tags or misconception in bullet.content.lower():
+                    bonus += 0.2
+
+            combined_score = (
+                0.25 * relevance +
+                0.55 * normalized_strength +
+                0.2 * type_priority +
+                bonus
+            )
             scored_bullets.append((combined_score, bullet))
 
-        # Sort by combined score
         scored_bullets.sort(key=lambda x: x[0], reverse=True)
         top_bullets = [bullet for _, bullet in scored_bullets[:top_k]]
-        # Update access counters for retrieved bullets
         for bullet in top_bullets:
             self._touch_bullet(bullet)
         return top_bullets

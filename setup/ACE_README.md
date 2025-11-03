@@ -244,12 +244,13 @@ Where:
 ### Implementation Notes
 
 * **Bullet fields** – Each bullet serialises strengths and per-component access counters. Tags (`semantic`, `episodic`, `procedural`) are auto-synchronised with the active strengths so every retrieved bullet advertises its memory type. Additional metadata now includes learner IDs, topic, concept, memory_type, TTL, and a dedupe hash.
+* **Base strength** – New bullets initialise with a baseline strength of 100 (override via `ACE_MEMORY_BASE_STRENGTH`). Helpful reinforcements raise that baseline before decay is applied, so fresh observations start strong and fade only when unused.
 * **Access tracking** – Every time a bullet is retrieved or reinforced, `_touch_bullet` increments a global access counter and stamps the component’s access index. Decay now depends on event order instead of wall-clock time.
 * **Scoring API** – A new `ACEMemory._compute_score()` helper evaluates the formula. Pruning, deduplication, retrieval filtering, and statistics all consume this unified score.
 * **Category hygiene** – Whenever strengths change (including deduplication merges) the memory-type tags and `self.categories` index stay in sync so future lookups remain accurate.
 * **Dedupe & hashing** – Every bullet maintains a normalised content hash; duplicates (same learner/topic/memory_type) are merged and logged before write-back while the hash index keeps tag/category maps tidy.
 * **Dedup logging** – Whenever two bullets collapse into one, the memory prints `[ACE Memory][Dedup Merge] kept=… merged=…` so you can confirm which entry survived.
-* **Retrieval ranking** – Queries can pass `learner_id`, `topic`, and `memory_types`; ranking prioritises procedural > episodic > semantic memories while boosting learner/topic matches, ensuring stateful facts surface first.
+* **Faceted retrieval** – Retrieval passes `(learner_id, topic)` as hard filters and composes facet keywords (visual hints, persona requests, fraction sets, misconceptions) from the latest user turn. Procedural memories are prioritised ahead of episodic and semantic notes, and facet matches add extra boost so student-specific state surfaces first.
 * **Decay configuration** – Override via constructor:
   ```python
   memory = ACEMemory(decay_rates={"episodic": 0.08, "semantic": 0.005})
@@ -262,6 +263,7 @@ Where:
 * **Lesson/delta logging** – After reflection the pipeline lists every lesson. If `ACE_CURATOR_USE_LLM=true`, the curator calls Gemini (JSON-only mode), retries on parse errors, logs the raw output, and otherwise falls back to heuristic lessons; with the default heuristic mode, no LLM call is made.
 * **Fallback curation** – When the heuristic path is used (default) or Gemini still fails after retries, each lesson is automatically turned into a new bullet (with inferred tags, learner/topic/concept, and memory type) so the playbook continues to grow, and that fallback action is logged.
 * **Curator modes** – `ACE_CURATOR_USE_LLM=false` (default) keeps curation heuristic and deterministic; flipping it on uses Gemini with schema retries, then gracefully falls back to the heuristic so no delta is ever lost.
+* **Procedural & misconception supplements** – When heuristics spot denominator anxiety or fraction conversion steps, the curator adds explicit procedural “state” bullets and misconception trackers so future turns retrieve concrete checkpoints, not only high-level pedagogy.
 
 ### Key Implementation Snippets
 
@@ -423,7 +425,7 @@ if existing:
     print(f"[Curator][Heuristic Reinforce] id={existing.id} score={score:.3f} content={content}")
     continue
 ```
-* The curator now bumps `helpful` on semantically similar bullets instead of adding near-duplicates, and caps new bullet creation (`ACE_CURATOR_MAX_NEW`, default 2). When the cap is hit, lessons fall back to reinforcement and the overflow is logged as `Heuristic ReinforceOverflow`.
+* The curator now bumps `helpful` on semantically similar bullets instead of adding near-duplicates. Every new lesson becomes its own bullet (no per-turn cap), with supplementary state/misconception bullets emitted when conversion progress or LCD worries are detected.
 * Tags are normalised to snake_case and stripped of class keywords so retrieval filters stay consistent.
 
 #### Sanitised outputs & telemetry

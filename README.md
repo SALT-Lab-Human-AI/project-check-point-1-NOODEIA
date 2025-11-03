@@ -349,7 +349,7 @@ We also incorporated AI generated images for demonstration purpose for our propo
 
 We draft task descriptions and example prompts for the three scenarios and ask AI to suggest a standardized protocol structure to ensure consistency across tools.  
 
-
+We utilized Claude Code to temporarily log and document the set up steps during the developing phase and we will be modifying and editing them in the later phases.
 
 All AI-generated content was **critically reviewed, edited, and adapted by human team members** before inclusion.
 

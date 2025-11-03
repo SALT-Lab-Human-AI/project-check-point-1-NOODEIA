@@ -38,10 +38,34 @@ export default function CircularTaskGallery({ userId, onReady }: CircularTaskGal
   }, [router]);
   
   // Create stable items reference with debouncing to reduce blinking
+  // Initialize with empty array - will be set synchronously during initial load
   const [debouncedGalleryItems, setDebouncedGalleryItems] = useState<{ image: string; text: string }[]>([]);
+  const isInitialLoadRef = useRef(true);
+  const skipDebounceRef = useRef(false);
+  const hasInitialItemsRef = useRef(false);
+  const initialItemsReadyRef = useRef(false);
   
   useEffect(() => {
-    // Debounce updates to reduce blinking - batch changes together
+    // Skip debounce if this was explicitly set as immediate (initial load)
+    if (skipDebounceRef.current) {
+      skipDebounceRef.current = false;
+      // Don't update debouncedGalleryItems here since it was already set synchronously
+      return;
+    }
+    
+    // For initial load with items, set immediately without debounce
+    if (isInitialLoadRef.current && galleryItems.length > 0) {
+      setDebouncedGalleryItems([...galleryItems]);
+      isInitialLoadRef.current = false;
+      return;
+    }
+    
+    // Skip if we already have initial items set (prevent race condition)
+    if (hasInitialItemsRef.current && debouncedGalleryItems.length === galleryItems.length && galleryItems.length > 0) {
+      return;
+    }
+    
+    // For subsequent updates, debounce to reduce blinking
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
     }
@@ -55,34 +79,60 @@ export default function CircularTaskGallery({ userId, onReady }: CircularTaskGal
         clearTimeout(updateTimeoutRef.current);
       }
     };
-  }, [galleryItems]);
+  }, [galleryItems, debouncedGalleryItems]);
   
   const stableGalleryItems = useMemo(() => {
-    const validItems = debouncedGalleryItems.filter(item => item.image && item.image.trim() !== '' && item.image.startsWith('data:image'));
-    const itemsKey = validItems.map(item => item.image).join('|');
-    
-    // Only create new array if items actually changed
-    if (itemsKey === lastItemsKeyRef.current && stableItemsCacheRef.current.length > 0) {
-      return stableItemsCacheRef.current; // Return cached stable reference if no change
+    // During initial load, if cache is populated but debouncedGalleryItems is empty, return cache
+    if (hasInitialItemsRef.current && debouncedGalleryItems.length === 0 && stableItemsCacheRef.current.length > 0) {
+      return stableItemsCacheRef.current;
     }
     
+    const validItems = debouncedGalleryItems.filter(item => item.image && item.image.trim() !== '' && item.image.startsWith('data:image'));
+    
+    // Early return if no valid items
+    if (validItems.length === 0) {
+      // Only clear cache if we're not in initial load
+      if (!hasInitialItemsRef.current) {
+        stableItemsCacheRef.current = [];
+        lastItemsKeyRef.current = '';
+      }
+      // Return cache if available during initial load
+      if (hasInitialItemsRef.current && stableItemsCacheRef.current.length > 0) {
+        return stableItemsCacheRef.current;
+      }
+      return [];
+    }
+    
+    const itemsKey = validItems.map(item => item.image).join('|');
+    
+    // CRITICAL: Always return the cached reference if items haven't changed
+    // This prevents CircularGallery from remounting and causing a blink
+    if (itemsKey === lastItemsKeyRef.current && stableItemsCacheRef.current.length > 0) {
+      // Verify the items are actually the same (extra safety check)
+      const cachedKey = stableItemsCacheRef.current.map(item => item.image).join('|');
+      if (cachedKey === itemsKey) {
+        return stableItemsCacheRef.current; // Return cached stable reference - SAME REFERENCE
+      }
+    }
+    
+    // Items have changed - update cache
     lastItemsKeyRef.current = itemsKey;
-    stableItemsCacheRef.current = validItems;
-    return validItems;
+    // Create new array only when items actually changed
+    stableItemsCacheRef.current = [...validItems];
+    return stableItemsCacheRef.current;
   }, [debouncedGalleryItems]);
 
   useEffect(() => {
+    // Reset initial load flag when userId changes
+    isInitialLoadRef.current = true;
+    skipDebounceRef.current = false;
+    hasInitialItemsRef.current = false;
+    initialItemsReadyRef.current = false;
     loadTasks();
   }, [userId]);
 
   const loadTasks = async () => {
     try {
-      // CRITICAL: Show page immediately, don't wait for fetch
-      setLoading(false);
-      if (onReady) {
-        onReady(); // Call immediately so page can render
-      }
-      
       const response = await fetch(`/api/kanban/tasks?userId=${userId}`);
       if (response.ok) {
         const data = await response.json();
@@ -93,78 +143,147 @@ export default function CircularTaskGallery({ userId, onReady }: CircularTaskGal
         console.log('🎨 CircularTaskGallery: Found', activeTasks.length, 'active tasks');
         setTasks(activeTasks);
 
-        // OPTIMIZED: Progressive rendering - generate first card immediately, then rest progressively
-        // This prevents black cards from empty placeholders
-        const items: { image: string; text: string }[] = [];
+        // OPTIMIZED: Generate first 3 cards immediately BEFORE showing page
+        // This ensures cards are ready when user sees the page
+        const INITIAL_CARDS_COUNT = Math.min(3, activeTasks.length);
+        const initialItems: { image: string; text: string }[] = [];
         
-        // Generate all cards progressively in background (non-blocking)
-        // Page is already shown above, so this doesn't block
-        const generateCardsProgressive = async () => {
-          const items: { image: string; text: string }[] = [];
-          const BATCH_UPDATE_SIZE = 3; // Update gallery every 3 cards to reduce blinking
-          let pendingBatch: { image: string; text: string }[] = [];
-          let batchTimeout: NodeJS.Timeout | null = null;
+        // Generate first 3 cards synchronously (no delays)
+        for (let i = 0; i < INITIAL_CARDS_COUNT; i++) {
+          try {
+            const image = await generateTaskCardImage(activeTasks[i], i);
+            if (image && image.trim() !== '' && image.startsWith('data:image')) {
+              initialItems.push({ image, text: '' });
+            }
+          } catch (error) {
+            console.error(`Failed to generate initial card for task ${activeTasks[i].id}:`, error);
+          }
+        }
+        
+        // Set initial cards and show page only after cards are ready
+        if (initialItems.length > 0) {
+          // Mark that we have initial items to prevent placeholder flash
+          hasInitialItemsRef.current = true;
+          // Pre-populate the cache to ensure stableGalleryItems is ready immediately
+          const validItems = initialItems.filter(item => item.image && item.image.trim() !== '' && item.image.startsWith('data:image'));
+          if (validItems.length > 0) {
+            const itemsKey = validItems.map(item => item.image).join('|');
+            // CRITICAL: Store the exact same array reference that will be used
+            stableItemsCacheRef.current = validItems; // Set cache before state update
+            lastItemsKeyRef.current = itemsKey;
+          }
+          // Set skipDebounceRef BEFORE setting states to prevent useEffect from running
+          skipDebounceRef.current = true;
+          // Use React's automatic batching - set both states together synchronously
+          // This ensures they update in the same render cycle
+          setDebouncedGalleryItems(initialItems);
+          setGalleryItems(initialItems);
           
-          const flushBatch = () => {
-            if (pendingBatch.length > 0) {
-              const newItems = [...items, ...pendingBatch];
-              items.push(...pendingBatch);
-              pendingBatch = [];
-              
-              // Use startTransition for smooth updates
-              startTransition(() => {
-                setGalleryItems([...newItems]);
+          // Mark that initial items are ready
+          initialItemsReadyRef.current = true;
+          
+          // CRITICAL: Wait for React to render CircularGallery with the cached items
+          // Then wait for WebGL initialization before starting fade-in
+          // The fade-in animation will make the appearance smooth
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                // Wait for WebGL textures to load
+                setTimeout(() => {
+                  // Start fade-in by removing loading state (gallery will fade in)
+                  setLoading(false);
+                  // Call onReady after fade-in animation completes (600ms)
+                  setTimeout(() => {
+                    if (onReady) {
+                      onReady(); // Call after fade-in animation completes
+                    }
+                  }, 600); // Wait for fade-in animation (600ms)
+                }, 50); // Short delay for WebGL initialization
               });
+            });
+          });
+        } else {
+          setLoading(false);
+          if (onReady) {
+            onReady();
+          }
+        }
+        
+        // Generate remaining cards progressively in background
+        if (activeTasks.length > INITIAL_CARDS_COUNT) {
+          const generateRemainingCards = async () => {
+            const items = [...initialItems];
+            const BATCH_UPDATE_SIZE = 3; // Update gallery every 3 cards to reduce blinking
+            let pendingBatch: { image: string; text: string }[] = [];
+            let batchTimeout: NodeJS.Timeout | null = null;
+            
+            const flushBatch = () => {
+              if (pendingBatch.length > 0) {
+                const newItems = [...items, ...pendingBatch];
+                items.push(...pendingBatch);
+                pendingBatch = [];
+                
+                // Use startTransition for smooth updates
+                startTransition(() => {
+                  setGalleryItems([...newItems]);
+                });
+              }
+              if (batchTimeout) {
+                clearTimeout(batchTimeout);
+                batchTimeout = null;
+              }
+            };
+            
+            for (let i = INITIAL_CARDS_COUNT; i < activeTasks.length; i++) {
+              try {
+                // Use requestIdleCallback to yield to main thread between cards
+                await new Promise<void>((resolve) => {
+                  if (typeof requestIdleCallback !== 'undefined') {
+                    requestIdleCallback(() => {
+                      resolve();
+                    }, { timeout: 0 });
+                  } else {
+                    // Fallback for browsers without requestIdleCallback
+                    setTimeout(() => resolve(), 0);
+                  }
+                });
+                
+                const image = await generateTaskCardImage(activeTasks[i], i);
+                if (image && image.trim() !== '' && image.startsWith('data:image')) {
+                  pendingBatch.push({ image, text: '' });
+                  
+                  // Batch updates: flush when batch is full or after delay
+                  if (pendingBatch.length >= BATCH_UPDATE_SIZE) {
+                    flushBatch();
+                  } else {
+                    // Debounce: flush after 300ms if batch isn't full
+                    if (batchTimeout) clearTimeout(batchTimeout);
+                    batchTimeout = setTimeout(flushBatch, 300);
+                  }
+                }
+              } catch (error) {
+                console.error(`Failed to generate card for task ${activeTasks[i].id}:`, error);
+              }
             }
-            if (batchTimeout) {
-              clearTimeout(batchTimeout);
-              batchTimeout = null;
-            }
+            
+            // Flush any remaining cards
+            flushBatch();
           };
           
-          for (let i = 0; i < activeTasks.length; i++) {
-            try {
-              // Use requestIdleCallback to yield to main thread between cards
-              await new Promise<void>((resolve) => {
-                if (typeof requestIdleCallback !== 'undefined') {
-                  requestIdleCallback(() => {
-                    resolve();
-                  }, { timeout: 0 });
-                } else {
-                  // Fallback for browsers without requestIdleCallback
-                  setTimeout(() => resolve(), 0);
-                }
-              });
-              
-              const image = await generateTaskCardImage(activeTasks[i], i);
-              if (image && image.trim() !== '' && image.startsWith('data:image')) {
-                pendingBatch.push({ image, text: '' });
-                
-                // Batch updates: flush when batch is full or after delay
-                if (pendingBatch.length >= BATCH_UPDATE_SIZE) {
-                  flushBatch();
-                } else {
-                  // Debounce: flush after 300ms if batch isn't full
-                  if (batchTimeout) clearTimeout(batchTimeout);
-                  batchTimeout = setTimeout(flushBatch, 300);
-                }
-              }
-            } catch (error) {
-              console.error(`Failed to generate card for task ${activeTasks[i].id}:`, error);
-            }
-          }
-          
-          // Flush any remaining cards
-          flushBatch();
-        };
-        
-        // Start generating cards in background (non-blocking)
-        generateCardsProgressive();
+          // Start generating remaining cards in background (non-blocking)
+          generateRemainingCards();
+        }
+      } else {
+        // No tasks or error - show page anyway
+        setLoading(false);
+        if (onReady) {
+          onReady();
+        }
       }
     } catch (error) {
       console.error('Failed to load tasks:', error);
       setLoading(false);
-      // Still call onReady immediately even if there's an error so page can render
+      // Still call onReady even if there's an error so page can render
       if (onReady) {
         onReady();
       }
@@ -581,25 +700,67 @@ export default function CircularTaskGallery({ userId, onReady }: CircularTaskGal
         {/* CircularGallery Container - Fixed height to prevent layout shifts */}
         {/* Always render container with fixed height, show placeholder when empty */}
         <div style={{ height: '350px', position: 'relative', width: '100%', overflow: 'visible', minHeight: '350px' }}>
-          {stableGalleryItems.length > 0 ? (
-            <CircularGallery
-              items={stableGalleryItems} // Items are already filtered and verified - no empty images
-              bend={2}
-              textColor="#ffffff"
-              borderRadius={0.08}
-              scrollSpeed={3}
-              scrollEase={0.08}
-              onSelect={handleCardSelect}
-            />
-          ) : (
-            // Placeholder while cards are loading - maintains fixed height
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-2xl mb-2 animate-pulse">✨</div>
-                <div className="text-sm text-gray-500">Loading cards...</div>
+          {/* Render CircularGallery with smooth fade-in animation */}
+          {(() => {
+            // CRITICAL: Only render CircularGallery when cache is populated
+            // This prevents mounting with empty items then remounting (which causes blink)
+            const cacheReady = hasInitialItemsRef.current && stableItemsCacheRef.current.length > 0;
+            
+            if (!cacheReady && stableGalleryItems.length === 0) {
+              return (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-2xl mb-2 animate-pulse">✨</div>
+                    <div className="text-sm text-gray-500">Loading cards...</div>
+                  </div>
+                </div>
+              );
+            }
+            
+            // ALWAYS use cache reference when available - it's the source of truth
+            // This ensures CircularGallery gets the EXACT SAME array reference every time
+            const itemsToRender = stableItemsCacheRef.current.length > 0
+              ? stableItemsCacheRef.current  // ALWAYS use cache - same reference prevents remount
+              : stableGalleryItems.length > 0 
+                  ? stableGalleryItems 
+                  : [];
+            
+            if (itemsToRender.length === 0) {
+              return (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-2xl mb-2 animate-pulse">✨</div>
+                    <div className="text-sm text-gray-500">Loading cards...</div>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Use a completely stable key that never changes for initial items
+            // CircularGallery now compares by content, so key is mainly for React reconciliation
+            const stableKey = lastItemsKeyRef.current || 'gallery-initial';
+            
+            return (
+              <div
+                key={stableKey}
+                className="gallery-fade-in"
+                style={{
+                  width: '100%',
+                  height: '100%'
+                }}
+              >
+                <CircularGallery
+                  items={itemsToRender}
+                  bend={2}
+                  textColor="#ffffff"
+                  borderRadius={0.08}
+                  scrollSpeed={3}
+                  scrollEase={0.08}
+                  onSelect={handleCardSelect}
+                />
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
     </div>

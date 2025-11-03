@@ -26,21 +26,31 @@ from ace_memory_store import Neo4jMemoryStore
 _ACE_CACHE: Dict[str, Dict[str, Any]] = {}
 
 
-def _sanitize_key(value: str) -> str:
-    return re.sub(r"[^a-zA-Z0-9._-]", "_", value)
+def _extract_retrieval_facets(message: str, scratch: Dict[str, Any]) -> Dict[str, Any]:
+    facets: Dict[str, Any] = {}
+    lowered = (message or "").lower()
 
+    if any(token in lowered for token in ("visual", "diagram", "picture", "draw", "show me")):
+        facets["needs_visual"] = True
 
-def _memory_file_for(key: str) -> str:
-    """Compute a per-learner memory file path for local fallback."""
-    base = Path(os.getenv("ACE_MEMORY_FILE", "ace_memory.json"))
-    if key == "global":
-        return str(base)
-    sanitized = _sanitize_key(key)
-    suffix = base.suffix or ".json"
-    stem = base.stem or "ace_memory"
-    directory = base.parent
-    filename = f"{stem}_{sanitized}{suffix}"
-    return str(directory / filename)
+    persona = scratch.get("persona_request") or scratch.get("voice")
+    if persona:
+        facets["persona_request"] = str(persona).lower()
+
+    fractions = re.findall(r"\d+\s*/\s*\d+", message or "")
+    if fractions:
+        facets["fractions"] = [f.replace(" ", "") for f in fractions]
+
+    if "next step" in lowered or ("step" in lowered and "what" in lowered):
+        facets["next_step_flag"] = True
+
+    if any(phrase in lowered for phrase in ("too big", "big denominator", "large denominator", "denominator so big", "lcd too big")):
+        facets.setdefault("misconceptions", []).append("lcd_too_big")
+
+    if "add numerator" in lowered and "denominator" in lowered:
+        facets.setdefault("misconceptions", []).append("add_tops_bottoms")
+
+    return facets
 
 
 def _infer_topic(question: str) -> Optional[str]:
@@ -72,19 +82,19 @@ def get_ace_system(learner_id: Optional[str] = None):
 
     memory = entry.get("memory")
     if memory is None:
-        storage = None
-        if learner_id:
-            try:
-                storage = Neo4jMemoryStore(learner_id)
-            except Exception as exc:
-                print(
-                    f"[ACE Memory] Warning: Neo4j storage unavailable for learner={learner_id}: {exc}",
-                    flush=True,
-                )
-                storage = None
-        memory_file = _memory_file_for(key)
+        # Require Neo4j storage for all learners
+        if not learner_id:
+            raise ValueError("[ACE Memory] Error: learner_id is required for memory storage")
+
+        try:
+            storage = Neo4jMemoryStore(learner_id)
+        except Exception as exc:
+            raise RuntimeError(
+                f"[ACE Memory] CRITICAL: Neo4j storage initialization failed for learner={learner_id}. "
+                f"Error: {exc}. Please check Neo4j credentials and connection."
+            )
+
         memory = ACEMemory(
-            memory_file=memory_file,
             max_bullets=100,
             dedup_threshold=0.85,
             prune_threshold=0.3,
@@ -115,8 +125,10 @@ def router_node(state: GraphState) -> GraphState:
         return state
 
     scratch = state.setdefault("scratch", {})
-    user_text = " ".join([m.get("content", "") for m in state.get("messages", []) if m.get("role") == "user"])
-    normalized_text = user_text.lower()
+    user_messages = [m.get("content", "") for m in state.get("messages", []) if m.get("role") == "user"]
+    user_text = user_messages[-1] if user_messages else ""
+    full_user_text = " ".join(user_messages)
+    normalized_text = full_user_text.lower()
     learner_id = scratch.get("learner_id")
     topic = scratch.get("topic") or _infer_topic(user_text)
     if topic:
@@ -126,16 +138,22 @@ def router_node(state: GraphState) -> GraphState:
     # Get ACE memory for context-aware routing
     memory, _ = get_ace_system(learner_id)
     if not scratch.get("_ace_memory_loaded"):
-        memory.reload_from_storage()
+        if not memory.consume_fresh_init_flag():
+            memory.reload_from_storage()
         scratch["_ace_memory_loaded"] = True
         state["scratch"] = scratch
 
     # Retrieve relevant bullets to inform routing decision
+    retrieval_facets = _extract_retrieval_facets(user_text, scratch)
+    scratch["ace_retrieval_facets"] = retrieval_facets
+    state["scratch"] = scratch
+
     relevant_bullets = memory.retrieve_relevant_bullets(
         user_text,
         top_k=5,
         learner_id=learner_id,
         topic=topic,
+        facets=retrieval_facets,
     )
 
     # Store bullets in scratch for use by other nodes
@@ -145,10 +163,10 @@ def router_node(state: GraphState) -> GraphState:
     if any(w in normalized_text for w in ["chapter", "unit", "textbook", "quiz", "user", "session", "group", "message", "database", "graph"]):
         state["mode"] = "react"
     # Check for calculator needs
-    elif any(w in normalized_text for w in ["calculate", "sum", "difference", "product", "ratio", "percent", "%", "number"]):
+    elif any(w in normalized_text for w in ["calculate", "sum", "difference", "product", "ratio", "percent", "%", "number", "verify", "double check", "make sure", "confirm", "check if"]):
         state["mode"] = "react"
     # Check for web search needs
-    elif any(w in normalized_text for w in ["search", "web", "internet", "current", "latest", "trending", "news"]):
+    elif any(w in normalized_text for w in ["search", "web", "internet", "current", "latest", "trending", "news", "online", "look up", "find out", "recent", "today"]):
         state["mode"] = "react"
     # Check for tree-of-thought needs
     elif any(w in normalized_text for w in ["plan", "options", "steps", "strategy", "search space"]):
@@ -196,16 +214,23 @@ def solver_node_with_ace(state: GraphState) -> GraphState:
 
     # Get the user question
     user_messages = [m.get("content", "") for m in state.get("messages", []) if m.get("role") == "user"]
-    question = " ".join(user_messages)
+    question = user_messages[-1] if user_messages else ""
+    full_question = " ".join(user_messages)
 
     learner_id = scratch.get("learner_id")
     topic = scratch.get("topic") or _infer_topic(question)
     if topic and scratch.get("topic") != topic:
         scratch["topic"] = topic
         state["scratch"] = scratch
-    
+
     # Get ACE system
     memory, pipeline = get_ace_system(learner_id)
+
+    facets = scratch.get("ace_retrieval_facets") or _extract_retrieval_facets(question, scratch)
+    scratch["ace_retrieval_facets"] = facets
+    scratch["ace_full_question"] = full_question
+    scratch["ace_latest_question"] = question
+    state["scratch"] = scratch
 
     # Enrich messages with ACE context if enabled
     if scratch.get("use_ace_context", True):
@@ -214,6 +239,7 @@ def solver_node_with_ace(state: GraphState) -> GraphState:
             top_k=10,
             learner_id=learner_id,
             topic=topic,
+            facets=facets,
         )
         if retrieved_bullets:
             print(
@@ -310,7 +336,7 @@ def ace_learning_node(state: GraphState) -> GraphState:
         learner_id = scratch.get("learner_id")
         
         user_messages = [m.get("content", "") for m in messages if m.get("role") == "user"]
-        question = " ".join(user_messages).strip()
+        question = scratch.get("ace_full_question") or " ".join(user_messages).strip()
         
         model_answer = result.get("answer", "")
         

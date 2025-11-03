@@ -874,6 +874,15 @@ interface CircularGalleryProps {
   onSelect?: (item: GalleryItem, index: number) => void;
 }
 
+// Helper function to compare items by content (image URLs) instead of reference
+function itemsEqual(items1: GalleryItem[], items2: GalleryItem[]): boolean {
+  if (items1.length !== items2.length) return false;
+  return items1.every((item1, index) => {
+    const item2 = items2[index];
+    return item1.image === item2.image && item1.text === item2.text;
+  });
+}
+
 export default function CircularGallery({
   items,
   bend = 3,
@@ -885,8 +894,25 @@ export default function CircularGallery({
   onSelect
 }: CircularGalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const appRef = useRef<App | null>(null);
+  const previousItemsRef = useRef<GalleryItem[]>([]);
+  
   useEffect(() => {
     if (!containerRef.current) return;
+    
+    // Only create new App if items actually changed (by content, not reference)
+    // This prevents unnecessary remounts when items array reference changes but content is the same
+    if (appRef.current && itemsEqual(previousItemsRef.current, items)) {
+      // Items haven't changed by content - don't remount
+      return;
+    }
+    
+    // Items changed or first mount - create/recreate App
+    if (appRef.current) {
+      appRef.current.destroy();
+      appRef.current = null;
+    }
+    
     const app = new App(containerRef.current, {
       items,
       bend,
@@ -897,10 +923,18 @@ export default function CircularGallery({
       scrollEase,
       onSelect
     });
+    
+    appRef.current = app;
+    previousItemsRef.current = items;
+    
     return () => {
-      app.destroy();
+      if (appRef.current) {
+        appRef.current.destroy();
+        appRef.current = null;
+      }
     };
   }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase, onSelect]);
+  
   return <div className="w-full h-full overflow-visible cursor-grab active:cursor-grabbing" ref={containerRef} />;
 }
 

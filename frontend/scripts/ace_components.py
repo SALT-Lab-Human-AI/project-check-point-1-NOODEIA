@@ -207,6 +207,71 @@ class Curator:
                 seen.add(slug)
         return normalised
 
+    def _derive_supporting_bullets(
+        self,
+        content: str,
+        normalized_tags: List[str],
+        learner_id: Optional[str],
+        topic: Optional[str],
+    ) -> List[Bullet]:
+        extras: List[Bullet] = []
+        lower = content.lower()
+        fractions = re.findall(r"\d+\s*/\s*\d+", content)
+
+        if topic == "fraction_addition" and fractions:
+            cleaned = [f.replace(" ", "") for f in fractions]
+            state_summary = (
+                "State: fraction addition in progress with "
+                + ", ".join(cleaned)
+                + ". Convert each fraction to the shared denominator and reassure the learner that large denominators like 105 are normal."
+            )
+            tags = self._normalise_tags(["state", "step_tracking", topic or ""] + normalized_tags)
+            extras.append(
+                Bullet(
+                    id="",
+                    content=state_summary,
+                    tags=tags,
+                    helpful_count=1,
+                    learner_id=learner_id,
+                    topic=topic,
+                    memory_type="procedural",
+                    ttl_days=7,
+                )
+            )
+
+        if any(phrase in lower for phrase in ("too big", "big denominator", "large denominator", "lcd too big")):
+            tags = self._normalise_tags(["misconception", "lcd_too_big", topic or ""] + normalized_tags)
+            extras.append(
+                Bullet(
+                    id="",
+                    content="Misconception: learner worries the common denominator is too large; reinforce that matching large denominators is acceptable once numerators are scaled.",
+                    tags=tags,
+                    helpful_count=1,
+                    learner_id=learner_id,
+                    topic=topic,
+                    memory_type="episodic",
+                    ttl_days=14,
+                    concept="common_denominator",
+                )
+            )
+
+        if "add numerator" in lower and "denominator" in lower:
+            tags = self._normalise_tags(["misconception", "add_tops_bottoms", topic or ""] + normalized_tags)
+            extras.append(
+                Bullet(
+                    id="",
+                    content="Misconception: learner tries to add numerators and denominators directly; remind them to find a common denominator first before combining numerators.",
+                    tags=tags,
+                    helpful_count=1,
+                    learner_id=learner_id,
+                    topic=topic,
+                    memory_type="episodic",
+                    ttl_days=14,
+                )
+            )
+
+        return extras
+
     def _lessons_to_delta(
         self,
         lessons: List[Dict[str, Any]],
@@ -214,9 +279,7 @@ class Curator:
         topic: Optional[str] = None,
     ) -> DeltaUpdate:
         delta = DeltaUpdate()
-        max_new = int(os.getenv("ACE_CURATOR_MAX_NEW", "2"))
         similarity_threshold = float(os.getenv("ACE_CURATOR_SIMILARITY", "0.9"))
-        new_added = 0
         for idx, lesson in enumerate(lessons, 1):
             content = (lesson.get("content") or "").strip()
             if not content:
@@ -236,28 +299,6 @@ class Curator:
                     flush=True,
                 )
                 continue
-            if new_added >= max_new:
-                fallback_bullet, fallback_score = self.memory.find_similar_bullet(
-                    content,
-                    learner_id=learner_id,
-                    topic=topic,
-                    threshold=0.0,
-                    return_score=True,
-                )
-                if fallback_bullet:
-                    entry = delta.update_bullets.setdefault(fallback_bullet.id, {"helpful": 0, "harmful": 0})
-                    entry["helpful"] += 1
-                    print(
-                        f"[Curator][Heuristic ReinforceOverflow] id={fallback_bullet.id} "
-                        f"score={fallback_score:.3f} content={content}",
-                        flush=True,
-                    )
-                else:
-                    print(
-                        f"[Curator][Heuristic SkipOverflow] skipped content={content}",
-                        flush=True,
-                    )
-                continue
             tags = lesson.get("tags") or []
             ltype = lesson.get("type")
             if ltype:
@@ -269,10 +310,6 @@ class Curator:
             normalized_tags = self._normalise_tags(tags)
 
             helpful = 1
-            semantic_strength = helpful if memory_type == "semantic" else 0.0
-            episodic_strength = helpful if memory_type == "episodic" else 0.0
-            procedural_strength = helpful if memory_type == "procedural" else 0.0
-
             bullet = Bullet(
                 id="",
                 content=content,
@@ -282,16 +319,19 @@ class Curator:
                 topic=topic,
                 concept=concept,
                 memory_type=memory_type,
-                semantic_strength=float(semantic_strength),
-                episodic_strength=float(episodic_strength),
-                procedural_strength=float(procedural_strength),
             )
             delta.new_bullets.append(bullet)
             print(
                 f"[Curator][Heuristic New {idx}] type={memory_type} tags={normalized_tags} content={content}",
                 flush=True,
             )
-            new_added += 1
+            supporting = self._derive_supporting_bullets(content, normalized_tags, learner_id, topic)
+            for extra_idx, supplemental in enumerate(supporting, 1):
+                delta.new_bullets.append(supplemental)
+                print(
+                    f"[Curator][Heuristic Support {idx}.{extra_idx}] type={supplemental.memory_type} tags={supplemental.tags} content={supplemental.content}",
+                    flush=True,
+                )
         delta.metadata = {
             "reasoning": "heuristic_lessons_to_bullets",
             "num_lessons": len(lessons),

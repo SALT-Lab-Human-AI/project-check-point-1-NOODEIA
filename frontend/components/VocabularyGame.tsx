@@ -9,6 +9,7 @@ import {
   Zap,
   ArrowLeft
 } from 'lucide-react';
+import GamificationBar from './GamificationBar';
 
 // Vocabulary bank with emojis and definitions
 const vocabularyBank = [
@@ -100,7 +101,7 @@ const vocabularyBank = [
   { word: 'bag', emoji: '🎒', definition: 'What we carry our school things in' },
   { word: 'scissors', emoji: '✂️', definition: 'A tool we use to cut paper' },
   { word: 'ruler', emoji: '📏', definition: 'A tool we use to measure and draw straight lines' },
-  { word: 'glue', emoji: '🖇️', definition: 'What we use to stick things together' },
+  { word: 'pin', emoji: '🖇️', definition: 'A tool we use to clip papers together' },
   { word: 'crayon', emoji: '🖍️', definition: 'A colorful stick we use to draw' },
   { word: 'bell', emoji: '🔔', definition: 'What rings at school to tell us about time' },
 
@@ -155,6 +156,32 @@ export default function VocabularyGame({
   // Game state
   const [gameMode, setGameMode] = useState<GameMode>('menu');
   const [showTryAgain, setShowTryAgain] = useState(false);
+  
+  // Fetch user data on mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user?.id) {
+          const response = await fetch(`/api/user/xp?userId=${session.user.id}`);
+          if (response.ok) {
+            const userData = await response.json();
+            setCurrentUser({
+              id: userData.id,
+              xp: userData.xp || 0,
+              level: userData.level || 1
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
 
   // Word Match state
   const [matchWords, setMatchWords] = useState<MatchItem[]>([]);
@@ -167,6 +194,7 @@ export default function VocabularyGame({
   const [currentSpellingWord, setCurrentSpellingWord] = useState<MatchItem | null>(null);
   const [spellingInput, setSpellingInput] = useState('');
   const [spellingFeedback, setSpellingFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const [spellingHint, setSpellingHint] = useState('');
 
   // Memory Cards state
   const [memoryCards, setMemoryCards] = useState<MemoryCard[]>([]);
@@ -177,10 +205,32 @@ export default function VocabularyGame({
   const [builderWord, setBuilderWord] = useState<MatchItem | null>(null);
   const [availableLetters, setAvailableLetters] = useState<string[]>([]);
   const [placedLetters, setPlacedLetters] = useState<string[]>([]);
+  const [builderFeedback, setBuilderFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const [builderHint, setBuilderHint] = useState('');
 
   // XP Animation state
   const [showXPAnimation, setShowXPAnimation] = useState(false);
   const [xpGained, setXpGained] = useState(0);
+  
+  // User data for XP bar
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [xpGain, setXpGain] = useState(0);
+  const [xpUpdateKey, setXpUpdateKey] = useState(0);
+
+  // Helper function to get ordinal suffix (1st, 2nd, 3rd, etc.)
+  const getOrdinal = (n: number): string => {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
+  // Helper function to generate hint with random character position
+  const generateHint = (correctWord: string): string => {
+    const randomIndex = Math.floor(Math.random() * correctWord.length);
+    const position = randomIndex + 1; // Convert 0-based to 1-based
+    const ordinal = getOrdinal(position);
+    return `The ${ordinal} character of this word is "${correctWord[randomIndex]}"`;
+  };
 
   // Enhanced celebration effect with massive confetti
   const triggerConfetti = () => {
@@ -244,6 +294,15 @@ export default function VocabularyGame({
       if (response.ok) {
         const data = await response.json();
         console.log(`✅ Awarded ${xpAmount} XP! Total: ${data.xp} XP, Level: ${data.level}`);
+        
+        // Update user data and trigger XP bar update
+        setCurrentUser((prev: any) => ({
+          ...prev,
+          xp: data.xp,
+          level: data.level
+        }));
+        setXpGain(xpAmount);
+        setXpUpdateKey(prev => prev + 1); // Trigger GamificationBar update
       }
     } catch (error) {
       console.error('Failed to award XP:', error);
@@ -269,6 +328,7 @@ export default function VocabularyGame({
     setCurrentSpellingWord(randomWord);
     setSpellingInput('');
     setSpellingFeedback(null);
+    setSpellingHint(''); // Clear hint when starting new word
   };
 
   // Initialize Memory Cards game
@@ -322,6 +382,8 @@ export default function VocabularyGame({
     // Combine and shuffle all letters
     setAvailableLetters([...letters, ...extraLetters].sort(() => Math.random() - 0.5));
     setPlacedLetters([]);
+    setBuilderFeedback(null); // Clear feedback when starting new word
+    setBuilderHint(''); // Clear hint when starting new word
   };
 
   // Handle Word Match selection
@@ -345,7 +407,7 @@ export default function VocabularyGame({
       if (wordItem && emojiItem && wordItem.word === emojiItem.word) {
         // Correct match!
         setMatchedPairs([...matchedPairs, wordItem.word]);
-        const xpReward = Math.floor(Math.random() * 4) + 8; // 8-11 XP
+        const xpReward = Math.floor(Math.random() * 4) + 2; // 2-5 XP
         triggerConfetti();
         awardXP(xpReward);
 
@@ -379,14 +441,21 @@ export default function VocabularyGame({
       awardXP(xpReward);
       setTimeout(() => {
         initSpellingGame();
+        setSpellingHint(''); // Clear hint when moving to next word
       }, 1500);
     } else {
       setSpellingFeedback('incorrect');
+
+      // Generate a random hint for the correct word
+      const hint = generateHint(currentSpellingWord.word);
+      setSpellingHint(hint);
+
       setShowTryAgain(true);
       setTimeout(() => {
         setShowTryAgain(false);
         setSpellingFeedback(null);
         setSpellingInput('');
+        // Keep the hint visible - only clear when moving to next word
       }, 2000);
     }
   };
@@ -411,7 +480,7 @@ export default function VocabularyGame({
           setMemoryCards(updatedCards);
           setFlippedCards([]);
           setCanFlip(true);
-          const xpReward = Math.floor(Math.random() * 4) + 2; // 2-5 XP
+          const xpReward = Math.floor(Math.random() * 4) + 8; // 8-11 XP
           triggerConfetti();
           awardXP(xpReward);
 
@@ -446,16 +515,37 @@ export default function VocabularyGame({
     setAvailableLetters([...availableLetters, letter]);
   };
 
-  useEffect(() => {
-    if (builderWord && placedLetters.join('').toLowerCase() === builderWord.word.toLowerCase()) {
+  // Handle Word Builder submission
+  const handleBuilderSubmit = () => {
+    if (!builderWord) return;
+
+    const userWord = placedLetters.join('').toLowerCase();
+    const correctWord = builderWord.word.toLowerCase();
+
+    if (userWord === correctWord) {
+      setBuilderFeedback('correct');
       const xpReward = Math.floor(Math.random() * 4) + 14; // 14-17 XP
       triggerConfetti();
       awardXP(xpReward);
       setTimeout(() => {
         initWordBuilderGame();
+        setBuilderHint(''); // Clear hint when moving to next word
       }, 1500);
+    } else {
+      setBuilderFeedback('incorrect');
+
+      // Generate a random hint for the correct word
+      const hint = generateHint(builderWord.word);
+      setBuilderHint(hint);
+
+      setShowTryAgain(true);
+      setTimeout(() => {
+        setShowTryAgain(false);
+        setBuilderFeedback(null);
+        // Keep the hint visible - only clear when moving to next word
+      }, 2000);
     }
-  }, [placedLetters]);
+  };
 
   // Reset game
   const resetGame = () => {
@@ -528,7 +618,7 @@ export default function VocabularyGame({
                   <p className="text-purple-800 font-bold mb-4">Match words with emojis</p>
                   <div className="flex items-center gap-2 text-purple-700 text-sm font-bold">
                     <Award className="w-4 h-4" />
-                    <span>8-11 XP per match</span>
+                    <span>2-5 XP per match</span>
                   </div>
                 </div>
               </motion.div>
@@ -594,7 +684,7 @@ export default function VocabularyGame({
                   <p className="text-rose-800 font-bold mb-4">Find matching pairs</p>
                   <div className="flex items-center gap-2 text-rose-700 text-sm font-bold">
                     <Award className="w-4 h-4" />
-                    <span>2-5 XP per pair</span>
+                    <span>8-11 XP per pair</span>
                   </div>
                 </div>
               </motion.div>
@@ -643,9 +733,29 @@ export default function VocabularyGame({
               exit={{ opacity: 0, scale: 0.9 }}
               className="space-y-6"
             >
-              <div className="text-center mb-6">
-                <h2 className="text-3xl font-black text-purple-900 mb-2">Match Words & Emojis</h2>
-                <p className="text-gray-600 font-bold">Tap a word, then tap its matching emoji!</p>
+              {/* Header with Back Button and XP Bar */}
+              <div className="flex items-start justify-between mb-4 gap-4">
+                <button
+                  onClick={resetGame}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg glass-button glass-button-light text-gray-700 font-medium hover:bg-white/30 transition-all duration-300 flex-shrink-0"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  Game Menu
+                </button>
+                
+                {/* XP Bar - Top Right, doesn't block title */}
+                {currentUser && (
+                  <div className="w-64 flex-shrink-0">
+                    <GamificationBar
+                      currentUser={currentUser}
+                      xpGain={xpGain}
+                      key={xpUpdateKey}
+                      onLevelUp={(newLevel, oldLevel) => {
+                        console.log(`Level up! ${oldLevel} → ${newLevel}`);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -715,9 +825,29 @@ export default function VocabularyGame({
               exit={{ opacity: 0, scale: 0.9 }}
               className="max-w-2xl mx-auto"
             >
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-black text-yellow-900 mb-2">Spelling Bee</h2>
-                <p className="text-gray-600 font-bold">Type the correct spelling of the word!</p>
+              {/* Header with Back Button and XP Bar */}
+              <div className="flex items-start justify-between mb-4 gap-4">
+                <button
+                  onClick={resetGame}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg glass-button glass-button-light text-gray-700 font-medium hover:bg-white/30 transition-all duration-300 flex-shrink-0"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  Game Menu
+                </button>
+                
+                {/* XP Bar - Top Right, doesn't block title */}
+                {currentUser && (
+                  <div className="w-64 flex-shrink-0">
+                    <GamificationBar
+                      currentUser={currentUser}
+                      xpGain={xpGain}
+                      key={xpUpdateKey}
+                      onLevelUp={(newLevel, oldLevel) => {
+                        console.log(`Level up! ${oldLevel} → ${newLevel}`);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               <motion.div
@@ -754,6 +884,29 @@ export default function VocabularyGame({
                   autoFocus
                 />
 
+                {/* Hint Box - Shows after wrong answer */}
+                <AnimatePresence>
+                  {spellingHint && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                      className="mt-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-4 border-2 border-purple-300"
+                      style={{
+                        boxShadow: '0 4px 12px rgba(168,85,247,0.3)',
+                      }}
+                    >
+                      <div className="text-center">
+                        <div className="text-sm font-black text-purple-900 mb-2">💡 Hint</div>
+                        <div className="text-lg font-bold text-purple-700">
+                          {spellingHint}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <motion.button
                   onClick={handleSpellingSubmit}
                   whileHover={{ scale: 1.05 }}
@@ -774,9 +927,29 @@ export default function VocabularyGame({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
             >
-              <div className="text-center mb-6">
-                <h2 className="text-3xl font-black text-pink-900 mb-2">Memory Cards</h2>
-                <p className="text-gray-600 font-bold">Find matching emoji pairs!</p>
+              {/* Header with Back Button and XP Bar */}
+              <div className="flex items-start justify-between mb-4 gap-4">
+                <button
+                  onClick={resetGame}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg glass-button glass-button-light text-gray-700 font-medium hover:bg-white/30 transition-all duration-300 flex-shrink-0"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  Game Menu
+                </button>
+                
+                {/* XP Bar - Top Right, doesn't block title */}
+                {currentUser && (
+                  <div className="w-64 flex-shrink-0">
+                    <GamificationBar
+                      currentUser={currentUser}
+                      xpGain={xpGain}
+                      key={xpUpdateKey}
+                      onLevelUp={(newLevel, oldLevel) => {
+                        console.log(`Level up! ${oldLevel} → ${newLevel}`);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
@@ -832,9 +1005,29 @@ export default function VocabularyGame({
               exit={{ opacity: 0, scale: 0.9 }}
               className="max-w-2xl mx-auto"
             >
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-black text-blue-900 mb-2">Word Builder</h2>
-                <p className="text-gray-600 font-bold">Build the word from the letters!</p>
+              {/* Header with Back Button and XP Bar */}
+              <div className="flex items-start justify-between mb-4 gap-4">
+                <button
+                  onClick={resetGame}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg glass-button glass-button-light text-gray-700 font-medium hover:bg-white/30 transition-all duration-300 flex-shrink-0"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  Game Menu
+                </button>
+                
+                {/* XP Bar - Top Right, doesn't block title */}
+                {currentUser && (
+                  <div className="w-64 flex-shrink-0">
+                    <GamificationBar
+                      currentUser={currentUser}
+                      xpGain={xpGain}
+                      key={xpUpdateKey}
+                      onLevelUp={(newLevel, oldLevel) => {
+                        console.log(`Level up! ${oldLevel} → ${newLevel}`);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               <motion.div
@@ -878,7 +1071,7 @@ export default function VocabularyGame({
               </div>
 
               {/* Available letters */}
-              <div className="flex flex-wrap gap-2 justify-center">
+              <div className="flex flex-wrap gap-2 justify-center mb-6">
                 {availableLetters.map((letter, index) => (
                   <motion.button
                     key={index}
@@ -891,6 +1084,42 @@ export default function VocabularyGame({
                   </motion.button>
                 ))}
               </div>
+
+              {/* Hint Box - Shows after wrong answer */}
+              <AnimatePresence>
+                {builderHint && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                    className="mb-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-4 border-2 border-purple-300"
+                    style={{
+                      boxShadow: '0 4px 12px rgba(168,85,247,0.3)',
+                    }}
+                  >
+                    <div className="text-center">
+                      <div className="text-sm font-black text-purple-900 mb-2">💡 Hint</div>
+                      <div className="text-lg font-bold text-purple-700">
+                        {builderHint}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Submit Button */}
+              <motion.button
+                onClick={handleBuilderSubmit}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                disabled={placedLetters.length === 0}
+                className={`w-full bg-gradient-to-br from-blue-400 to-cyan-600 text-white p-6 rounded-2xl font-black text-xl shadow-lg transition-all ${
+                  placedLetters.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {builderFeedback === 'correct' ? '✓ Correct!' : builderFeedback === 'incorrect' ? '✗ Try Again' : 'Check Answer'}
+              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>

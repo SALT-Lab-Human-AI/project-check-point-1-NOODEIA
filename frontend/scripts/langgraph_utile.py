@@ -375,26 +375,79 @@ class LLM:
 # Prompts are now imported from prompts/reasoning_prompts.py
 
 ######tools
+def _eval_node(node):
+    """
+    Recursively evaluate AST nodes with operator whitelist.
+    Only allows safe mathematical operations - no code execution.
+    """
+    import ast
+    import operator
+
+    # Safe operators whitelist
+    SAFE_OPERATORS = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.Pow: operator.pow,
+        ast.Mod: operator.mod,
+        ast.USub: operator.neg,  # Unary minus
+    }
+
+    if isinstance(node, ast.Constant):  # Python 3.8+
+        return node.value
+    elif isinstance(node, ast.Num):  # Python 3.7 compatibility
+        return node.n
+    elif isinstance(node, ast.BinOp):
+        left = _eval_node(node.left)
+        right = _eval_node(node.right)
+        operator_func = SAFE_OPERATORS.get(type(node.op))
+        if operator_func is None:
+            raise ValueError(f"Unsupported operator: {type(node.op).__name__}")
+        return operator_func(left, right)
+    elif isinstance(node, ast.UnaryOp):
+        operand = _eval_node(node.operand)
+        operator_func = SAFE_OPERATORS.get(type(node.op))
+        if operator_func is None:
+            raise ValueError(f"Unsupported unary operator: {type(node.op).__name__}")
+        return operator_func(operand)
+    else:
+        raise ValueError(f"Unsupported expression node: {type(node).__name__}")
+
+
+def safe_eval_expression(expression: str) -> float:
+    """
+    Safely evaluate mathematical expressions using AST parsing.
+    Only allows numbers and basic arithmetic operators.
+    No code execution - just mathematical evaluation.
+    """
+    import ast
+
+    try:
+        node = ast.parse(expression, mode='eval').body
+        return _eval_node(node)
+    except Exception as e:
+        raise ValueError(f"Invalid expression: {e}")
+
+
 def _calculator_run(args: Dict[str, Any]) -> str:
     """
-    Simple calculator tool that evaluates mathematical expressions.
+    Safe calculator tool that evaluates mathematical expressions using AST parsing.
     Supports basic arithmetic operations: +, -, *, /, **, %, and parentheses.
+    NO eval() - completely safe from code injection.
     """
     expression = args.get("expression", "").strip()
     if not expression:
         return "Calculator error: missing 'expression'."
-    
+
     try:
-        # Sanitize the expression - only allow numbers, operators, and parentheses
-        allowed_chars = set("0123456789+-*/()%.** ")
-        if not all(c in allowed_chars for c in expression):
-            return f"Calculator error: Invalid characters in expression. Only numbers and operators (+, -, *, /, **, %, parentheses) are allowed."
-        
-        # Evaluate the expression safely
-        result = eval(expression, {"__builtins__": {}}, {})
+        # Use safe AST-based evaluation (no eval() vulnerability)
+        result = safe_eval_expression(expression)
         return json.dumps({"expression": expression, "result": result})
     except ZeroDivisionError:
         return "Calculator error: Division by zero."
+    except ValueError as e:
+        return f"Calculator error: {str(e)}"
     except Exception as e:
         return f"Calculator error: {str(e)}"
 

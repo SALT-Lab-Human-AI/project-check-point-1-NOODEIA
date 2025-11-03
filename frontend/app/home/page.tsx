@@ -28,11 +28,19 @@ export default function HomePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [galleryReady, setGalleryReady] = useState(false);
   const [showNavBar, setShowNavBar] = useState(false);
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  // Reset galleryReady when user changes
+  useEffect(() => {
+    if (user?.id) {
+      setGalleryReady(false);
+    }
+  }, [user?.id]);
 
   // Scroll detection for bottom nav
   useEffect(() => {
@@ -135,10 +143,10 @@ export default function HomePage() {
   };
 
 
-  // Only wait for auth - gallery loads progressively in background
+  // Wait for auth first
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 flex items-center justify-center" style={{ backgroundColor: '#fef3e2' }}>
         <div className="text-center">
           <div className="text-xl font-black text-gray-600 mb-2">Loading...</div>
           <div className="text-sm text-gray-500">Please wait</div>
@@ -149,6 +157,16 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 pb-24">
+      {/* Show loading overlay until first 3 cards are ready */}
+      {!galleryReady && (
+        <div className="fixed inset-0 bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 flex items-center justify-center z-50" style={{ backgroundColor: '#fef3e2' }}>
+          <div className="text-center">
+            <div className="text-xl font-black text-gray-600 mb-2">Loading...</div>
+            <div className="text-sm text-gray-500">Preparing your tasks</div>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="max-w-md mx-auto px-6 pt-8 mb-6">
         <div className="pl-4">
@@ -162,10 +180,13 @@ export default function HomePage() {
         </div>
 
         {/* Circular Task Gallery - Swipe through TODO and IN_PROGRESS tasks */}
-        <CircularTaskGallery 
-          userId={user?.id} 
-          onReady={() => {}} // Callback not needed - page already shown
-        />
+        {/* Render gallery immediately after auth so it can generate first 3 cards */}
+        {user?.id && (
+          <CircularTaskGallery 
+            userId={user.id} 
+            onReady={() => setGalleryReady(true)} // Signal when first 3 cards are ready
+          />
+        )}
 
         {/* Section Title */}
         <div className="mb-4">

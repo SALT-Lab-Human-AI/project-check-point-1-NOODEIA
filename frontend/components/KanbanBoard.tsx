@@ -85,29 +85,6 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [xpGain, setXpGain] = useState<number>(0);
   const [showXpAnimation, setShowXpAnimation] = useState(false);
-  const [newlyCreatedTasks, setNewlyCreatedTasks] = useState<Set<string>>(new Set());
-
-  // Load newly created tasks from localStorage on mount
-  useEffect(() => {
-    if (userId) {
-      const savedNewlyCreated = localStorage.getItem(`newly_created_tasks_${userId}`);
-      if (savedNewlyCreated) {
-        try {
-          const taskIds = JSON.parse(savedNewlyCreated);
-          setNewlyCreatedTasks(new Set(taskIds));
-        } catch (error) {
-          console.error('Failed to load newly created tasks:', error);
-        }
-      }
-    }
-  }, [userId]);
-
-  // Save newly created tasks to localStorage whenever they change
-  useEffect(() => {
-    if (userId && newlyCreatedTasks.size >= 0) {
-      localStorage.setItem(`newly_created_tasks_${userId}`, JSON.stringify([...newlyCreatedTasks]));
-    }
-  }, [newlyCreatedTasks, userId]);
 
   // Load theme
   useEffect(() => {
@@ -176,12 +153,12 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
           }
         });
 
-        setColumns(prevColumns =>
-          prevColumns.map(col => ({
+        setColumns(prevColumns => {
+          return prevColumns.map(col => ({
             ...col,
             tasks: columnMap[col.id] || []
-          }))
-        );
+          }));
+        });
       }
     } catch (error) {
       console.error('Failed to load tasks:', error);
@@ -200,6 +177,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
   };
 
   const handleDragEnd = () => {
+    // Clear drag state immediately to remove any glow effects
     setDraggedItem(null);
     setDropTarget(null);
   };
@@ -247,13 +225,6 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
           body: JSON.stringify({ status: targetColumnId, userId })
         });
 
-        // Remove glow effect when task is moved to different column
-        setNewlyCreatedTasks(prev => {
-          const updated = new Set(prev);
-          updated.delete(taskId);
-          return updated;
-        });
-
         // Award XP if moved to done
         if (targetColumnId === 'done') {
           await handleTaskComplete();
@@ -265,6 +236,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
       loadTasks();
     }
 
+    // Clear drag state immediately after drop
     setDraggedItem(null);
     setDropTarget(null);
   };
@@ -306,13 +278,6 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
       )
     );
 
-    // Remove glow effect when task is deleted
-    setNewlyCreatedTasks(prev => {
-      const updated = new Set(prev);
-      updated.delete(taskId);
-      return updated;
-    });
-
     try {
       await fetch(`/api/kanban/tasks/${taskId}`, {
         method: 'DELETE',
@@ -336,9 +301,6 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
       priority: newTaskPriority,
       createdAt: new Date().toISOString()
     };
-
-    // Mark as newly created for glowing effect
-    setNewlyCreatedTasks(prev => new Set(prev).add(tempId));
 
     // Optimistic add to "To Do" column
     setColumns(prevColumns =>
@@ -370,14 +332,6 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
       if (response.ok) {
         const { task } = await response.json();
 
-        // Update the newly created set with the real task ID
-        setNewlyCreatedTasks(prev => {
-          const updated = new Set(prev);
-          updated.delete(tempId);
-          updated.add(task.id);
-          return updated;
-        });
-
         // Replace temp task with real task
         setColumns(prevColumns =>
           prevColumns.map(col =>
@@ -386,17 +340,9 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
               : col
           )
         );
-
-        // Keep the glow effect - it will persist until task is moved or deleted
       }
     } catch (error) {
       console.error('Failed to create task:', error);
-      // Remove temp task on error
-      setNewlyCreatedTasks(prev => {
-        const updated = new Set(prev);
-        updated.delete(tempId);
-        return updated;
-      });
       setColumns(prevColumns =>
         prevColumns.map(col =>
           col.id === 'todo'
@@ -464,43 +410,38 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
               key={column.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ duration: 0 }}
               className="flex-shrink-0 w-96"
             >
               {/* Column Container with enhanced hover and drag state */}
               <motion.div
                 animate={{
                   scale: draggedItem && dropTarget?.columnId === column.id ? 1.02 : 1,
-                  boxShadow: draggedItem && dropTarget?.columnId === column.id
-                    ? '0 0 0 2px rgba(168,85,247,0.3), 0 8px 32px rgba(168,85,247,0.2), 0 16px 64px rgba(236,72,153,0.15)'
-                    : '0 4px 16px rgba(0,0,0,0.08)'
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
                 }}
                 transition={{
                   type: 'spring',
-                  stiffness: 400,
-                  damping: 25,
-                  mass: 0.8
+                  stiffness: 1000,
+                  damping: 20,
+                  mass: 0.3
                 }}
                 whileHover={{
                   scale: draggedItem ? 1 : 1.01,
-                  boxShadow: draggedItem ? undefined : '0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(168,85,247,0.1)',
+                  boxShadow: draggedItem ? undefined : '0 8px 24px rgba(0,0,0,0.12)',
                   transition: {
                     type: 'spring',
-                    stiffness: 500,
-                    damping: 30
+                    stiffness: 1000,
+                    damping: 20,
+                    duration: 0.1
                   }
                 }}
-                className={`flex flex-col h-[calc(100vh-320px)] bg-[var(--surface-1)] rounded-3xl border overflow-hidden ${
-                  draggedItem && dropTarget?.columnId === column.id
-                    ? 'border-purple-400'
-                    : 'border-[var(--surface-2-border)]'
-                }`}
+                className={`flex flex-col h-[calc(100vh-320px)] bg-[var(--surface-1)] rounded-3xl border overflow-hidden border-[var(--surface-2-border)]`}
               >
                 {/* Column Header with hover animation */}
                 <motion.div
                   whileHover={!draggedItem ? {
                     scale: 1.02,
-                    transition: { type: 'spring', stiffness: 500, damping: 20 }
+                    transition: { type: 'spring', stiffness: 1000, damping: 20, duration: 0.1 }
                   } : {}}
                   className={`bg-gradient-to-r ${column.color} p-4 flex items-center justify-between cursor-default`}
                 >
@@ -509,7 +450,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                       whileHover={{
                         rotate: [0, -10, 10, -5, 5, 0],
                         scale: 1.15,
-                        transition: { duration: 0.5 }
+                        transition: { duration: 0.15 }
                       }}
                       className="text-3xl inline-block"
                     >
@@ -531,7 +472,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                     whileHover={{
                       rotate: [0, 10, -10, 0],
                       scale: 1.2,
-                      transition: { duration: 0.4 }
+                      transition: { duration: 0.15 }
                     }}
                     className="text-2xl inline-block"
                   >
@@ -567,16 +508,16 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                         exit={{ opacity: 0, scale: 0.9 }}
                         transition={{
                           type: 'spring',
-                          stiffness: 400,
+                          stiffness: 1000,
                           damping: 20,
                           scale: draggedItem && dropTarget?.columnId === column.id ? {
                             repeat: Infinity,
-                            duration: 0.6,
+                            duration: 0.3,
                             ease: 'easeInOut'
                           } : undefined,
                           y: draggedItem && dropTarget?.columnId === column.id ? {
                             repeat: Infinity,
-                            duration: 0.6,
+                            duration: 0.3,
                             ease: 'easeInOut'
                           } : undefined
                         }}
@@ -593,7 +534,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                           }}
                           transition={draggedItem && dropTarget?.columnId === column.id ? {
                             repeat: Infinity,
-                            duration: 0.8,
+                            duration: 0.4,
                             ease: 'easeInOut'
                           } : undefined}
                           className="text-4xl mb-2 inline-block"
@@ -606,7 +547,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                           }}
                           transition={draggedItem && dropTarget?.columnId === column.id ? {
                             repeat: Infinity,
-                            duration: 0.8,
+                            duration: 0.4,
                             ease: 'easeInOut'
                           } : undefined}
                           className="text-sm text-center px-4 font-bold"
@@ -624,11 +565,10 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                       const isDone = column.id === 'done';
                       const isDropTarget = dropTarget?.columnId === column.id && dropTarget?.index === taskIndex;
                       const isDragging = draggedItem?.taskId === task.id;
-                      const isNewlyCreated = newlyCreatedTasks.has(task.id);
 
                       return (
                         <div key={task.id} className="relative">
-                          {/* Enhanced drop indicator with magnetic glow */}
+                          {/* Drop indicator */}
                           {isDropTarget && (
                             <motion.div
                               initial={{ scaleX: 0, opacity: 0, y: -10 }}
@@ -636,55 +576,15 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                                 scaleX: 1,
                                 opacity: 1,
                                 y: 0,
-                                scale: [1, 1.1, 1],
                               }}
                               exit={{ scaleX: 0, opacity: 0, y: 10 }}
                               transition={{
                                 type: 'spring',
-                                stiffness: 400,
+                                stiffness: 1000,
                                 damping: 20,
-                                scale: {
-                                  repeat: Infinity,
-                                  duration: 0.8,
-                                  ease: "easeInOut"
-                                }
+                                duration: 0.1
                               }}
-                              className="absolute -top-2 left-0 right-0 h-1.5 rounded-full z-10"
-                              style={{
-                                background: 'linear-gradient(90deg, rgba(168,85,247,0.8) 0%, rgba(236,72,153,1) 50%, rgba(168,85,247,0.8) 100%)',
-                                boxShadow: '0 0 20px rgba(168, 85, 247, 0.8), 0 0 40px rgba(236, 72, 153, 0.6), 0 0 60px rgba(168, 85, 247, 0.4)',
-                                filter: 'blur(0.5px)'
-                              }}
-                            />
-                          )}
-
-                          {/* Glowing indicator for newly created tasks */}
-                          {isNewlyCreated && !isDropTarget && (
-                            <motion.div
-                              initial={{ scaleX: 0, opacity: 0, y: -10 }}
-                              animate={{
-                                scaleX: 1,
-                                opacity: 1,
-                                y: 0,
-                                scale: [1, 1.1, 1],
-                              }}
-                              exit={{ scaleX: 0, opacity: 0, y: 10 }}
-                              transition={{
-                                type: 'spring',
-                                stiffness: 400,
-                                damping: 20,
-                                scale: {
-                                  repeat: Infinity,
-                                  duration: 0.8,
-                                  ease: "easeInOut"
-                                }
-                              }}
-                              className="absolute -top-2 left-0 right-0 h-1.5 rounded-full z-10"
-                              style={{
-                                background: 'linear-gradient(90deg, rgba(168,85,247,0.8) 0%, rgba(236,72,153,1) 50%, rgba(168,85,247,0.8) 100%)',
-                                boxShadow: '0 0 20px rgba(168, 85, 247, 0.8), 0 0 40px rgba(236, 72, 153, 0.6), 0 0 60px rgba(168, 85, 247, 0.4)',
-                                filter: 'blur(0.5px)'
-                              }}
+                              className="absolute -top-2 left-0 right-0 h-1 bg-gray-300 rounded-full z-10"
                             />
                           )}
 
@@ -693,59 +593,67 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                             layoutId={task.id}
                             initial={{ opacity: 0, scale: 0.8, y: 20 }}
                             animate={{
-                              opacity: isDragging ? 0.4 : 1,
-                              scale: isDragging ? 0.92 : [1, 1.02, 1],
+                              opacity: isDragging ? 0.5 : 1,
+                              scale: isDragging ? 0.95 : 1,
                               y: 0,
-                              rotateZ: isDragging ? 8 : 0,
-                              rotateX: isDragging ? 5 : 0,
+                              rotateZ: isDragging ? 2 : 0,
+                              rotateX: isDragging ? 2 : 0,
                             }}
                             exit={{
                               opacity: 0,
                               scale: 0.7,
                               y: -30,
                               rotateZ: -10,
-                              transition: { duration: 0.15, ease: 'easeIn' }
+                              transition: { duration: 0.1, ease: 'easeIn' }
                             }}
                             transition={{
                               layout: {
                                 type: 'spring',
-                                stiffness: 500,
-                                damping: 35,
-                                mass: 0.8
+                                stiffness: 1000,
+                                damping: 25,
+                                mass: 0.2
                               },
                               default: {
                                 type: 'spring',
-                                stiffness: 400,
-                                damping: 28,
-                                mass: 0.6
+                                stiffness: 1000,
+                                damping: 20,
+                                mass: 0.2
+                              },
+                              opacity: {
+                                duration: 0.08,
+                                ease: 'easeOut'
                               },
                               scale: {
-                                duration: 0.4,
-                                ease: 'easeOut',
-                                times: [0, 0.5, 1]
+                                duration: 0.08,
+                                ease: 'easeOut'
                               },
-                              delay: taskIndex * 0.03
+                              rotateZ: {
+                                duration: 0.08,
+                                ease: 'easeOut'
+                              },
+                              rotateX: {
+                                duration: 0.08,
+                                ease: 'easeOut'
+                              }
                             }}
-                            whileHover={!isDone ? {
-                              scale: 1.04,
-                              rotateZ: -1.5,
-                              y: -6,
-                              rotateY: 2,
+                            whileHover={!isDone && !isDragging ? {
+                              scale: 1.02,
+                              y: -2,
                               transition: {
                                 type: 'spring',
-                                stiffness: 500,
-                                damping: 22,
-                                mass: 0.5
+                                stiffness: 1000,
+                                damping: 20,
+                                mass: 0.2,
+                                duration: 0.1
                               }
                             } : {}}
                             whileTap={!isDone ? {
-                              scale: 0.96,
-                              rotateZ: 3,
+                              scale: 0.98,
                               transition: {
                                 type: 'spring',
-                                stiffness: 600,
+                                stiffness: 1200,
                                 damping: 25,
-                                duration: 0.1
+                                duration: 0.05
                               }
                             } : {}}
                             draggable={!isDone}
@@ -755,20 +663,20 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                               e.preventDefault();
                               handleDrop(column.id, taskIndex);
                             }}
-                            onDragEnd={handleDragEnd}
-                            className={`group bg-white/60 backdrop-blur-sm border rounded-2xl p-3 mb-2 transition-all duration-200 ${
+                            onDragEnd={(e) => {
+                              e.preventDefault();
+                              handleDragEnd();
+                            }}
+                            className={`group bg-white/60 backdrop-blur-sm border rounded-2xl p-3 mb-2 transition-all duration-75 ${
                               isDone
                                 ? 'opacity-70 cursor-default border-white/40'
                                 : isDragging
-                                ? 'cursor-grabbing border-purple-400 shadow-[0_20px_60px_rgba(168,85,247,0.5),0_0_0_2px_rgba(168,85,247,0.3),0_0_100px_rgba(236,72,153,0.3)]'
-                                : 'cursor-grab border-white/40 hover:border-purple-300 hover:shadow-[0_12px_32px_rgba(168,85,247,0.25),0_0_0_1px_rgba(168,85,247,0.15),0_0_80px_rgba(236,72,153,0.1)]'
+                                ? 'cursor-grabbing border-gray-300'
+                                : 'cursor-grab border-white/40 hover:border-gray-300'
                             }`}
                             style={{
                               transformStyle: 'preserve-3d',
-                              perspective: '1000px',
-                              boxShadow: isDragging
-                                ? '0 20px 60px rgba(168,85,247,0.5), 0 0 0 2px rgba(168,85,247,0.3), 0 0 100px rgba(236,72,153,0.3), inset 0 1px 0 rgba(255,255,255,0.3)'
-                                : undefined
+                              perspective: '1000px'
                             }}
                           >
                             <div className="flex items-start gap-2 mb-2">
@@ -783,7 +691,13 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                                 </h3>
                               </div>
                               {isDone ? (
-                                <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                <button
+                                  onClick={() => handleDeleteTask(column.id, task.id)}
+                                  className="text-green-500 hover:text-green-600 transition-all duration-100 flex-shrink-0 hover:scale-110 active:scale-95"
+                                  title="Delete task"
+                                >
+                                  <CheckCircle2 className="w-4 h-4" />
+                                </button>
                               ) : (
                                 <button
                                   onClick={() => handleDeleteTask(column.id, task.id)}
@@ -819,7 +733,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 48 }}
                         exit={{ opacity: 0, height: 0 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                        transition={{ type: 'spring', stiffness: 1000, damping: 20, duration: 0.1 }}
                         onDragOver={(e) => handleDragOver(e, column.id, column.tasks.length)}
                         onDrop={() => handleDrop(column.id, column.tasks.length)}
                         className={`rounded-xl border-2 border-dashed transition-all flex items-center justify-center ${
@@ -967,7 +881,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
             initial={{ opacity: 0, scale: 0.5, y: 0 }}
             animate={{ opacity: 1, scale: 1, y: -40 }}
             exit={{ opacity: 0, scale: 0.3, y: -80 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            transition={{ type: 'spring', stiffness: 1000, damping: 20, duration: 0.1 }}
             className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
           >
             <div
@@ -986,7 +900,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
 
       {/* Bottom Navigation Bar */}
       <div
-        className={`fixed bottom-0 left-0 right-0 pb-safe z-50 transition-all duration-300 ${
+        className={`fixed bottom-0 left-0 right-0 pb-safe z-50 transition-all duration-150 ${
           showNavBar ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
         }`}
       >
@@ -997,7 +911,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
             <div className="relative flex items-center justify-around px-4 py-2.5">
               <button
                 onClick={() => router.push('/home')}
-                className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
+                className="relative flex flex-col items-center gap-1 transition-all duration-100 group"
               >
                 <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">
                   <Home size={18} className="text-gray-500 group-active:text-gray-700 transition-colors" />
@@ -1007,7 +921,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
 
               <button
                 onClick={() => router.push('/todo')}
-                className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
+                className="relative flex flex-col items-center gap-1 transition-all duration-100 group"
               >
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-pink-100/40 to-pink-200/40 rounded-xl blur-md opacity-50 group-active:opacity-70 transition-opacity" />
@@ -1020,7 +934,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
 
               <button
                 onClick={() => router.push('/achievements')}
-                className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
+                className="relative flex flex-col items-center gap-1 transition-all duration-100 group"
               >
                 <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">
                   <Trophy size={18} className="text-gray-500 group-active:text-gray-700 transition-colors" />
@@ -1030,7 +944,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
 
               <button
                 onClick={() => router.push('/settings')}
-                className="relative flex flex-col items-center gap-1 transition-all duration-300 group"
+                className="relative flex flex-col items-center gap-1 transition-all duration-100 group"
               >
                 <div className="relative p-2 rounded-xl transform group-active:scale-95 transition-all group-hover:bg-gray-100/50">
                   <User size={18} className="text-gray-500 group-active:text-gray-700 transition-colors" />
