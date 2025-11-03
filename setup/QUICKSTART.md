@@ -72,33 +72,33 @@ Open the AI assistant, ask a question, and inspect the network response—`metad
 
 ---
 
-## 5. Inspect Learned Memory
+## 5. Inspect Learned Memory (Neo4j)
+
+Each learner’s playbook now lives in Neo4j. To inspect it, supply the learner
+ID (Supabase `user.id`) either via the `--learner` flag or the
+`ACE_ANALYZE_LEARNER_ID` environment variable.
 
 ```bash
 cd frontend/scripts
-python3 analyze_ace_memory.py                     # overview
-python3 analyze_ace_memory.py search "division"
-python3 analyze_ace_memory.py export
-python3 analyze_ace_memory.py interactive
+# Example with explicit learner id
+python3 analyze_ace_memory.py --learner abcd-1234
+python3 analyze_ace_memory.py search "division" --learner abcd-1234
+python3 analyze_ace_memory.py export --learner abcd-1234
+python3 analyze_ace_memory.py cleanup --learner abcd-1234 --dry-run
 ```
 
-The file `frontend/scripts/ace_memory.json` is created automatically on the first successful invocation.
+`analyze_ace_memory.py` connects to Neo4j using the same environment variables
+(`NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`).
 
 ---
 
 ## 6. Reset or Tune Memory
 
-```python
-from ace_memory import ACEMemory
-mem = ACEMemory(memory_file="frontend/scripts/ace_memory.json")
-mem.clear()   # wipe learned bullets
-```
-
-Tune parameters by editing the `ACEMemory(...)` call in `frontend/scripts/langgraph_agent_ace.py`:
+Memory snapshots are stored per learner in Neo4j. To clear or tune settings,
+modify the `ACEMemory(...)` constructor in `frontend/scripts/langgraph_agent_ace.py`:
 
 ```python
 ACEMemory(
-    memory_file="ace_memory.json",
     max_bullets=100,
     dedup_threshold=0.85,
     prune_threshold=0.3,
@@ -109,6 +109,16 @@ ACEMemory(
 - Raise `dedup_threshold` to merge bullets more aggressively.
 - Raise `prune_threshold` to discard middling strategies faster.
 
+To wipe a learner’s memory, you can run a simple script:
+
+```python
+from ace_memory import ACEMemory
+from ace_memory_store import Neo4jMemoryStore
+
+mem = ACEMemory(storage=Neo4jMemoryStore("abcd-1234"))
+mem.clear()
+```
+
 ---
 
 ## 7. Troubleshooting Cheat Sheet
@@ -117,7 +127,6 @@ ACEMemory(
 |-------|-----|
 | `GEMINI_API_KEY not configured` | Export the key in the same shell before running any Python scripts or the dev server. |
 | `/api/ai/chat` returns 500 | The JSON body now contains the detailed error from the Python runner (`metadata.error`). |
-| No `ace_memory.json` | Run the CLI test once; the file is created on the first successful invocation. |
 | Dev server cannot start | Run Next.js outside the sandbox or choose an allowed port/host. |
 
-That’s all you need to get ACE working in this directory. Start with the CLI test, watch `ace_memory.json` grow, then plug it into any workflow that can hit `/api/ai/chat`.***
+That’s all you need to get ACE working in this directory. Start with the CLI test, inspect the learner’s Neo4j playbook with `analyze_ace_memory.py`, then plug the pipeline into any workflow that can hit `/api/ai/chat`.***

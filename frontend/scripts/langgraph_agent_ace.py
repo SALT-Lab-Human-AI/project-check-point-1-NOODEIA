@@ -489,5 +489,5 @@ if __name__ == "__main__":
     
     print("\n💡 Next Steps:")
     print("   1. Run more queries to build up memory")
-    print("   2. Examine ace_memory.json to see learned bullets")
+    print("   2. Run analyze_ace_memory.py --learner <id> to inspect learned bullets")
     print("   3. Try: python analyze_ace_memory.py")

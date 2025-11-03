@@ -213,17 +213,19 @@ class Curator:
         normalized_tags: List[str],
         learner_id: Optional[str],
         topic: Optional[str],
+        facets: Optional[Dict[str, Any]] = None,
     ) -> List[Bullet]:
         extras: List[Bullet] = []
         lower = content.lower()
-        fractions = re.findall(r"\d+\s*/\s*\d+", content)
+        facets = facets or {}
+        fractions = list(dict.fromkeys(facets.get("fractions") or re.findall(r"\d+\s*/\s*\d+", content)))
 
         if topic == "fraction_addition" and fractions:
-            cleaned = [f.replace(" ", "") for f in fractions]
+            cleaned = sorted({f.replace(" ", "") for f in fractions})
             state_summary = (
                 "State: fraction addition in progress with "
                 + ", ".join(cleaned)
-                + ". Convert each fraction to the shared denominator and reassure the learner that large denominators like 105 are normal."
+                + ". Convert each to the shared denominator and reassure the learner that large denominators are expected."
             )
             tags = self._normalise_tags(["state", "step_tracking", topic or ""] + normalized_tags)
             extras.append(
@@ -277,6 +279,7 @@ class Curator:
         lessons: List[Dict[str, Any]],
         learner_id: Optional[str] = None,
         topic: Optional[str] = None,
+        facets: Optional[Dict[str, Any]] = None,
     ) -> DeltaUpdate:
         delta = DeltaUpdate()
         similarity_threshold = float(os.getenv("ACE_CURATOR_SIMILARITY", "0.9"))
@@ -325,13 +328,28 @@ class Curator:
                 f"[Curator][Heuristic New {idx}] type={memory_type} tags={normalized_tags} content={content}",
                 flush=True,
             )
-            supporting = self._derive_supporting_bullets(content, normalized_tags, learner_id, topic)
+            supporting = self._derive_supporting_bullets(content, normalized_tags, learner_id, topic, facets)
             for extra_idx, supplemental in enumerate(supporting, 1):
-                delta.new_bullets.append(supplemental)
-                print(
-                    f"[Curator][Heuristic Support {idx}.{extra_idx}] type={supplemental.memory_type} tags={supplemental.tags} content={supplemental.content}",
-                    flush=True,
+                existing_support, score = self.memory.find_similar_bullet(
+                    supplemental.content,
+                    learner_id=learner_id,
+                    topic=topic,
+                    threshold=float(os.getenv("ACE_CURATOR_SUPPORT_SIMILARITY", "0.95")),
+                    return_score=True,
                 )
+                if existing_support:
+                    entry = delta.update_bullets.setdefault(existing_support.id, {"helpful": 0, "harmful": 0})
+                    entry["helpful"] += 1
+                    print(
+                        f"[Curator][Heuristic Support {idx}.{extra_idx}] reinforcing id={existing_support.id} score={score:.3f}",
+                        flush=True,
+                    )
+                else:
+                    delta.new_bullets.append(supplemental)
+                    print(
+                        f"[Curator][Heuristic Support {idx}.{extra_idx}] type={supplemental.memory_type} tags={supplemental.tags} content={supplemental.content}",
+                        flush=True,
+                    )
         delta.metadata = {
             "reasoning": "heuristic_lessons_to_bullets",
             "num_lessons": len(lessons),
@@ -348,6 +366,7 @@ class Curator:
         query: str,
         learner_id: Optional[str] = None,
         topic: Optional[str] = None,
+        facets: Optional[Dict[str, Any]] = None,
         **_: Any,
     ) -> DeltaUpdate:
         """
@@ -373,6 +392,7 @@ class Curator:
             top_k=10,
             learner_id=learner_id,
             topic=topic,
+            facets=facets,
         )
         current_bullets_str = "\n".join(
             f"ID: {b.id}\n{b.format_for_prompt()}\nType: {b.memory_type} | Learner: {b.learner_id} | Topic: {b.topic}"
@@ -387,7 +407,7 @@ class Curator:
         
         if not use_llm:
             print("[Curator] Using heuristic delta generation (LLM disabled).", flush=True)
-            delta = self._lessons_to_delta(lessons, learner_id=learner_id, topic=topic)
+            delta = self._lessons_to_delta(lessons, learner_id=learner_id, topic=topic, facets=facets)
             delta.metadata.update({
                 "reasoning": "heuristic_lessons_to_bullets",
                 "prompt": prompt,
@@ -440,7 +460,7 @@ class Curator:
 
         if not delta_data:
             print("[Curator] Falling back to deterministic delta generation", flush=True)
-            fallback = self._lessons_to_delta(lessons, learner_id=learner_id, topic=topic)
+            fallback = self._lessons_to_delta(lessons, learner_id=learner_id, topic=topic, facets=facets)
             fallback.metadata.update({
                 "reasoning": "fallback_from_unparsed_curator",
                 "num_lessons": len(lessons),
@@ -593,7 +613,8 @@ class ACEPipeline:
 
         # Step 2: Curator creates delta update
         print("[ACE Pipeline] Step 2: Curating delta update...")
-        delta = self.curator.curate(lessons, trace.question, learner_id=learner_id, topic=topic)
+        facets = scratch_state.get("ace_retrieval_facets") if isinstance(scratch_state, dict) else None
+        delta = self.curator.curate(lessons, trace.question, learner_id=learner_id, topic=topic, facets=facets)
 
         print(f"[ACE Pipeline] Created delta: {len(delta.new_bullets)} new, "
               f"{len(delta.update_bullets)} updates, {len(delta.remove_bullets)} removals")

@@ -163,10 +163,10 @@ LIMIT 10
 **Steps:**
 1. Have a multi-turn conversation (3+ messages)
 2. Ask about a topic the AI hasn't seen before
-3. Check if memory is updated in `frontend/scripts/ace_memory.json`
+3. Inspect the learner's `AceMemoryState` in Neo4j (run `python3 analyze_ace_memory.py --learner <id>`)
 
 **Expected Outcome:**
-- ✅ `ace_memory.json` file exists and grows
+- ✅ Neo4j playbook shows new bullets for the learner
 - ✅ New bullets added to memory after conversation
 - ✅ Bullets have relevant tags
 - ✅ Memory stays under 100 bullets (pruning works)
@@ -834,7 +834,7 @@ The verify_all.sh script ensures that when users interact with the AI:
 
 **Steps:**
 1. Have 50+ conversations with AI
-2. Check `frontend/scripts/ace_memory.json`
+2. Inspect the learner's `AceMemoryState` via `analyze_ace_memory.py --learner <id>`
 3. Verify pruning mechanism
 
 **Expected Outcome:**

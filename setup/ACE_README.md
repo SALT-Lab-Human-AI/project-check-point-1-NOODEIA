@@ -150,6 +150,61 @@ LTMBSE ACE Framework (Proposed Method)
                                   +------------------------+
 ```
 
+### Detailed Workflow (End-to-End)
+
+```text
+1. User → Frontend Composer
+   → Student types a prompt in the Next.js /ai page and clicks send.
+   → The browser issues POST /api/ai/chat with { message, conversationId?, history[] } and the Supabase session token.
+
+2. Route Handler → Auth & Context Build
+   → /api/ai/chat validates the bearer token with Supabase; `user.id` becomes `learner_id`.
+   → If `conversationId` is present, the handler verifies ownership against Neo4j (Session node).
+   → Builds the prompt array: system message + historical turns + current user input.
+   → Assembles `scratch = { learner_id, conversation_id }` and launches `scripts/run_ace_agent.py` via `spawn`.
+
+3. Python Runner → LangGraph Initialisation
+   → Normalises messages, adds `ace_online_learning = True`, and logs `[ACE Runner] …` events.
+   → Calls `build_ace_graph()` to wire router → planner → solver → critic → ace_learning.
+   → Passes `{messages, scratch, mode?, result?}` into the LangGraph state machine.
+
+4. Router Node → Mode Selection + Memory Boot
+   → Reads the latest user turn; infers topic (e.g., `fraction_addition`).
+   → Looks up `ACEMemory` / `ACEPipeline` for `learner_id`. First load hits Neo4j; subsequent turns reuse the cache.
+   → Extracts retrieval facets (needs_visual, persona, fraction list, misconceptions) from the message.
+   → Calls `memory.retrieve_relevant_bullets` with `(learner_id, topic, facets)`; saves bullets/facets on `scratch`.
+   → Chooses reasoning mode (CoT / ReAct / ToT) based on keywords and advances to the planner.
+
+5. Planner Node → Reasoning Parameters
+   → Sets breadth/depth/temperature defaults per mode.
+   → Flags `scratch.use_ace_context = True` so the solver injects memory context.
+
+6. Solver Node → Prompt Enrichment + Gemini Call
+   → Retrieves top-k bullets again (same facets) and logs `[ACE Memory][Inject] …` lines.
+   → Injects a formatted “Relevant Strategies and Lessons” block ahead of the system prompt or first user turn.
+   → Executes the chosen solver (CoT/ToT/ReAct) through Gemini; captures trace messages for learning.
+   → Stores the solver output in state for downstream nodes.
+
+7. Critic Node → Answer Sanitisation
+   → Strips internal scratchpads, extracts the final answer sentence, and normalises formatting.
+   → Updates `state.result.answer` for delivery to the runner.
+
+8. ACE Learning Node → Reflect → Curate → Apply
+   → Builds an `ExecutionTrace` (`question`, `answer`, `trace`, metadata including facets).
+   → Reflector extracts lessons (LLM JSON mode with retries; falls back heuristically if needed).
+   → Curator turns lessons into deltas, emitting supporting procedural/misconception bullets with the exact fractions while reinforcing existing entries when similar ones exist.
+   → `ACEMemory.apply_delta` merges or adds bullets, dedupes, prunes, updates decay counters, and saves back to Neo4j; logs each action.
+   → `scratch.ace_delta` records new/update/remove counts for logging.
+
+9. Python Runner → Response Emission
+   → Cleans the final answer (no stray numerals, ≤50 words), writes JSON `{ answer, mode, scratch }` to stdout.
+   → Logs `[ACE Runner] Invocation complete … | ace_delta=…` to stderr so the Next.js console shows the workflow.
+
+10. Route Handler → Frontend Delivery
+    → Forwards the runner’s JSON to the browser.
+    → UI renders the tutor’s reply; the terminal displays the full ACE trace for observability.
+```
+
 ## Current agent memory system
 
 Before ACE, the agent “memory” just appended every exchange to the prompt: the model re-read the entire conversation transcript on each turn. This yields short-lived context while the chat is active, but it comes with major limitations:
@@ -253,7 +308,14 @@ Where:
 * **Faceted retrieval** – Retrieval passes `(learner_id, topic)` as hard filters and composes facet keywords (visual hints, persona requests, fraction sets, misconceptions) from the latest user turn. Procedural memories are prioritised ahead of episodic and semantic notes, and facet matches add extra boost so student-specific state surfaces first.
 * **Decay configuration** – Override via constructor:
   ```python
-  memory = ACEMemory(decay_rates={"episodic": 0.08, "semantic": 0.005})
+  from ace_memory_store import Neo4jMemoryStore
+
+  # Storage is required (Nov 2, 2025 update)
+  storage = Neo4jMemoryStore(learner_id="user123")
+  memory = ACEMemory(
+      storage=storage,
+      decay_rates={"episodic": 0.08, "semantic": 0.005}
+  )
   ```
   Values are clamped to `[0.0, 1.0]`. Lower rates retain knowledge longer; higher rates forget faster.
 * **Default ordering** – During pruning bullets are ordered by the decay score and then `helpful_count` to resolve ties. Tag indices remain consistent when entries are removed.
@@ -459,7 +521,7 @@ def _preview(text: Any, limit: int = 120) -> str:
 
 | Area | ACE Framework | LTMBSE ACE Framework |
 |------|--------------------------|-------------------------------|
-| Storage | JSON file shared by all sessions | Per-learner `AceMemoryState` node in Neo4j; JSON fallback only in local dev |
+| Storage | JSON file shared by all sessions | Per-learner `AceMemoryState` node in Neo4j; **Neo4j required (JSON fallback removed Nov 2, 2025)** |
 | Memory load cadence | Reloaded on every access | Single reload per turn (`_ace_memory_loaded` guard) |
 | Dedup policy | Jaccard similarity kept first bullet it saw | Canonical survivor = highest helpful/ newest; merges transfer metadata and tags |
 | Bullet taxonomy | Tags often carried `semantic/episodic/procedural` simultaneously | `_sync_strengths` enforces one class; tags stripped of class keywords |
@@ -493,7 +555,7 @@ def _preview(text: Any, limit: int = 120) -> str:
 | Gemini + tool utilities | `frontend/scripts/langgraph_utile.py` |
 | Runner invoked by Next.js | `frontend/scripts/run_ace_agent.py` |
 | Memory analysis helpers | `frontend/scripts/analyze_ace_memory.py`, `compare_memory_systems.py`, `test_memory_comparison.py` |
-| Stored bullets (runtime) | `frontend/scripts/ace_memory.json` |
+| Stored bullets (runtime) | `AceMemoryState` nodes in Neo4j (see `ace_memory_store.py`) |
 
 These modules were sourced from `../ace memory` and then extended here with the LTMB upgrades (Neo4j persistence, merge-on-write dedupe, curator reinforcement heuristics, cleanup tooling, and logging improvements) described in the following sections.
 
@@ -509,7 +571,7 @@ These modules were sourced from `../ace memory` and then extended here with the 
    - `planner_node` sets solver parameters.
    - `solver_node_with_ace` injects relevant bullets via `ACEMemory.format_context()` and calls Gemini through the `LLM` class.
    - `critic_node` cleans the answer.
-   - `ace_learning_node` runs Reflector + Curator and updates `ace_memory.json`.
+   - `ace_learning_node` runs Reflector + Curator and persists the playbook back to the learner’s `AceMemoryState` node in Neo4j.
 5. **Response** – Runner prints `{answer, mode, result, scratch}` as JSON; the API returns it to the client. Errors are surfaced to the UI.
 
 ---
@@ -524,7 +586,6 @@ These modules were sourced from `../ace memory` and then extended here with the 
   export GEMINI_MODEL="gemini-2.5-flash"    # optional override
   export ACE_LLM_TEMPERATURE="0.2"          # optional override for ACE pipeline LLM
   export ACE_CURATOR_USE_LLM="false"         # disable LLM-based curation (use heuristic bullets)
-  export ACE_MEMORY_FILE="frontend/scripts/ace_memory.json"  # optional override
 
   # Optional Neo4j tool configuration
   export NEO4J_URI="bolt://localhost:7687"
@@ -539,11 +600,12 @@ These modules were sourced from `../ace memory` and then extended here with the 
 ```bash
 pip3 install -r frontend/requirements.txt      # LangGraph, LangChain, Gemini, Tavily, Neo4j, MCP
 export GEMINI_API_KEY="sk-..."
+export ACE_ANALYZE_LEARNER_ID="<supabase-user-id>"
 cd frontend/scripts
 python3 run_ace_agent.py <<'EOF'
 {"messages":[{"role":"user","content":"Help me multiply 12 by 5."}]}
 EOF
-python3 analyze_ace_memory.py                  # Inspect learned bullets
+python3 analyze_ace_memory.py                  # Inspect learned bullets (uses env learner)
 ```
 
 > If `npm run dev` cannot bind to a port because of local restrictions (`listen EPERM`), run the dev server in an environment where you can open the chosen port.
@@ -561,14 +623,14 @@ python3 analyze_ace_memory.py                  # Inspect learned bullets
 
 ```python
 # Example: dry run
-python3 analyze_ace_memory.py cleanup --dry-run
+python3 analyze_ace_memory.py cleanup --learner abcd-1234 --dry-run
 
 # Example: apply merges
-python3 analyze_ace_memory.py cleanup
+python3 analyze_ace_memory.py cleanup --learner abcd-1234
 ```
 
 * Checks cosine similarity ≥ 0.90, keeps the newest/highest-signal bullet (based on created_at/helpful-harmful), and merges older entries into it via the same `_merge_bullet_into` helper used at runtime.
-* After non-dry runs the tool saves the updated `ace_memory.json` (or Neo4j state if configured), so take a backup before large cleanups.
+* After non-dry runs the tool saves the updated Neo4j playbook, so take a backup/export before large cleanups if you need an audit trail.
 
 ## Observability & Testing
 
@@ -581,11 +643,11 @@ python3 analyze_ace_memory.py cleanup
   [ACE Runner] Memory delta summary new=1 updates=4 removals=0
   ```
   You should see exactly one “Loaded …” line per HTTP request; repeated “Reloaded …” lines indicate the scratch memoisation guard is missing. The delta summary should show mostly updates with new ≤ 2 per turn.
-* **CLI inspection**:
+* **CLI inspection** (supply `--learner <id>` or set `ACE_ANALYZE_LEARNER_ID`):
   ```bash
   cd frontend/scripts
-  python3 analyze_ace_memory.py summary                 # overview
-  python3 analyze_ace_memory.py search "fraction"       # filter by keyword
+  python3 analyze_ace_memory.py --learner abcd-1234
+  python3 analyze_ace_memory.py search "fraction" --learner abcd-1234
   ```
 * **End-to-end smoke test**:
   ```bash
@@ -601,18 +663,22 @@ python3 analyze_ace_memory.py cleanup
 
 | Command | Purpose |
 |---------|---------|
-| `python3 analyze_ace_memory.py` | Overview, categories, top bullets |
-| `python3 analyze_ace_memory.py search "division"` | Keyword search |
-| `python3 analyze_ace_memory.py export` | Export bullets to text |
-| `python3 analyze_ace_memory.py interactive` | Guided CLI exploration |
-| `python3 analyze_ace_memory.py cleanup [--dry-run]` | Merge older duplicates into newest survivor |
+| `python3 analyze_ace_memory.py --learner <id>` | Overview, categories, top bullets |
+| `python3 analyze_ace_memory.py search "division" --learner <id>` | Keyword search |
+| `python3 analyze_ace_memory.py export --learner <id>` | Export bullets to text |
+| `python3 analyze_ace_memory.py interactive --learner <id>` | Guided CLI exploration |
+| `python3 analyze_ace_memory.py cleanup --learner <id> [--dry-run]` | Merge older duplicates into newest survivor |
 | `python3 compare_memory_systems.py` | Original vs ACE comparison |
 | `python3 test_memory_comparison.py` | Side-by-side agent run |
 
 Reset memory:
 ```python
 from ace_memory import ACEMemory
-mem = ACEMemory(memory_file="frontend/scripts/ace_memory.json")
+from ace_memory_store import Neo4jMemoryStore
+
+# Neo4j storage is required (JSON fallback removed Nov 2, 2025)
+storage = Neo4jMemoryStore(learner_id="user123")
+mem = ACEMemory(storage=storage)
 mem.clear()
 ```
 

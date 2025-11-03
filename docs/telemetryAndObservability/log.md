@@ -1212,7 +1212,10 @@ async function someOperation() {
 
 1. **Check Memory File Exists:**
    ```bash
-   ls -lh frontend/scripts/ace_memory.json
+    > _Legacy note:_ Before Nov 2025 the playbook was stored in `ace_memory.json`. The current build persists to Neo4j; use `analyze_ace_memory.py --learner <id>` instead of inspecting the file listed below.
+
+    # Legacy example:
+    # ls -lh frontend/scripts/ace_memory.json
    # Should exist and grow over time
    ```
 
@@ -1869,19 +1872,21 @@ RETURN u.xp
 
 ### Issue 4: ACE Memory File Permissions
 
-**Problem:** If `ace_memory.json` is read-only, agent can't learn
+**Legacy Problem (deprecated):** Prior builds used `ace_memory.json`; current Neo4j-backed deployments no longer read this file.
 **Impact:** Memory doesn't grow, same responses over time
 **Current State:** No permission check
 
 **Debug:**
 ```bash
-ls -la frontend/scripts/ace_memory.json
+# Legacy example:
+# ls -la frontend/scripts/ace_memory.json
 # Should be writable: -rw-r--r--
 ```
 
 **Fix:**
 ```bash
-chmod 644 frontend/scripts/ace_memory.json
+# Legacy example:
+# chmod 644 frontend/scripts/ace_memory.json
 ```
 
 ---
@@ -2063,7 +2068,7 @@ console.warn('⚠️ Performance degraded')  // Warning
 - Manual cleanup required for old data
 
 **ACE Memory:**
-- `ace_memory.json` grows up to 100 bullets
+- Legacy note: earlier JSON store grew up to 100 bullets; Neo4j now enforces the same limit per learner.
 - Automatic pruning keeps size bounded
 - Should backup periodically
 
@@ -2085,8 +2090,8 @@ DETACH DELETE m
 
 **Monthly:**
 ```bash
-# Backup ACE memory
-cp frontend/scripts/ace_memory.json backups/ace_memory_$(date +%Y%m%d).json
+# Backup ACE memory (Neo4j)
+python3 frontend/scripts/analyze_ace_memory.py export --learner <id> > backups/ace_memory_$(date +%Y%m%d)_<id>.txt
 ```
 
 ---

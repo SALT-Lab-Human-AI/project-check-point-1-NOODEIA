@@ -1,62 +1,64 @@
 """
-ACE Memory Analysis Tool
+ACE Memory Analysis Tool (Neo4j-backed)
 
-Provides insights into the learned ACE memory:
-- View all bullets with scores
-- Search for specific topics
-- Analyze learning patterns
-- Export bullets for inspection
+Inspect, search, and export ACE memory for a specific learner. The script
+expects Neo4j credentials (NEO4J_URI / NEO4J_USERNAME / NEO4J_PASSWORD) and a
+learner identifier provided either via `--learner <uuid>` or the
+`ACE_ANALYZE_LEARNER_ID` environment variable.
 """
 
-import json
-from pathlib import Path
+from __future__ import annotations
+
+import argparse
+import os
 from collections import defaultdict
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from ace_memory import ACEMemory, Bullet
+from ace_memory_store import Neo4jMemoryStore
 
 
-def print_section(title: str):
-    """Print a formatted section header"""
+def _load_memory(learner_id: str) -> ACEMemory:
+    if not learner_id:
+        raise ValueError(
+            "Learner ID is required. Use --learner or set ACE_ANALYZE_LEARNER_ID."
+        )
+    store = Neo4jMemoryStore(learner_id)
+    return ACEMemory(storage=store)
+
+
+def _print_section(title: str) -> None:
     print("\n" + "=" * 80)
     print(f"  {title}")
     print("=" * 80)
 
 
-def analyze_memory(memory_file: str = "ace_memory.json"):
-    """Analyze and display ACE memory contents"""
-    
-    if not Path(memory_file).exists():
-        print(f"❌ Memory file not found: {memory_file}")
-        print("Run the ACE agent first to build up memory.")
-        return
-    
-    memory = ACEMemory(memory_file=memory_file)
-    
+def analyze_memory(learner_id: str) -> None:
+    memory = _load_memory(learner_id)
+
     if not memory.bullets:
         print("📭 Memory is empty. Run the agent to accumulate strategies.")
         return
-    
-    # Overall statistics
-    print_section("📊 Memory Statistics")
+
+    _print_section("📊 Memory Statistics")
     stats = memory.get_statistics()
     print(f"Total bullets: {stats['total_bullets']}")
     print(f"Average score: {stats['avg_score']:.3f}")
     print(f"Average helpful count: {stats['avg_helpful']:.1f}")
     print(f"Average harmful count: {stats['avg_harmful']:.1f}")
-    
-    if stats.get('categories'):
-        print(f"\nCategories:")
-        for tag, count in sorted(stats['categories'].items(), key=lambda x: x[1], reverse=True):
+
+    if stats.get("categories"):
+        print("\nCategories:")
+        for tag, count in sorted(stats["categories"].items(), key=lambda x: x[1], reverse=True):
             print(f"  - {tag}: {count} bullets")
-    
-    # Top performing bullets
-    print_section("🏆 Top 10 Performing Bullets")
+
+    _print_section("🏆 Top 10 Performing Bullets")
     bullets_list = sorted(
         memory.bullets.values(),
         key=lambda b: (b.score(), b.helpful_count),
-        reverse=True
+        reverse=True,
     )
-    
+
     for i, bullet in enumerate(bullets_list[:10], 1):
         score = bullet.score()
         print(f"\n{i}. {bullet.format_for_prompt()}")
@@ -65,26 +67,21 @@ def analyze_memory(memory_file: str = "ace_memory.json"):
         if bullet.tags:
             print(f"   Tags: {', '.join(bullet.tags)}")
         print(f"   Created: {bullet.created_at[:10]}")
-    
-    # Recently added bullets
-    print_section("🆕 10 Most Recently Added Bullets")
+
+    _print_section("🆕 10 Most Recently Added Bullets")
     recent_bullets = sorted(
-        memory.bullets.values(),
-        key=lambda b: b.created_at,
-        reverse=True
+        memory.bullets.values(), key=lambda b: b.created_at, reverse=True
     )
-    
     for i, bullet in enumerate(recent_bullets[:10], 1):
         print(f"\n{i}. {bullet.format_for_prompt()}")
         print(f"   ID: {bullet.id}")
         if bullet.tags:
             print(f"   Tags: {', '.join(bullet.tags)}")
-    
-    # Low performing bullets (candidates for pruning)
-    print_section("⚠️  Low Performing Bullets (Candidates for Pruning)")
+
+    _print_section("⚠️  Low Performing Bullets (Candidates for Pruning)")
     low_bullets = [b for b in bullets_list if b.helpful_count + b.harmful_count >= 3]
     low_bullets = sorted(low_bullets, key=lambda b: b.score())[:10]
-    
+
     if low_bullets:
         for i, bullet in enumerate(low_bullets, 1):
             score = bullet.score()
@@ -93,49 +90,37 @@ def analyze_memory(memory_file: str = "ace_memory.json"):
             print(f"   Score: {score:.3f} ({bullet.helpful_count} helpful, {bullet.harmful_count} harmful)")
     else:
         print("No low-performing bullets found.")
-    
-    # Category analysis
-    if stats.get('categories'):
-        print_section("📚 Bullets by Category")
-        for tag in sorted(stats['categories'].keys()):
+
+    if stats.get("categories"):
+        _print_section("📚 Bullets by Category")
+        for tag in sorted(stats["categories"].keys()):
             print(f"\n[{tag.upper()}]")
-            tagged_bullets = [
-                b for b in memory.bullets.values()
-                if tag in b.tags
-            ]
+            tagged_bullets = [b for b in memory.bullets.values() if tag in b.tags]
             tagged_bullets = sorted(
                 tagged_bullets,
                 key=lambda b: b.score(),
-                reverse=True
-            )[:5]  # Top 5 per category
-            
+                reverse=True,
+            )[:5]
             for bullet in tagged_bullets:
                 print(f"  • {bullet.format_for_prompt()}")
 
 
-def search_memory(query: str, memory_file: str = "ace_memory.json", top_k: int = 10):
-    """Search memory for relevant bullets"""
-    
-    if not Path(memory_file).exists():
-        print(f"❌ Memory file not found: {memory_file}")
-        return
-    
-    memory = ACEMemory(memory_file=memory_file)
-    
+def search_memory(query: str, learner_id: str, top_k: int = 10) -> None:
+    memory = _load_memory(learner_id)
+
     if not memory.bullets:
         print("📭 Memory is empty.")
         return
-    
-    print_section(f"🔍 Search Results for: '{query}'")
-    
+
+    _print_section(f"🔍 Search Results for: '{query}'")
     bullets = memory.retrieve_relevant_bullets(query, top_k=top_k)
-    
+
     if not bullets:
         print("No relevant bullets found.")
         return
-    
+
     print(f"Found {len(bullets)} relevant bullets:\n")
-    
+
     for i, bullet in enumerate(bullets, 1):
         print(f"{i}. {bullet.format_for_prompt()}")
         print(f"   ID: {bullet.id}")
@@ -144,56 +129,46 @@ def search_memory(query: str, memory_file: str = "ace_memory.json", top_k: int =
         print()
 
 
-def export_memory(memory_file: str = "ace_memory.json", output_file: str = "ace_memory_export.txt"):
-    """Export memory to a readable text file"""
-    
-    if not Path(memory_file).exists():
-        print(f"❌ Memory file not found: {memory_file}")
-        return
-    
-    memory = ACEMemory(memory_file=memory_file)
-    
+def export_memory(learner_id: str, output_file: str = "ace_memory_export.txt") -> None:
+    memory = _load_memory(learner_id)
+
     if not memory.bullets:
         print("📭 Memory is empty.")
         return
-    
-    with open(output_file, 'w', encoding='utf-8') as f:
+
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write("=" * 80 + "\n")
         f.write("ACE MEMORY EXPORT\n")
         f.write("=" * 80 + "\n\n")
-        
-        # Statistics
+
         stats = memory.get_statistics()
         f.write(f"Total Bullets: {stats['total_bullets']}\n")
         f.write(f"Average Score: {stats['avg_score']:.3f}\n\n")
-        
-        # All bullets sorted by score
+
         bullets_list = sorted(
             memory.bullets.values(),
             key=lambda b: (b.score(), b.helpful_count),
-            reverse=True
+            reverse=True,
         )
-        
+
         f.write("=" * 80 + "\n")
         f.write("ALL BULLETS (SORTED BY SCORE)\n")
         f.write("=" * 80 + "\n\n")
-        
+
         for i, bullet in enumerate(bullets_list, 1):
             f.write(f"{i}. {bullet.format_for_prompt()}\n")
             f.write(f"   ID: {bullet.id}\n")
             f.write(f"   Score: {bullet.score():.3f}\n")
             if bullet.tags:
                 f.write(f"   Tags: {', '.join(bullet.tags)}\n")
-            f.write(f"   Created: {bullet.created_at}\n")
-            f.write("\n")
-    
+            f.write(f"   Created: {bullet.created_at}\n\n")
+
     print(f"✓ Memory exported to: {output_file}")
 
 
-def interactive_mode():
-    """Interactive mode for exploring memory"""
-    memory_file = "ace_memory.json"
-    
+def interactive_mode(learner_id: str) -> None:
+    memory = _load_memory(learner_id)
+
     print("=" * 80)
     print("  ACE Memory Analysis - Interactive Mode")
     print("=" * 80)
@@ -207,81 +182,76 @@ def interactive_mode():
     print("  cleanup [--dry-run] - Merge near-duplicate bullets")
     print("  quit     - Exit")
     print()
-    
+
     while True:
         try:
             command = input("\n> ").strip()
-            
+
             if not command:
                 continue
-            
-            if command == "quit" or command == "exit":
+
+            if command in {"quit", "exit"}:
                 break
-            
-            elif command == "stats":
-                memory = ACEMemory(memory_file=memory_file)
+
+            if command == "stats":
+                memory = _load_memory(learner_id)
                 stats = memory.get_statistics()
                 print(f"\nTotal bullets: {stats['total_bullets']}")
                 print(f"Average score: {stats['avg_score']:.3f}")
-                if stats.get('categories'):
+                if stats.get("categories"):
                     print("\nCategories:")
-                    for tag, count in sorted(stats['categories'].items(), key=lambda x: x[1], reverse=True):
+                    for tag, count in sorted(stats["categories"].items(), key=lambda x: x[1], reverse=True):
                         print(f"  - {tag}: {count} bullets")
-            
+
             elif command == "top":
-                memory = ACEMemory(memory_file=memory_file)
+                memory = _load_memory(learner_id)
                 bullets_list = sorted(
                     memory.bullets.values(),
                     key=lambda b: (b.score(), b.helpful_count),
-                    reverse=True
+                    reverse=True,
                 )[:10]
-                
+
                 print("\nTop 10 bullets:")
                 for i, bullet in enumerate(bullets_list, 1):
                     print(f"\n{i}. {bullet.format_for_prompt()}")
                     print(f"   Score: {bullet.score():.3f}")
-            
+
             elif command == "recent":
-                memory = ACEMemory(memory_file=memory_file)
+                memory = _load_memory(learner_id)
                 recent = sorted(
                     memory.bullets.values(),
                     key=lambda b: b.created_at,
-                    reverse=True
+                    reverse=True,
                 )[:10]
-                
+
                 print("\n10 most recent bullets:")
                 for i, bullet in enumerate(recent, 1):
                     print(f"\n{i}. {bullet.format_for_prompt()}")
-            
+
             elif command.startswith("search "):
                 query = command[7:].strip()
-                search_memory(query, memory_file=memory_file)
-            
+                search_memory(query, learner_id)
+
             elif command == "export":
-                export_memory(memory_file=memory_file)
-            
+                export_memory(learner_id)
+
             elif command.startswith("cleanup"):
                 parts = command.split()
                 dry_run = "--dry-run" in parts
-                cleanup_memory(memory_file=memory_file, dry_run=dry_run)
-            
+                cleanup_memory(learner_id, dry_run=dry_run)
+
             else:
                 print("Unknown command. Type 'quit' to exit.")
-        
+
         except KeyboardInterrupt:
             print("\n\nExiting...")
             break
-        except Exception as e:
-            print(f"Error: {e}")
+        except Exception as exc:
+            print(f"Error: {exc}")
 
 
-def cleanup_memory(memory_file: str = "ace_memory.json", similarity: float = 0.9, dry_run: bool = False):
-    """Merge near-duplicate bullets, keeping the newest/highest-signal entry."""
-    if not Path(memory_file).exists():
-        print(f"❌ Memory file not found: {memory_file}")
-        return
-
-    memory = ACEMemory(memory_file=memory_file)
+def cleanup_memory(learner_id: str, similarity: float = 0.9, dry_run: bool = False) -> None:
+    memory = _load_memory(learner_id)
     bullets = list(memory.bullets.values())
     if not bullets:
         print("📭 Memory is empty.")
@@ -290,7 +260,7 @@ def cleanup_memory(memory_file: str = "ace_memory.json", similarity: float = 0.9
     bullets_sorted = sorted(
         bullets,
         key=lambda b: memory._parse_created_at(b),
-        reverse=True  # newest first
+        reverse=True,
     )
 
     visited = set()
@@ -299,7 +269,7 @@ def cleanup_memory(memory_file: str = "ace_memory.json", similarity: float = 0.9
         if keep.id in visited:
             continue
         cluster = [keep]
-        for other in bullets_sorted[idx + 1:]:
+        for other in bullets_sorted[idx + 1 :]:
             if other.id in visited:
                 continue
             score = memory._text_similarity(keep.content, other.content)
@@ -330,28 +300,34 @@ def cleanup_memory(memory_file: str = "ace_memory.json", similarity: float = 0.9
     print(f"✅ Cleanup complete. Merged {merges} bullets.")
 
 
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Inspect ACE memory stored in Neo4j")
+    parser.add_argument(
+        "command",
+        nargs="?",
+        default="analyze",
+        choices=["analyze", "search", "export", "interactive", "cleanup"],
+    )
+    parser.add_argument("query", nargs="*", help="Query text for the search command")
+    parser.add_argument("--learner", dest="learner_id", help="Learner ID (Supabase user id)")
+    parser.add_argument("--dry-run", action="store_true", help="Preview cleanup merges without saving")
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    import sys
-    
-    if len(sys.argv) > 1:
-        command = sys.argv[1]
-        
-        if command == "search" and len(sys.argv) > 2:
-            query = " ".join(sys.argv[2:])
-            search_memory(query)
-        elif command == "export":
-            export_memory()
-        elif command == "interactive":
-            interactive_mode()
-        elif command == "cleanup":
-            dry_run = "--dry-run" in sys.argv[2:]
-            cleanup_memory(dry_run=dry_run)
+    args = _parse_args()
+    learner_id = args.learner_id or os.getenv("ACE_ANALYZE_LEARNER_ID")
+
+    if args.command == "analyze":
+        analyze_memory(learner_id)
+    elif args.command == "search":
+        if not args.query:
+            print("Usage: analyze_ace_memory.py search <query> --learner <id>")
         else:
-            print("Usage:")
-            print("  python analyze_ace_memory.py                  # Full analysis")
-            print("  python analyze_ace_memory.py search <query>   # Search memory")
-            print("  python analyze_ace_memory.py export           # Export to text")
-            print("  python analyze_ace_memory.py interactive      # Interactive mode")
-            print("  python analyze_ace_memory.py cleanup [--dry-run] # Merge duplicates")
-    else:
-        analyze_memory()
+            search_memory(" ".join(args.query), learner_id)
+    elif args.command == "export":
+        export_memory(learner_id)
+    elif args.command == "interactive":
+        interactive_mode(learner_id)
+    elif args.command == "cleanup":
+        cleanup_memory(learner_id, dry_run=args.dry_run)
