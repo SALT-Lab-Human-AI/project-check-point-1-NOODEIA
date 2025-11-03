@@ -4,7 +4,7 @@ import { useState } from "react"
 import React from "react"
 import { useRouter } from "next/navigation"
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
-import { KeyRound, User, ShieldCheck, TrendingUp, BarChart2, ChevronDown, ChevronUp } from "lucide-react"
+import { KeyRound, User, ShieldCheck, TrendingUp, BarChart2, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react"
 
 function GlassCard({ className = "", children }: { className?: string; children: React.ReactNode }) {
   return (
@@ -77,14 +77,22 @@ export default function AdministratorPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 px-4 py-8">
       <div className="mx-auto w-full max-w-4xl space-y-6">
-        <div className="pl-1">
-          <h1 className="font-black text-3xl text-gray-800 drop-shadow-sm flex items-center gap-2">
-            <BarChart2 className="w-7 h-7 text-orange-500" />
-            Administrator Dashboard
-          </h1>
-          <p className="text-sm text-gray-600">
-            Enter the key to access, then select a student to view daily average accuracy and weekly summaries.
-          </p>
+        <div className="relative">
+          <button
+            onClick={() => router.push('/settings')}
+            className="absolute left-0 top-0 px-4 py-2 rounded-xl bg-white/30 hover:bg-white/40 border border-white/30 text-gray-800 font-medium transition-all duration-300 backdrop-blur-sm"
+          >
+            Back to Settings Page
+          </button>
+          <div className="flex flex-col items-center gap-2">
+            <h1 className="font-black text-3xl text-gray-800 drop-shadow-sm flex items-center gap-2">
+              <BarChart2 className="w-7 h-7 text-orange-500" />
+              Administrator Dashboard
+            </h1>
+            <p className="text-sm text-gray-600 text-center">
+              Enter the key to access, then select a student to view daily average accuracy and weekly summaries.
+            </p>
+          </div>
         </div>
 
         {!isAuthed ? (
