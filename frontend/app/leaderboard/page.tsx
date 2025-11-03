@@ -244,11 +244,14 @@ export default function LeaderboardPage() {
                   const top3UserIds = rankings.filter(t => t.rank <= 3).map(t => t.userId)
                   return r.rank > 3 && !top3UserIds.includes(r.userId)
                 })
+                .sort((a, b) => a.rank - b.rank) // Ensure proper sorting by rank
                 .slice(0, 20) // Limit to maximum 20 players
-                .map((rankEntry) => {
+                .map((rankEntry, index) => {
+                  // Calculate display rank: start from 4 (after top 3)
+                  const displayRank = index + 4;
                   const isCurrentUser = rankEntry.userId === user?.id;
-                  const rankIcon = getRankIcon(rankEntry.rank);
-                  const rankColor = getRankColor(rankEntry.rank);
+                  const rankIcon = getRankIcon(displayRank);
+                  const rankColor = getRankColor(displayRank);
 
                   return (
                     <div
@@ -264,7 +267,7 @@ export default function LeaderboardPage() {
                         {rankIcon ? (
                           <span className="text-2xl">{rankIcon}</span>
                         ) : (
-                          <span className="text-lg font-black text-white">{rankEntry.rank}</span>
+                          <span className="text-lg font-black text-white">{displayRank}</span>
                         )}
                       </div>
 
