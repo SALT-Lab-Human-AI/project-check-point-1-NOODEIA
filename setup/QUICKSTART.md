@@ -74,9 +74,20 @@ Open the AI assistant, ask a question, and inspect the network response—`metad
 
 ## 5. Inspect Learned Memory (Neo4j)
 
-Each learner’s playbook now lives in Neo4j. To inspect it, supply the learner
-ID (Supabase `user.id`) either via the `--learner` flag or the
-`ACE_ANALYZE_LEARNER_ID` environment variable.
+Each learner’s playbook now lives in Neo4j. To inspect it, you need the
+Supabase `user.id` that owns the memory. If you are unsure which ID maps to
+which playbook, run the following (from `cypher-shell` or the Aura console):
+
+```cypher
+MATCH (u:User)-[:HAS_ACE_MEMORY]->(m:AceMemoryState)
+RETURN u.id AS learner_id,
+       size(apoc.convert.fromJsonMap(m.memory_json).bullets) AS bullet_count,
+       m.access_clock
+ORDER BY m.updated_at DESC;
+```
+
+Once you know the learner id, supply it either via the `--learner` flag or the
+`ACE_ANALYZE_LEARNER_ID` environment variable:
 
 ```bash
 cd frontend/scripts
