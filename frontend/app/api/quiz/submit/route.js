@@ -94,7 +94,8 @@ export async function POST(request) {
        CREATE (u)-[:COMPLETED]->(qs)
 
        // Update or create QuizProgress
-       MERGE (u)-[:HAS_QUIZ_PROGRESS]->(qp:QuizProgress {userId: $userId})
+       // First MERGE the QuizProgress node itself
+       MERGE (qp:QuizProgress {userId: $userId})
        ON CREATE SET
          qp.totalQuizzes = 1,
          qp.bestStreak = $streak,
@@ -109,6 +110,9 @@ export async function POST(request) {
          qp.commonCompleted = qp.commonCompleted + CASE WHEN $nodeType = 'common' THEN 1 ELSE 0 END,
          qp.rareCompleted = qp.rareCompleted + CASE WHEN $nodeType = 'rare' THEN 1 ELSE 0 END,
          qp.legendaryCompleted = qp.legendaryCompleted + CASE WHEN $nodeType = 'legendary' THEN 1 ELSE 0 END
+
+       // Then MERGE the relationship (only create if it doesn't exist)
+       MERGE (u)-[:HAS_QUIZ_PROGRESS]->(qp)
 
        RETURN qp`,
       {
