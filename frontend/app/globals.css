@@ -3,6 +3,11 @@
 @tailwind utilities;
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 
+/* Hide Next.js portal elements */
+nextjs-portal {
+  display: none !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

@@ -4,8 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { PuffyCard } from '@/components/PuffyComponents';
-import { Trophy, Flame, Zap, Award, Target, Star, Home, LayoutGrid, User, Settings } from 'lucide-react';
+import { Trophy, Flame, Zap, Award, Target, Star, Home, LayoutGrid, User, Settings, ArrowRight } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
+import AnimatedRank from '@/components/AnimatedRank';
 
 interface QuizStats {
   totalQuizzes: number;
@@ -28,6 +29,14 @@ interface RecentSession {
   completedAt: any;
 }
 
+interface LeaderboardRank {
+  rank: number;
+  userId: string;
+  name: string;
+  xp: number;
+  level: number;
+}
+
 export default function AchievementsPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -35,6 +44,8 @@ export default function AchievementsPage() {
   const [stats, setStats] = useState<QuizStats | null>(null);
   const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
   const [showNavBar, setShowNavBar] = useState(false);
+  const [userRank, setUserRank] = useState<LeaderboardRank | null>(null);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
 
   useEffect(() => {
     checkAuth();
@@ -74,7 +85,10 @@ export default function AchievementsPage() {
         return;
       }
       setUser(session.user);
-      await fetchAchievements(session.user.id);
+      await Promise.all([
+        fetchAchievements(session.user.id),
+        fetchLeaderboard(session.user.id)
+      ]);
     } catch (error) {
       console.error('Auth error:', error);
       router.push('/login');
@@ -93,6 +107,19 @@ export default function AchievementsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch achievements:', error);
+    }
+  };
+
+  const fetchLeaderboard = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/leaderboard?userId=${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserRank(data.userRank);
+        setTotalUsers(data.totalUsers);
+      }
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
     }
   };
 
@@ -158,15 +185,43 @@ export default function AchievementsPage() {
           </PuffyCard>
         </div>
 
-        {/* Quiz XP Breakdown */}
-        <PuffyCard color="pink" size="md" className="mb-8" onClick={undefined}>
+        {/* Leaderboard Stats */}
+        <PuffyCard 
+          color="pink" 
+          size="md" 
+          className="mb-8 cursor-pointer hover:scale-[1.02] transition-transform relative" 
+          onClick={() => router.push('/leaderboard')}
+        >
+          <div className="absolute top-4 right-4">
+            <ArrowRight className="w-5 h-5 text-pink-600" />
+          </div>
           <h2 className="text-2xl font-black text-pink-900 mb-4 flex items-center gap-2">
-            <Star className="w-6 h-6" />
-            Quiz XP Earned
+            <Trophy className="w-6 h-6" />
+            Leaderboard
           </h2>
           <div className="text-center mb-6">
-            <div className="text-5xl font-black text-pink-600">{stats?.totalXPFromQuiz || 0} XP</div>
-            <div className="text-sm text-pink-700 mt-2">From completing quizzes</div>
+            {userRank ? (
+              <>
+                <AnimatedRank rank={userRank.rank} />
+                <div className="text-sm text-pink-700 mt-2">
+                  Out of {totalUsers} players
+                </div>
+                <div className="text-xs text-pink-600 mt-1">
+                  {Math.round(userRank.xp)} XP · Level {userRank.level}
+                </div>
+              </>
+            ) : (
+              <>
+                <AnimatedRank rank={null} />
+                <div className="text-sm text-pink-700 mt-2">No ranking yet</div>
+              </>
+            )}
+          </div>
+          <div className="text-center mt-4 pt-4 border-t border-pink-200/50">
+            <div className="inline-flex items-center gap-2 text-sm font-bold text-pink-700">
+              <span>Check out the leaderboard</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
           </div>
         </PuffyCard>
 
