@@ -11,12 +11,12 @@ interface Top3CardProps {
   name: string;
   xp: number;
   level: number;
-  accuracy?: number; // Average quiz accuracy percentage
+  attempts?: number; // Quiz attempts in the selected timeframe
   iconType?: string;
   iconEmoji?: string;
   iconColor?: string;
   isCurrentUser?: boolean;
-  displayType?: 'xp' | 'accuracy'; // What to display
+  displayType?: 'xp' | 'attempts'; // What to display
 }
 
 export default function Top3Card({
@@ -25,7 +25,7 @@ export default function Top3Card({
   name,
   xp,
   level,
-  accuracy,
+  attempts,
   iconType,
   iconEmoji,
   iconColor,
@@ -588,8 +588,8 @@ export default function Top3Card({
             ease: 'easeInOut',
           }}
         >
-          {displayType === 'accuracy' && accuracy !== undefined
-            ? `${accuracy.toFixed(1)}%`
+          {displayType === 'attempts' && attempts !== undefined
+            ? `${attempts} Attempt${attempts === 1 ? '' : 's'}`
             : `${Math.round(xp).toLocaleString()} XP`}
         </motion.div>
       </motion.div>
@@ -621,4 +621,3 @@ export default function Top3Card({
     </motion.div>
   );
 }
-

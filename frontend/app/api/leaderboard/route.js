@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { neo4jService } from '@/lib/neo4j'
 
-// GET /api/leaderboard?userId=xxx&timeframe=daily|weekly|monthly|all-time&type=xp|accuracy
-// Response: { rankings: [{ rank, userId, name, xp, level, accuracy? }], userRank: { rank, userId, name, xp, level, accuracy? }, totalUsers }
+// GET /api/leaderboard?userId=xxx&timeframe=daily|weekly|monthly|all-time&type=xp|attempts
+// Response: { rankings: [{ rank, userId, name, xp, level, attempts? }], userRank: { rank, userId, name, xp, level, attempts? }, totalUsers }
 export async function GET(request) {
   const session = neo4jService.getSession()
 
@@ -10,7 +10,8 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     const timeframe = searchParams.get('timeframe') || 'all-time' // daily, weekly, monthly, all-time
-    const type = searchParams.get('type') || 'xp' // xp or accuracy
+    const rawType = searchParams.get('type') || 'xp'
+    const type = rawType === 'accuracy' ? 'attempts' : rawType // xp or attempts
 
     if (!userId) {
       return NextResponse.json(
@@ -42,25 +43,20 @@ export async function GET(request) {
         boardType,
         timeframe,
         timeframeSessions,
-        [s IN timeframeSessions WHERE s.totalQuestions IS NOT NULL AND toFloat(s.totalQuestions) > 0] AS accuracySessions
+        [s IN timeframeSessions WHERE s.totalQuestions IS NOT NULL AND toFloat(s.totalQuestions) > 0] AS validSessions
       WITH 
         u,
         boardType,
         timeframe,
         timeframeSessions,
-        accuracySessions,
-        reduce(totalAccuracy = 0.0, s IN accuracySessions | totalAccuracy + ((toFloat(s.score) / toFloat(s.totalQuestions)) * 100.0)) AS totalAccuracy,
-        size(accuracySessions) AS accuracyAttempts,
+        validSessions,
+        size(validSessions) AS attemptCount,
         reduce(timeframeXP = 0.0, s IN timeframeSessions | timeframeXP + COALESCE(s.xpEarned, 0)) AS timeframeXP
       WITH 
         u,
         boardType,
         timeframe,
-        accuracyAttempts,
-        CASE 
-          WHEN accuracyAttempts > 0 THEN totalAccuracy / accuracyAttempts
-          ELSE 0.0
-        END AS accuracy,
+        attemptCount,
         CASE 
           WHEN timeframe = 'all-time' THEN COALESCE(u.xp, 0)
           ELSE timeframeXP
@@ -71,13 +67,13 @@ export async function GET(request) {
         COALESCE(u.name, u.email, 'Anonymous') AS name,
         leaderboardXP AS xp,
         COALESCE(u.level, 1) AS level,
-        accuracy AS accuracy,
+        attemptCount AS attempts,
         u.iconType AS iconType,
         u.iconEmoji AS iconEmoji,
         u.iconColor AS iconColor,
         timeframeXP AS timeframeXP
       ORDER BY 
-        CASE WHEN boardType = 'accuracy' THEN accuracy ELSE leaderboardXP END DESC,
+        CASE WHEN boardType = 'attempts' THEN attemptCount ELSE leaderboardXP END DESC,
         u.level DESC,
         u.id ASC
     `
@@ -92,7 +88,7 @@ export async function GET(request) {
       name: record.get('name'),
       xp: neo4jService.toNumber(record.get('xp') || 0),
       level: neo4jService.toNumber(record.get('level')),
-      accuracy: type === 'accuracy' ? neo4jService.toNumber(record.get('accuracy') || 0) : undefined,
+      attempts: neo4jService.toNumber(record.get('attempts') || 0),
       iconType: record.get('iconType'),
       iconEmoji: record.get('iconEmoji'),
       iconColor: record.get('iconColor')

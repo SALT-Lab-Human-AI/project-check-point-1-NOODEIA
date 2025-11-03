@@ -14,7 +14,7 @@ interface LeaderboardRank {
   name: string;
   xp: number;
   level: number;
-  accuracy?: number; // Average quiz accuracy percentage
+  attempts?: number; // Quiz attempts in the selected timeframe
   iconType?: string;
   iconEmoji?: string;
   iconColor?: string;
@@ -29,7 +29,7 @@ export default function LeaderboardPage() {
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [showNavBar, setShowNavBar] = useState(false);
   const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly' | 'all-time'>('all-time');
-  const [leaderboardType, setLeaderboardType] = useState<'xp' | 'accuracy'>('xp');
+  const [leaderboardType, setLeaderboardType] = useState<'xp' | 'attempts'>('xp');
 
   useEffect(() => {
     checkAuth();
@@ -160,15 +160,15 @@ export default function LeaderboardPage() {
               XP
             </button>
             <button
-              onClick={() => setLeaderboardType('accuracy')}
+              onClick={() => setLeaderboardType('attempts')}
               className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1 ${
-                leaderboardType === 'accuracy'
+                leaderboardType === 'attempts'
                   ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg'
                   : 'text-gray-600 hover:bg-white/50'
               }`}
             >
               <Target className="w-3 h-3" />
-              Accuracy
+              Attempts
             </button>
           </div>
         </div>
@@ -216,7 +216,7 @@ export default function LeaderboardPage() {
                     name={rankEntry.name}
                     xp={rankEntry.xp}
                     level={rankEntry.level}
-                    accuracy={rankEntry.accuracy}
+                    attempts={rankEntry.attempts}
                     iconType={rankEntry.iconType}
                     iconEmoji={rankEntry.iconEmoji}
                     iconColor={rankEntry.iconColor}
@@ -315,8 +315,8 @@ export default function LeaderboardPage() {
                         </div>
                         <div className="text-xs text-gray-600 mt-1">
                           Level {rankEntry.level} · {
-                            leaderboardType === 'accuracy' && rankEntry.accuracy !== undefined
-                              ? `${rankEntry.accuracy.toFixed(1)}% Accuracy`
+                            leaderboardType === 'attempts' && rankEntry.attempts !== undefined
+                              ? `${rankEntry.attempts} Attempt${rankEntry.attempts === 1 ? '' : 's'}`
                               : `${Math.round(rankEntry.xp).toLocaleString()} XP`
                           }
                         </div>
@@ -338,8 +338,8 @@ export default function LeaderboardPage() {
               </div>
               <div className="text-lg font-bold text-purple-900 mb-1">{userRank.name}</div>
               <div className="text-xs text-purple-600">
-                {leaderboardType === 'accuracy' && userRank.accuracy !== undefined
-                  ? `${userRank.accuracy.toFixed(1)}% Accuracy · Level ${userRank.level}`
+                {leaderboardType === 'attempts' && userRank.attempts !== undefined
+                  ? `${userRank.attempts} Attempt${userRank.attempts === 1 ? '' : 's'} · Level ${userRank.level}`
                   : `${Math.round(userRank.xp).toLocaleString()} XP · Level ${userRank.level}`
                 }
               </div>
@@ -434,4 +434,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-
