@@ -171,7 +171,8 @@ export default function ThreadPanel({
             <div className="flex-1">
               <div className="mb-1 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                  {parentMessage.userName || parentMessage.userEmail}
+                  {parentMessage.userName || 
+                   (currentUser && currentUser.id === parentMessage.createdBy ? (currentUser.name || 'User') : 'User')}
                 </span>
                 <span>{formatTime(parentMessage.createdAt)}</span>
               </div>

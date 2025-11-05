@@ -101,6 +101,14 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: message.error }, { status: 400 })
     }
 
+    // Ensure userName is set from Supabase metadata if not available from Neo4j
+    if (!message.userName && user.user_metadata?.name) {
+      message.userName = user.user_metadata.name
+    }
+    if (!message.userName && !message.userEmail && user.email) {
+      message.userEmail = user.email
+    }
+
     await pusherService.sendMessage(groupId, message)
 
     // Check if message contains @ai mention

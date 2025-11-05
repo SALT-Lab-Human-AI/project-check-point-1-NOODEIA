@@ -318,12 +318,12 @@ class GroupChatService {
         WHERE m IS NOT NULL
         WITH m, author, parent, parentAuthor, count(DISTINCT reply) as replyCount
         RETURN m,
-               author.name as userName,
-               author.email as userEmail,
+               coalesce(author.name, '') as userName,
+               coalesce(author.email, '') as userEmail,
                parent.id as parentId,
                parent.content as parentContent,
-               parentAuthor.name as parentAuthorName,
-               parentAuthor.email as parentAuthorEmail,
+               coalesce(parentAuthor.name, '') as parentAuthorName,
+               coalesce(parentAuthor.email, '') as parentAuthorEmail,
                replyCount
         ORDER BY m.createdAt DESC
         SKIP $skip

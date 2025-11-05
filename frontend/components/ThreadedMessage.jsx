@@ -79,7 +79,10 @@ export default function ThreadedMessage({
         <div className="flex-1">
           <div className="mb-1 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
             <span className="font-medium text-zinc-900 dark:text-zinc-100">
-              {isAI ? 'AI Assistant' : (message.userName || message.userEmail)}
+              {isAI 
+                ? 'AI Assistant' 
+                : (message.userName || 
+                   (currentUser && currentUser.id === message.createdBy ? (currentUser.name || 'User') : 'User'))}
             </span>
             <span>{formatTime(message.createdAt)}</span>
             {message.edited && <span>(edited)</span>}

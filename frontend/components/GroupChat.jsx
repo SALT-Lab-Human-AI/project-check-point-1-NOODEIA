@@ -71,11 +71,28 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     channel.bind(PUSHER_EVENTS.MESSAGE_SENT, (data) => {
       if (!data.parentId) {
         setMessages(prev => {
+          // Check if this is the real version of an optimistic message (same content and creator)
+          const optimisticIndex = prev.findIndex(msg => 
+            msg.id.startsWith('temp_') && 
+            msg.content === data.content && 
+            msg.createdBy === data.createdBy
+          )
+          
+          if (optimisticIndex !== -1) {
+            // Replace optimistic message with real one
+            const updated = [...prev]
+            updated[optimisticIndex] = data
+            return updated
+          }
+          
+          // Check if real message already exists
           const messageExists = prev.some(msg => msg.id === data.id)
           if (messageExists) {
             console.warn(`Duplicate message prevented via Pusher: ${data.id}`)
             return prev
           }
+          
+          // Add new message
           return [...prev, data] // Append to end (newest at bottom)
         })
         scrollToBottom()
@@ -241,6 +258,28 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
     setSending(true)
     stopTyping()
 
+    // Optimistic update - add message immediately for instant feedback
+    const tempMessageId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+    const optimisticMessage = {
+      id: tempMessageId,
+      content: messageContent,
+      createdBy: currentUser?.id,
+      userName: currentUser?.name || currentUser?.user_metadata?.name || 'User',
+      userEmail: currentUser?.email || '',
+      createdAt: new Date().toISOString(),
+      edited: false,
+      parentId: null,
+      replyCount: 0
+    }
+
+    // Add optimistically
+    setMessages(prev => {
+      const messageExists = prev.some(msg => msg.id === tempMessageId)
+      if (messageExists) return prev
+      return [...prev, optimisticMessage]
+    })
+    scrollToBottom()
+
     try {
       const response = await fetch(`/api/groupchat/${groupId}/messages`, {
         method: 'POST',
@@ -253,12 +292,26 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
 
       if (!response.ok) throw new Error('Failed to send message')
 
-      await response.json()
-      // Don't add locally - let Pusher handle it to avoid duplicates
-      // The message will appear via Pusher event in real-time
-      // Reply count will be updated automatically via Pusher when AI responds
+      const realMessage = await response.json()
+      
+      // Replace optimistic message with real message when Pusher event arrives
+      // If Pusher doesn't arrive, replace it with the real message from API response
+      setMessages(prev => {
+        // Remove optimistic message
+        const withoutOptimistic = prev.filter(msg => msg.id !== tempMessageId)
+        // Check if real message already exists (from Pusher)
+        const realMessageExists = withoutOptimistic.some(msg => msg.id === realMessage.id)
+        if (realMessageExists) {
+          return withoutOptimistic
+        }
+        // Add real message
+        return [...withoutOptimistic, realMessage]
+      })
+      scrollToBottom()
     } catch (error) {
       console.error('Failed to send message:', error)
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(msg => msg.id !== tempMessageId))
       setNewMessage(messageContent)
     } finally {
       setSending(false)

@@ -126,12 +126,18 @@ export default function LeaderboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-yellow-100/60 via-purple-100 to-purple-100 pb-24">
       <div className="max-w-md mx-auto px-6 pt-6">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-6 relative z-10">
           <button
-            onClick={() => router.back()}
-            className="p-2 rounded-xl bg-white/50 hover:bg-white/70 transition-colors"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              router.push('/achievements');
+            }}
+            className="relative z-10 p-2 rounded-xl bg-white/50 hover:bg-white/70 transition-colors cursor-pointer active:scale-95 touch-manipulation"
+            style={{ pointerEvents: 'auto', WebkitTapHighlightColor: 'transparent' }}
           >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
+            <ArrowLeft className="w-5 h-5 text-gray-700 pointer-events-none" />
           </button>
           <h1 className="text-3xl font-black text-purple-900 flex items-center gap-2">
             <Trophy className="w-8 h-8 text-yellow-600" />
