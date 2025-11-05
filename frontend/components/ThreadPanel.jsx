@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Send } from 'lucide-react'
 import ThreadedMessage from './ThreadedMessage'
+import UserAvatar from './UserAvatar'
 import { getPusherClient, PUSHER_EVENTS } from '../lib/pusher'
 
 export default function ThreadPanel({
@@ -167,7 +168,18 @@ export default function ThreadPanel({
         {/* Parent Message */}
         <div className="border-b p-4 dark:border-zinc-800">
           <div className="flex gap-3">
-            <div className="h-8 w-8 flex-shrink-0 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+            <UserAvatar
+              user={
+                currentUser && currentUser.id === parentMessage.createdBy
+                  ? currentUser
+                  : {
+                      id: parentMessage.createdBy,
+                      name: parentMessage.userName,
+                      email: parentMessage.userEmail
+                    }
+              }
+              size="md"
+            />
             <div className="flex-1">
               <div className="mb-1 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">
