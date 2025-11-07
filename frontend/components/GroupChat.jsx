@@ -249,7 +249,8 @@ export default function GroupChat({ groupId, groupData, currentUser, authToken, 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: currentUser.id,
-          xpGained: xpEarned
+          xpGained: xpEarned,
+          source: 'group_chat'
         })
       }).catch(err => console.error('Failed to update XP:', err))
     }

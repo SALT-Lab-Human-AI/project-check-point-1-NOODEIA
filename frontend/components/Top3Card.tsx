@@ -441,24 +441,7 @@ export default function Top3Card({
         />
       </motion.div>
 
-      {/* Subtle border glow animation */}
-      <motion.div
-        className="absolute inset-0 rounded-[2rem] pointer-events-none"
-        style={{
-          border: `2px solid ${rank === 1 ? 'rgba(255,215,0,0.3)' : rank === 2 ? 'rgba(192,192,192,0.3)' : 'rgba(205,127,50,0.3)'}`,
-          willChange: 'opacity',
-          transform: 'translateZ(0)'
-        }}
-        animate={{
-          opacity: [0.3, 0.6, 0.3],
-          scale: [1, 1.01, 1]
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
+      {/* Subtle border glow animation - removed to prevent border conflicts */}
 
       {/* Avatar with enhanced bounce animation */}
       <motion.div

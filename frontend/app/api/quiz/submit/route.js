@@ -134,7 +134,8 @@ export async function POST(request) {
       },
       body: JSON.stringify({
         userId,
-        xpGained: xpEarned
+        xpGained: xpEarned,
+        source: 'quiz'
       })
     })
 

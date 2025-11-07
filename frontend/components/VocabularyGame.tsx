@@ -287,7 +287,8 @@ export default function VocabularyGame({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: session.user.id,
-          xpGained: xpAmount
+          xpGained: xpAmount,
+          source: 'vocabulary_game'
         })
       });
 

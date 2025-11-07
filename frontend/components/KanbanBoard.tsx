@@ -261,7 +261,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
       await fetch('/api/user/xp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, xpGained: xpEarned })
+        body: JSON.stringify({ userId, xpGained: xpEarned, source: 'kanban_task' })
       });
     } catch (error) {
       console.error('Failed to award XP:', error);
@@ -388,7 +388,7 @@ export default function KanbanBoard({ userId, userName }: KanbanBoardProps) {
             <div>
               <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2">
                 <span className="text-2xl">✓</span>
-                To Do List
+                Kanban Board
               </h1>
               <p className="text-sm text-gray-600">Hey {userName}! Organize your day</p>
             </div>

@@ -328,25 +328,45 @@ class ACEMemory:
     #         bullet.procedural_last_access = iso_ts
     #         bullet.procedural_access_index = idx
 
-    def _touch_bullets(self, bullets, timestamp: Optional[datetime] = None):
+    def _next_access_index(self) -> int:
+        """Advance the global access clock and return the new index."""
         self.access_clock += 1
-        idx = self.access_clock
+        return self.access_clock
+
+    def _touch_bullets(
+        self,
+        bullets: List[Bullet],
+        timestamp: Optional[datetime] = None,
+        access_index: Optional[int] = None,
+    ):
+        if not bullets:
+            return
+        if access_index is None:
+            access_index = self._next_access_index()
+        else:
+            if access_index > self.access_clock:
+                self.access_clock = access_index
         ts = timestamp or datetime.now()
         iso_ts = ts.isoformat()
         for bullet in bullets:
             bullet.last_used = iso_ts
             if bullet.semantic_strength > 0:
                 bullet.semantic_last_access = iso_ts
-                bullet.semantic_access_index = idx
+                bullet.semantic_access_index = access_index
             if bullet.episodic_strength > 0:
                 bullet.episodic_last_access = iso_ts
-                bullet.episodic_access_index = idx
+                bullet.episodic_access_index = access_index
             if bullet.procedural_strength > 0:
                 bullet.procedural_last_access = iso_ts
-                bullet.procedural_access_index = idx
+                bullet.procedural_access_index = access_index
 
-    def _touch_bullet(self, bullet: Bullet, timestamp: Optional[datetime] = None):
-        self._touch_bullets([bullet], timestamp)
+    def _touch_bullet(
+        self,
+        bullet: Bullet,
+        timestamp: Optional[datetime] = None,
+        access_index: Optional[int] = None,
+    ):
+        self._touch_bullets([bullet], timestamp=timestamp, access_index=access_index)
 
 
     @staticmethod
@@ -387,7 +407,12 @@ class ACEMemory:
             if bullet.id not in self.categories[tag]:
                 self.categories[tag].append(bullet.id)
 
-    def _normalise_bullet(self, bullet: Bullet):
+    def _normalise_bullet(
+        self,
+        bullet: Bullet,
+        access_index: Optional[int] = None,
+        timestamp: Optional[datetime] = None,
+    ):
         """Ensure strengths and timestamps are initialised according to tags."""
         tag_set = {tag.lower() for tag in bullet.tags}
         valid = {"semantic", "episodic", "procedural"}
@@ -401,7 +426,7 @@ class ACEMemory:
         bullet.memory_type = bullet.memory_type.lower()
         self._sync_strengths(bullet)
         self._ensure_memory_tags(bullet)
-        self._touch_bullet(bullet)
+        self._touch_bullet(bullet, timestamp=timestamp, access_index=access_index)
         bullet.content_hash = bullet.content_hash or self._normalized_hash(bullet.content)
 
     def _finalize_bullet(self, bullet: Bullet):
@@ -449,7 +474,12 @@ class ACEMemory:
         self._sync_categories(keep)
         self._register_bullet(keep)
 
-    def _merge_or_add_bullet(self, bullet: Bullet) -> Tuple[Bullet, bool]:
+    def _merge_or_add_bullet(
+        self,
+        bullet: Bullet,
+        access_index: Optional[int] = None,
+        timestamp: Optional[datetime] = None,
+    ) -> Tuple[Bullet, bool]:
         """Upsert a bullet, merging into an existing one when possible."""
         self._finalize_bullet(bullet)
         duplicate_id = self._is_duplicate(bullet)
@@ -473,7 +503,7 @@ class ACEMemory:
 
         if existing:
             self._merge_bullet_into(existing, bullet)
-            self._touch_bullet(existing)
+            self._touch_bullet(existing, timestamp=timestamp, access_index=access_index)
             print(
                 f"[ACE Memory][Delta Merge] id={existing.id} helpful={existing.helpful_count} "
                 f"harmful={existing.harmful_count} tags={existing.tags} merged_score={score:.3f}",
@@ -481,7 +511,7 @@ class ACEMemory:
             )
             return existing, False
 
-        self._normalise_bullet(bullet)
+        self._normalise_bullet(bullet, access_index=access_index, timestamp=timestamp)
         self.bullets[bullet.id] = bullet
         self._sync_categories(bullet)
         self._register_bullet(bullet)
@@ -619,9 +649,19 @@ class ACEMemory:
         Apply a delta update to the memory.
         This is the core of incremental adaptation.
         """
+        has_changes = bool(
+            delta.new_bullets or delta.update_bullets or delta.remove_bullets
+        )
+        event_index = self._next_access_index() if has_changes else None
+        event_ts = datetime.now() if has_changes else None
+
         # Add new bullets
         for bullet in delta.new_bullets:
-            self._merge_or_add_bullet(bullet)
+            self._merge_or_add_bullet(
+                bullet,
+                access_index=event_index,
+                timestamp=event_ts,
+            )
         
         # Update existing bullets
         for bullet_id, updates in delta.update_bullets.items():
@@ -630,7 +670,7 @@ class ACEMemory:
                 bullet.helpful_count += updates.get("helpful", 0)
                 bullet.harmful_count += updates.get("harmful", 0)
                 self._finalize_bullet(bullet)
-                self._touch_bullet(bullet)
+                self._touch_bullet(bullet, timestamp=event_ts, access_index=event_index)
                 self._register_bullet(bullet)
                 print(
                     f"[ACE Memory][Delta Update] id={bullet_id} applied={updates} "

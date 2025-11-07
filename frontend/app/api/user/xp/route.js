@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import neo4j from "neo4j-driver"
+import { v4 as uuidv4 } from "uuid"
 import { getLevelFromXP } from "../../../../utils/levelingSystem"
 
 // Initialize Neo4j driver
@@ -17,7 +18,7 @@ export async function POST(request) {
 
   try {
     // Get the user ID from the request body or auth
-    const { userId, xpGained } = await request.json()
+    const { userId, xpGained, source } = await request.json()
 
     if (!userId) {
       return NextResponse.json(
@@ -32,6 +33,9 @@ export async function POST(request) {
         { status: 400 }
       )
     }
+
+    // Default source if not provided
+    const xpSource = source || 'unknown'
 
     // First get current XP
     const currentResult = await session.run(
@@ -51,20 +55,30 @@ export async function POST(request) {
     // Calculate new level based on total XP
     const newLevel = getLevelFromXP(newTotalXp)
 
-    // Update user's XP and level in Neo4j
+    // Update user's XP and level, and create XP transaction record with timestamp
+    const transactionId = uuidv4()
     const result = await session.run(
       `
       MATCH (u:User {id: $userId})
       SET u.xp = $newTotalXp,
           u.level = $newLevel
+      CREATE (xt:XPTransaction {
+        id: $transactionId,
+        userId: $userId,
+        amount: $xpGained,
+        source: $xpSource,
+        createdAt: datetime()
+      })
+      CREATE (u)-[:EARNED_XP]->(xt)
       RETURN u.id as id, u.xp as xp, u.level as level
       `,
-      { userId, newTotalXp, newLevel: neo4j.int(newLevel) }
+      { userId, newTotalXp, newLevel: neo4j.int(newLevel), xpGained, xpSource, transactionId }
     )
 
     if (result.records.length === 0) {
       // User doesn't exist, create them with initial XP
       const initialLevel = getLevelFromXP(xpGained)
+      const transactionId = uuidv4()
       const createResult = await session.run(
         `
         CREATE (u:User {
@@ -73,9 +87,17 @@ export async function POST(request) {
           level: $level,
           createdAt: datetime()
         })
+        CREATE (xt:XPTransaction {
+          id: $transactionId,
+          userId: $userId,
+          amount: $xpGained,
+          source: $xpSource,
+          createdAt: datetime()
+        })
+        CREATE (u)-[:EARNED_XP]->(xt)
         RETURN u.id as id, u.xp as xp, u.level as level
         `,
-        { userId, xpGained, level: neo4j.int(initialLevel) }
+        { userId, xpGained, level: neo4j.int(initialLevel), xpSource, transactionId }
       )
 
       const record = createResult.records[0]

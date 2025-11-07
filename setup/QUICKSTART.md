@@ -160,53 +160,6 @@ pip3 install -r requirements.txt
 
 ---
 
-## 📚 Full Documentation
-
-**This guide is abbreviated. For complete instructions:**
-
-**Getting Started** (Step-by-step):
-- [00_OVERVIEW.md](./getting-started/00_OVERVIEW.md) - Architecture
-- [01_PREREQUISITES.md](./getting-started/01_PREREQUISITES.md) - Accounts
-- [02_INSTALLATION.md](./getting-started/02_INSTALLATION.md) - Install
-- [03_CONFIGURATION.md](./getting-started/03_CONFIGURATION.md) - Configure
-- [04_DATABASE_SETUP.md](./getting-started/04_DATABASE_SETUP.md) - Database
-- [05_PYTHON_ACE_SETUP.md](./getting-started/05_PYTHON_ACE_SETUP.md) - Python
-- [06_LOCAL_DEVELOPMENT.md](./getting-started/06_LOCAL_DEVELOPMENT.md) - Development
-- [07_DEPLOYMENT.md](./getting-started/07_DEPLOYMENT.md) - Deploy
-- [08_COMPLETE_SETUP.md](./getting-started/08_COMPLETE_SETUP.md) - All-in-one
-
-**Technical References:**
-- [technical/DATABASE_SCHEMA.md](./technical/DATABASE_SCHEMA.md) - Complete schema
-- [technical/API_REFERENCE.md](./technical/API_REFERENCE.md) - All endpoints
-- [technical/PYTHON_SETUP.md](./technical/PYTHON_SETUP.md) - Python details
-- [technical/ACE_README.md](./technical/ACE_README.md) - ACE memory
-- [technical/AGENT.md](./technical/AGENT.md) - LangGraph agent
-
-**User Guides:**
-- [user-guides/](./user-guides/) - Feature usage guides
-
-**Troubleshooting:**
-- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues
-
----
-
-## ⏱️ Time Estimates
-
-**Quick Start** (this guide):
-- Experienced developers: 5-10 minutes
-- Assumes accounts already created
-- Skip detailed explanations
-
-**Complete Setup** (full guides):
-- First-time setup: 50-90 minutes
-- Includes account creation
-- Thorough testing
-- Deployment
-
-**Choose based on your experience level!**
-
----
-
 ## 🎯 You're Ready!
 
 **You now have:**

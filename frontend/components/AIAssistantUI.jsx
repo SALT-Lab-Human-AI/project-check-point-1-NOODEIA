@@ -281,7 +281,8 @@ export default function AIAssistantUI() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: userId,
-          xpGained: xpEarned
+          xpGained: xpEarned,
+          source: 'ai_chat'
         })
       })
 

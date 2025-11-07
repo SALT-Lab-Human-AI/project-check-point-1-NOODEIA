@@ -164,14 +164,8 @@ For comprehensive step-by-step instructions:
    * ``technical/ACE_README.md`` - ACE memory system architecture (existing)
    * ``technical/AGENT.md`` - LangGraph agent architecture (existing)
 
-**User Guides:**
-   * ``user-guides/GAMIFICATION.md`` - XP, leveling, rewards system
-   * ``user-guides/QUIZ_SYSTEM.md`` - Quiz taking and rewards
-   * ``user-guides/KANBAN.md`` - Todo/task management
-   * ``user-guides/LEADERBOARD.md`` - Rankings and competition
-   * ``user-guides/VOCABULARY_GAMES.md`` - 4 game modes for kids
-   * ``user-guides/GROUP_CHAT.md`` - Multi-user collaboration
-   * ``user-guides/THEMES.md`` - Theme customization
+**User Guide:**
+   * ``user-guides/FEATURES_GUIDE.md`` - Complete guide to all features (AI Tutor, Gamification, Quizzes, Games, Todo, Leaderboard, Group Chat, Themes)
 
 **Troubleshooting:**
    * ``TROUBLESHOOTING.md`` - Common issues and solutions
@@ -394,60 +388,3 @@ Development Notes
 * ACE agent runs as Python subprocess spawned by API routes
 * XP leveling uses formula: ((level-1)² + 4)²
 * Memory system learns from every student interaction
-
-Recent Updates
---------------
-
-**ACE Memory System:**
-   * Per-learner memory isolation with Neo4j storage
-   * Structured bullet storage with semantic/episodic/procedural types
-   * Automatic learning from every interaction
-   * Neo4j-only storage (JSON fallback removed for consistency)
-
-**Security Improvements:**
-   * Calculator tool uses AST parser (secure, no code execution)
-   * Enhanced trigger keywords for tool activation
-   * Simplified storage architecture (fail-fast on errors)
-
-**Gamification:**
-   * XP rewards on all interactions (1.01-1.75 per action)
-   * Advanced leveling system with exponential progression
-   * Leaderboard with daily/weekly/monthly/all-time rankings
-   * Quiz rewards with gacha-style opening animations
-
-**User Experience:**
-   * Real-time optimistic updates (messages appear instantly)
-   * Theme system with 4 color options
-   * Customizable user avatars (emojis and colors)
-   * Smooth animations and glass morphism UI
-
-For Developers
---------------
-
-**First Time Setup:**
-
-1. Follow ``getting-started/`` guides in order (01 → 08)
-2. Start with ``01_PREREQUISITES.md`` to create accounts
-3. Complete ``03_CONFIGURATION.md`` to set environment variables
-4. Run database initialization scripts
-5. Test Python ACE agent
-6. Start development with ``06_LOCAL_DEVELOPMENT.md``
-
-**Quick Reference:**
-
-* **API Routes**: See ``technical/API_REFERENCE.md`` (11+ endpoint groups)
-* **Database Schema**: See ``technical/DATABASE_SCHEMA.md`` (complete graph model)
-* **Python Setup**: See ``technical/PYTHON_SETUP.md`` (ACE agent dependencies)
-
-**Testing:**
-
-* **Automated Tests**: ``cd unitTests && ./run_all_tests.sh``
-* **Manual Tests**: See ``docs/minimalTest/useCase.md``
-* **ACE Agent**: ``cd frontend/scripts && python3 run_ace_agent.py``
-
-**Comprehensive Setup:**
-
-For a complete, all-in-one setup guide, see:
-``getting-started/08_COMPLETE_SETUP.md``
-
-This guide consolidates all steps from prerequisites through deployment in a single document.
