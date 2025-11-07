@@ -277,7 +277,7 @@ class ACEMemory:
             ):
                 return existing_id
         return None
-    
+####
     def _component_score(
         self,
         strength: float,
@@ -311,22 +311,43 @@ class ACEMemory:
         )
         return semantic + episodic + procedural
 
-    def _touch_bullet(self, bullet: Bullet, timestamp: Optional[datetime] = None):
-        """Mark a bullet as accessed and bump component access indices."""
+    # def _touch_bullet(self, bullet: Bullet, timestamp: Optional[datetime] = None):
+    #     """Mark a bullet as accessed and bump component access indices."""
+    #     self.access_clock += 1
+    #     idx = self.access_clock
+    #     ts = timestamp or datetime.now()
+    #     iso_ts = ts.isoformat()
+    #     bullet.last_used = iso_ts
+    #     if bullet.semantic_strength > 0:
+    #         bullet.semantic_last_access = iso_ts
+    #         bullet.semantic_access_index = idx
+    #     if bullet.episodic_strength > 0:
+    #         bullet.episodic_last_access = iso_ts
+    #         bullet.episodic_access_index = idx
+    #     if bullet.procedural_strength > 0:
+    #         bullet.procedural_last_access = iso_ts
+    #         bullet.procedural_access_index = idx
+
+    def _touch_bullets(self, bullets, timestamp: Optional[datetime] = None):
         self.access_clock += 1
         idx = self.access_clock
         ts = timestamp or datetime.now()
         iso_ts = ts.isoformat()
-        bullet.last_used = iso_ts
-        if bullet.semantic_strength > 0:
-            bullet.semantic_last_access = iso_ts
-            bullet.semantic_access_index = idx
-        if bullet.episodic_strength > 0:
-            bullet.episodic_last_access = iso_ts
-            bullet.episodic_access_index = idx
-        if bullet.procedural_strength > 0:
-            bullet.procedural_last_access = iso_ts
-            bullet.procedural_access_index = idx
+        for bullet in bullets:
+            bullet.last_used = iso_ts
+            if bullet.semantic_strength > 0:
+                bullet.semantic_last_access = iso_ts
+                bullet.semantic_access_index = idx
+            if bullet.episodic_strength > 0:
+                bullet.episodic_last_access = iso_ts
+                bullet.episodic_access_index = idx
+            if bullet.procedural_strength > 0:
+                bullet.procedural_last_access = iso_ts
+                bullet.procedural_access_index = idx
+
+    def _touch_bullet(self, bullet: Bullet, timestamp: Optional[datetime] = None):
+        self._touch_bullets([bullet], timestamp)
+
 
     @staticmethod
     def _sync_strengths(bullet: Bullet):
@@ -848,8 +869,9 @@ class ACEMemory:
 
         scored_bullets.sort(key=lambda x: x[0], reverse=True)
         top_bullets = [bullet for _, bullet in scored_bullets[:top_k]]
-        for bullet in top_bullets:
-            self._touch_bullet(bullet)
+        # for bullet in top_bullets:
+        #     self._touch_bullet(bullet)
+        self._touch_bullets(top_bullets)  # one increment instead of many
         return top_bullets
     
     def format_context(

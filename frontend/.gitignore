@@ -10,6 +10,8 @@
 # production
 /build
 
+/scripts/__pycache__/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

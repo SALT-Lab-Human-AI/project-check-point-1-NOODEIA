@@ -135,7 +135,9 @@ export async function POST(request) {
     }
 
     const stdout = await new Promise((resolve, reject) => {
-      const py = spawn('python3', [scriptPath], {
+      // Use custom Python path if provided, otherwise default to 'python3'
+      const pythonCmd = process.env.PYTHON_PATH || 'python3'
+      const py = spawn(pythonCmd, [scriptPath], {
         cwd: scriptCwd,
         env: childEnv
       })

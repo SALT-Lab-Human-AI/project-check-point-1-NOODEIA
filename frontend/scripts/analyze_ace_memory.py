@@ -14,6 +14,16 @@ import os
 from collections import defaultdict
 from typing import Any, Dict, List
 
+from pathlib import Path
+try:
+    from dotenv import load_dotenv
+    # Load .env.local from the frontend directory
+    env_path = Path(__file__).parent.parent / '.env.local'
+    if env_path.exists():
+        load_dotenv(env_path)
+except ImportError:
+    pass 
+
 from ace_memory import ACEMemory, Bullet
 from ace_memory_store import Neo4jMemoryStore
 
@@ -309,7 +319,7 @@ def _parse_args() -> argparse.Namespace:
         choices=["analyze", "search", "export", "interactive", "cleanup"],
     )
     parser.add_argument("query", nargs="*", help="Query text for the search command")
-    parser.add_argument("--learner", dest="learner_id", help="Learner ID (Supabase user id)")
+    parser.add_argument("--learner",default ="893c1bbd-d91d-4ad2-add8-2d504e703835" ,  dest="learner_id", help="Learner ID (Supabase user id)")
     parser.add_argument("--dry-run", action="store_true", help="Preview cleanup merges without saving")
     return parser.parse_args()
 
