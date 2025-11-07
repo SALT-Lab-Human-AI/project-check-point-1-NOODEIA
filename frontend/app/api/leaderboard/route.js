@@ -34,37 +34,45 @@ export async function GET(request) {
                 ELSE null END AS monthlyStart
       WITH COALESCE(dailyStart, weeklyStart, monthlyStart) AS timeframeStart
       MATCH (u:User)
+      WITH u, timeframeStart, $timeframe AS timeframe, $type AS boardType
       OPTIONAL MATCH (u)-[:COMPLETED]->(qs:QuizSession)
       WHERE qs.completedAt IS NOT NULL 
             AND qs.totalQuestions IS NOT NULL 
             AND toInteger(qs.totalQuestions) > 0
-            AND (
-              $timeframe = 'all-time' 
-              OR qs.completedAt >= timeframeStart
-            )
+      WITH u, timeframe, boardType, timeframeStart, collect(DISTINCT qs) AS allQuizSessions
       OPTIONAL MATCH (u)-[:EARNED_XP]->(xt:XPTransaction)
       WHERE xt.createdAt IS NOT NULL
-            AND (
-              $timeframe = 'all-time' 
-              OR xt.createdAt >= timeframeStart
-            )
-      WITH u, 
-           $timeframe AS timeframe, 
-           $type AS boardType,
-           collect(qs) AS allQuizSessions,
-           collect(xt) AS allXPTransactions
+      WITH u, timeframe, boardType, timeframeStart, allQuizSessions, collect(DISTINCT xt) AS allXPTransactions
       WITH 
         u,
         timeframe,
         boardType,
-        size(allQuizSessions) AS attemptCount,
+        [s IN allQuizSessions WHERE s IS NOT NULL 
+              AND ($timeframe = 'all-time' OR (timeframeStart IS NOT NULL AND s.completedAt >= timeframeStart))] AS timeframeSessions,
+        [t IN allXPTransactions WHERE t IS NOT NULL 
+              AND ($timeframe = 'all-time' OR (timeframeStart IS NOT NULL AND t.createdAt >= timeframeStart))] AS timeframeTransactions
+      WITH 
+        u,
+        timeframe,
+        boardType,
+        timeframeSessions,
+        timeframeTransactions,
+        size(timeframeSessions) AS attemptCount,
+        size(timeframeTransactions) AS txCount
+      WITH 
+        u,
+        timeframe,
+        boardType,
+        attemptCount,
+        txCount,
+        timeframeTransactions,
         CASE 
-          WHEN timeframe = 'all-time' THEN COALESCE(toInteger(u.xp), 0)
-          ELSE COALESCE(reduce(total = 0.0, t IN allXPTransactions | total + COALESCE(toFloat(t.amount), 0.0)), 0.0)
+          WHEN timeframe = 'all-time' AND u.xp IS NOT NULL AND toFloat(u.xp) > 0 THEN toFloat(u.xp)
+          ELSE COALESCE(reduce(total = 0.0, t IN timeframeTransactions | total + COALESCE(toFloat(t.amount), 0.0)), 0.0)
         END AS leaderboardXP
       WHERE 
         (timeframe = 'all-time' AND leaderboardXP > 0)
-        OR (timeframe <> 'all-time' AND (attemptCount > 0 OR size(allXPTransactions) > 0))
+        OR (timeframe <> 'all-time' AND (attemptCount > 0 OR txCount > 0))
       RETURN 
         u.id AS userId,
         COALESCE(u.name, u.email, 'Anonymous') AS name,
