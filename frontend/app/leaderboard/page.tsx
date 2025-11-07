@@ -88,15 +88,28 @@ export default function LeaderboardPage() {
 
   const fetchLeaderboard = async (userId: string) => {
     try {
-      const response = await fetch(`/api/leaderboard?userId=${userId}&timeframe=${timeframe}&type=${leaderboardType}`);
+      setLoading(true);
+      const url = `/api/leaderboard?userId=${userId}&timeframe=${timeframe}&type=${leaderboardType}`;
+      console.log('🔄 Fetching leaderboard:', { timeframe, type: leaderboardType, url });
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        setRankings(data.rankings);
+        console.log('✅ Leaderboard data received:', { 
+          timeframe: data.timeframe, 
+          type: data.type,
+          rankingsCount: data.rankings?.length,
+          totalUsers: data.totalUsers 
+        });
+        setRankings(data.rankings || []);
         setUserRank(data.userRank);
         setTotalUsers(data.totalUsers);
+      } else {
+        console.error('❌ Leaderboard fetch failed:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('Failed to fetch leaderboard:', error);
+      console.error('❌ Failed to fetch leaderboard:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -185,7 +198,12 @@ export default function LeaderboardPage() {
             {(['daily', 'weekly', 'monthly', 'all-time'] as const).map((tf) => (
               <button
                 key={tf}
-                onClick={() => setTimeframe(tf)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🖱️ Timeframe button clicked:', tf);
+                  setTimeframe(tf);
+                }}
                 className={`flex-1 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${
                   timeframe === tf
                     ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg'

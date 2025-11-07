@@ -9,25 +9,53 @@ Noodeia AI Tutor - Setup Guide
 Overview
 --------
 
-Noodeia is a personalized AI tutor chat application with:
+Noodeia is a personalized AI tutor application with gamification, making learning addictive in the best possible way.
 
-* **Frontend**: Next.js 15.2.4 with App Router
+**Core Technologies:**
+
+* **Frontend**: Next.js 15.2.4 with App Router + React 19
 * **Authentication**: Supabase Auth (JWT tokens)
 * **Database**: Neo4j AuraDB (Graph Database)
-* **AI Model**: Google Gemini 2.5 Pro
+* **AI Engine**: Google Gemini 2.5 Flash + LangGraph + ACE Memory System
 * **Real-time**: Pusher (optional)
-* **Deployment**: Railway / Render (migrated from Vercel on 2025-10-10)
+* **Deployment**: Render (migrated from Vercel for better Python and timeout support)
+
+**Key Features:**
+
+* 🤖 AI Tutor with personalized memory (learns from each student)
+* 👥 Group Chat with Slack-style threading and @ai mentions
+* 🎮 Gamification with XP, levels, and rewards
+* 📝 Quiz System with gacha-style rewards
+* ✅ Kanban/Todo task management
+* 🏆 Leaderboard with XP and accuracy rankings
+* 🎯 Vocabulary Games for kids (4 game modes, 108 words)
+* 🎨 4 theme options with customizable avatars
+* 📓 Markdown notes and mind maps per conversation
 
 Prerequisites
 -------------
 
-* Node.js 18+ installed
-* Git installed
-* Supabase account (free tier) - for authentication
-* Neo4j AuraDB account (free tier) - for data storage
-* Vercel account (free tier) - for deployment
+**System Requirements:**
 
-Quick Start (10 Minutes)
+* Node.js 18+ (20 recommended)
+* Python 3.10+ (required for ACE agent)
+* Git
+
+**Required Accounts** (all have free tiers):
+
+* Supabase account - for authentication
+* Neo4j AuraDB account - for data storage
+* Google AI Studio account - for Gemini API key
+* Render account - for deployment
+
+**Optional Accounts:**
+
+* Pusher account - for real-time messaging
+* Tavily account - for web search tool
+
+**Detailed Guide:** See ``getting-started/01_PREREQUISITES.md`` for complete account setup instructions.
+
+Quick Start (15 Minutes)
 -------------------------
 
 1. **Clone & Install**
@@ -37,141 +65,116 @@ Quick Start (10 Minutes)
       git clone https://github.com/SALT-Lab-Human-AI/project-check-point-1-NOODEIA.git
       cd project-check-point-1-NOODEIA/frontend
       npm install --legacy-peer-deps
-
-2. **Set Up Supabase (Authentication)**
-
-   a. Create account at https://supabase.com
-   b. Create new project (free tier)
-   c. Get credentials from Settings → API:
-
-      * Project URL
-      * anon public key
-
-   Note: Supabase is only used for authentication. No database tables needed.
-
-3. **Set Up Neo4j AuraDB (Database)**
-
-   a. Create account at https://console.neo4j.io/
-   b. Create new AuraDB instance (free tier)
-   c. Save your credentials:
-
-      * Connection URI (e.g., neo4j+s://xxxxx.databases.neo4j.io)
-      * Username (default: neo4j)
-      * Password (generated during setup)
-
-4. **Configure Environment**
-
-   Copy the example file and add your credentials:
-
-   .. code-block:: bash
-
-      cd frontend
-      cp .env.local.example .env.local
-
-   Then edit ``frontend/.env.local`` with your actual credentials:
-
-   .. code-block:: text
-
-      # Supabase - Authentication Only
-      NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-      NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-
-      # Neo4j AuraDB - All Data Storage
-      NEXT_PUBLIC_NEO4J_URI=neo4j+s://xxxxx.databases.neo4j.io
-      NEXT_PUBLIC_NEO4J_USERNAME=neo4j
-      NEXT_PUBLIC_NEO4J_PASSWORD=your-password
-
-      # Google Gemini AI - Required for AI features
-      GEMINI_API_KEY=your-gemini-api-key
-      # Get your key from: https://aistudio.google.com/app/apikey
-
-5. **Initialize Neo4j Database**
-
-   .. code-block:: bash
-
-      npm run setup-neo4j
-      npm run setup-groupchat  # (Optional) Setup group chat feature
-
-   This creates the required constraints and indexes in your Neo4j database.
-
-6. **Install Python Dependencies (Optional - for TTS feature)**
-
-   .. code-block:: bash
-
-      cd frontend
       pip3 install -r requirements.txt
-      # This installs gtts==2.5.0 for Text-to-Speech functionality
 
-   Note: Python3 must be installed on your system for TTS to work.
-
-7. **Test Locally**
+2. **Configure Environment**
 
    .. code-block:: bash
 
+      cp .env.local.example .env.local
+      # Edit .env.local with your credentials
+
+   **Required credentials:**
+
+   * Supabase: URL and anon key
+   * Neo4j: URI, username, password
+   * Gemini: API key
+
+   **Complete guide:** See ``getting-started/03_CONFIGURATION.md``
+
+3. **Initialize Database**
+
+   .. code-block:: bash
+
+      npm run setup-neo4j       # Core database schema
+      npm run setup-groupchat   # Group chat feature
+      npm run setup-markdown    # Markdown notes feature
+      npm run setup-quiz        # Quiz system feature
+
+   **Detailed guide:** See ``getting-started/04_DATABASE_SETUP.md``
+
+4. **Test Python ACE Agent**
+
+   .. code-block:: bash
+
+      cd frontend/scripts
+      export GEMINI_API_KEY="your-key"
+      python3 run_ace_agent.py <<'EOF'
+      {"messages":[{"role":"user","content":"Help me with 2 + 2"}]}
+      EOF
+
+   **Complete guide:** See ``getting-started/05_PYTHON_ACE_SETUP.md``
+
+5. **Start Development Server**
+
+   .. code-block:: bash
+
+      cd frontend
       npm run dev
       # Open http://localhost:3000
 
-8. **Deploy to Vercel (Recommended)**
-
-   a. Go to https://vercel.com and sign up with GitHub
-   b. Click "Add New Project" and import this repository
-
-   c. **IMPORTANT: Configure Root Directory**
-
-      * Click "Edit" next to Root Directory
-      * Enter: ``frontend``
-      * Click "Save"
-
-   d. Configure Build Settings:
-
-      * Install Command: ``npm install --legacy-peer-deps``
-      * (Click "Override" to set the install command)
-
-   e. Add all 5 environment variables from ``.env.local``
-
-      * Check: Production, Preview, Development for each variable
-
-   f. Click "Deploy"
-
-Your app will be live at: ``https://your-project.vercel.app``
-
-**Detailed Guide:** See ``setup/VERCEL_DEPLOYMENT.md`` for complete instructions
+   **Usage guide:** See ``getting-started/06_LOCAL_DEVELOPMENT.md``
 
 Architecture
 ------------
 
 **Hybrid Architecture:**
 
-* **Supabase**: Handles user authentication (signup/login)
-* **Neo4j AuraDB**: Stores all application data in graph format
-* **Google Gemini 2.5 Pro**: Powers AI tutor responses (upgraded from 2.0 Flash)
-* **Pusher**: Real-time messaging (optional, configured but can be disabled)
+* **Supabase**: User authentication only (no data storage)
+* **Neo4j AuraDB**: ALL application data in graph format
+* **Google Gemini + LangGraph + ACE**: AI agent with memory-enhanced reasoning
+* **Pusher**: Real-time messaging (optional)
 
-**AI Tutor Graph Structure:**
+**Database Graph Structures:**
+
+**AI Tutor** (1-on-1):
   ``(:User)-[:HAS]->(:Session)-[:OCCURRED]->(:Chat)-[:NEXT]->(:Chat)``
 
-  * Users own Sessions (conversations)
-  * Sessions contain Chats (messages)
-  * Chats link to next Chat via NEXT relationship
-
-**Group Chat Graph Structure:**
+**Group Chat** (Multi-user):
   ``(:User)-[:MEMBER_OF]->(:GroupChat)-[:CONTAINS]->(:Message)-[:REPLY_TO]->(:Message)``
 
-  * Users join GroupChats with access keys
-  * GroupChats contain Messages
-  * Messages can reply to other Messages (Slack-style threading)
-  * AI Assistant can be invoked with ``@ai`` mentions
+**ACE Memory** (Per-learner):
+  ``(:User)-[:HAS_ACE_MEMORY]->(:AceMemoryState)``
+
+**Complete schema:** See ``technical/DATABASE_SCHEMA.md``
 
 Detailed Setup Guides
 ---------------------
 
-For comprehensive instructions, refer to:
+For comprehensive step-by-step instructions:
 
-**Neo4j Setup Guide**
-   ``setup/NEO4J_SETUP.md`` - Complete Neo4j configuration and graph model
+**Getting Started** (In order):
+   1. ``getting-started/00_OVERVIEW.md`` - Project overview and architecture
+   2. ``getting-started/01_PREREQUISITES.md`` - System requirements and accounts
+   3. ``getting-started/02_INSTALLATION.md`` - Install Node.js and Python dependencies
+   4. ``getting-started/03_CONFIGURATION.md`` - Configure environment variables
+   5. ``getting-started/04_DATABASE_SETUP.md`` - Initialize Neo4j database
+   6. ``getting-started/05_PYTHON_ACE_SETUP.md`` - Setup and test ACE agent
+   7. ``getting-started/06_LOCAL_DEVELOPMENT.md`` - Run and test locally
+   8. ``getting-started/07_DEPLOYMENT.md`` - Deploy to production
+   9. ``getting-started/08_COMPLETE_SETUP.md`` - All-in-one comprehensive guide
 
-**Project Configuration**
-   ``README.md`` - Architecture notes and configuration details
+**Deployment:**
+   * ``deployment/RENDER.md`` - Complete Render deployment guide (recommended platform)
+
+**Technical References:**
+   * ``technical/PYTHON_SETUP.md`` - Python environment and dependencies
+   * ``technical/DATABASE_SCHEMA.md`` - Complete Neo4j schema reference
+   * ``technical/API_REFERENCE.md`` - All API endpoints documented
+   * ``technical/ACE_README.md`` - ACE memory system architecture (existing)
+   * ``technical/AGENT.md`` - LangGraph agent architecture (existing)
+
+**User Guides:**
+   * ``user-guides/GAMIFICATION.md`` - XP, leveling, rewards system
+   * ``user-guides/QUIZ_SYSTEM.md`` - Quiz taking and rewards
+   * ``user-guides/KANBAN.md`` - Todo/task management
+   * ``user-guides/LEADERBOARD.md`` - Rankings and competition
+   * ``user-guides/VOCABULARY_GAMES.md`` - 4 game modes for kids
+   * ``user-guides/GROUP_CHAT.md`` - Multi-user collaboration
+   * ``user-guides/THEMES.md`` - Theme customization
+
+**Troubleshooting:**
+   * ``TROUBLESHOOTING.md`` - Common issues and solutions
 
 Project Structure
 -----------------
@@ -181,95 +184,65 @@ Project Structure
    project-check-point-1-NOODEIA/
    ├── frontend/                   # Main application
    │   ├── app/                   # Next.js app router
-   │   ├── components/            # React components (10 files)
-   │   │   ├── ui/               # UI primitives (4 files: button, card, input, label)
-   │   │   ├── AIAssistantUI.jsx
-   │   │   ├── AuthForm.jsx
-   │   │   ├── ChatPane.jsx
-   │   │   ├── GroupChat.jsx
-   │   │   ├── GroupChatList.jsx
-   │   │   ├── GroupChatAccessModal.jsx
-   │   │   ├── ThreadedMessage.jsx
-   │   │   ├── ThreadPanel.jsx
-   │   │   ├── Composer.jsx
-   │   │   ├── ConversationRow.jsx
-   │   │   ├── Header.jsx
-   │   │   ├── Message.jsx
-   │   │   ├── Sidebar.jsx
-   │   │   ├── ThemeToggle.jsx
-   │   │   └── utils.js
+   │   │   ├── page.tsx          # Landing page
+   │   │   ├── ai/               # AI tutor interface
+   │   │   ├── login/            # Authentication
+   │   │   ├── home/             # User dashboard
+   │   │   ├── achievements/     # Achievements page
+   │   │   ├── leaderboard/      # Rankings
+   │   │   ├── quiz/             # Quiz system
+   │   │   ├── games/            # Vocabulary games
+   │   │   ├── todo/             # Kanban board
+   │   │   ├── settings/         # User settings
+   │   │   ├── groupchat/        # Group collaboration
+   │   │   └── api/              # API routes (11+ route groups)
+   │   ├── components/            # React components (30+ files)
    │   ├── lib/                   # Core utilities
-   │   │   ├── neo4j.js          # Neo4j driver service
-   │   │   ├── database-adapter.js # Database abstraction
+   │   │   ├── neo4j.js          # Neo4j driver
    │   │   ├── supabase.js       # Supabase auth client
-   │   │   ├── pusher.js         # Pusher real-time client
-   │   │   └── utils.ts          # Helper functions
+   │   │   └── database-adapter.js # Database abstraction
    │   ├── services/
-   │   │   ├── neo4j.service.js  # Neo4j CRUD operations
-   │   │   ├── groupchat.service.js # Group chat operations
-   │   │   └── gemini.service.js # Google Gemini AI client
+   │   │   ├── neo4j.service.js  # Neo4j operations
+   │   │   ├── groupchat.service.js # Group chat logic
+   │   │   └── gemini.service.js # Google Gemini client
    │   ├── scripts/
-   │   │   ├── setup-neo4j.js    # Database initialization
-   │   │   └── text2audio.py     # Python TTS script
-   │   ├── hooks/                # React hooks
+   │   │   ├── ace_memory.py     # ACE memory system
+   │   │   ├── ace_components.py # Reflector/Curator
+   │   │   ├── langgraph_agent_ace.py # LangGraph agent
+   │   │   ├── run_ace_agent.py  # Agent runner
+   │   │   ├── setup-*.js        # Database initialization scripts
+   │   │   └── text2audio.py     # Text-to-speech
+   │   ├── utils/
+   │   │   └── levelingSystem.js # XP/leveling calculations
    │   ├── .env.local            # Environment variables (create this)
-   │   ├── requirements.txt      # Python dependencies (gtts==2.5.0)
+   │   ├── requirements.txt      # Python dependencies
    │   └── package.json
-   ├── setup/                     # Setup documentation
-   │   ├── README.rst            # This file
-   │   └── NEO4J_SETUP.md        # Detailed Neo4j guide
+   ├── setup/                     # Setup documentation (you are here)
+   ├── docs/                      # Testing and observability
+   ├── unitTests/                 # Automated test suites
+   ├── prompts/                   # AI system prompts
+   ├── railway.toml              # Railway config (alternative to Render)
+   ├── render.yaml               # Render deployment config
    └── README.md                 # Project overview
 
-Key Features
-------------
-
-* 💬 Real-time chat interface with AI tutor (Gemini 2.5 Pro)
-* 👥 Group chat with Slack-style threading
-* 🤖 AI assistant with @ai mentions (works in main channel and thread replies)
-* 🗂️ Multiple conversation management
-* 💾 Graph database storage (Neo4j)
-* 🔐 Secure authentication (Supabase)
-* 🌓 Dark/Light theme
-* 📱 Responsive design
-* 🚀 Serverless deployment (Vercel)
-* ✏️ Edit and delete messages with cascade delete for threads
-* 🔄 Edit and resend messages with real AI responses (not mock)
-* 🔄 Server-side @ai detection for reliable AI responses
-
-Using the Application
+Key Features Overview
 ---------------------
 
-**AI Tutor:**
+**For Students:**
 
-1. Create account or login via Supabase Auth
-2. Start chatting - AI responds to every message using Gemini 2.5 Pro
-3. AI uses Socratic teaching method (guides with questions rather than direct answers)
-4. Create multiple conversations from the sidebar
-5. Delete conversations by clicking the delete button in sidebar
-6. **Edit messages**: Click the three-dot menu to edit your message and get a new AI response
-7. **Resend messages**: Click resend to regenerate the AI response without editing your message
+* **AI Tutor**: 1-on-1 tutoring with memory (remembers your struggles)
+* **Group Study**: Collaborate with classmates, @ai for help
+* **Gamification**: Earn XP, level up, unlock rewards
+* **Quizzes**: Test knowledge, earn rare/legendary nodes
+* **Vocabulary Games**: 4 fun games to learn 108+ words
+* **Task Management**: Organize homework with Kanban board
 
-**Group Chat:**
+**For Teachers/Staff:**
 
-1. Click "New Group Chat" in the sidebar
-2. **Create** a new group with a name and access key, or **Join** existing group with access key
-3. Send messages in the main channel
-4. **Reply to messages**: Click "Reply" or the reply count to open thread panel
-5. **Threading**: Slack-style side panel shows parent message and all replies
-6. **Invoke AI**: Type ``@ai`` in any message (main channel or thread reply) to get AI response
-
-   - AI responds in a thread when mentioned in main channel
-   - AI responds in the same thread when mentioned in a reply
-   - AI reads full thread context before responding
-   - AI greets users with @mention (e.g., "@John, Hi!")
-   - AI shows complete thread context including parent message
-
-7. **Edit/Delete**: Click the three-dot menu on your own messages
-
-   - Deleting a parent message cascades to all replies
-   - Edited messages show "(edited)" indicator
-
-8. **Leave group**: Click the logout icon in the header
+* **Leaderboard**: Track student progress and competition
+* **Admin Dashboard**: View all student activity and statistics
+* **Group Management**: Create study groups, monitor conversations
+* **Analytics**: Detailed insights into learning patterns
 
 Common Commands
 ---------------
@@ -277,195 +250,204 @@ Common Commands
 .. code-block:: bash
 
    # Development
-   npm run dev              # Start dev server
+   npm run dev              # Start development server
    npm run build            # Build for production
-   npm run setup-neo4j      # Initialize Neo4j database
-   npm run setup-groupchat  # Setup group chat schema (optional)
+   npm start                # Start production server
+
+   # Database Setup
+   npm run setup-neo4j      # Initialize core schema
+   npm run setup-groupchat  # Setup group chat feature
+   npm run setup-markdown   # Setup notes feature
+   npm run setup-quiz       # Setup quiz system
 
    # Dependencies
-   npm install --legacy-peer-deps   # Install Node.js dependencies
+   npm install --legacy-peer-deps   # Install Node.js packages
+   pip3 install -r requirements.txt # Install Python packages (ACE agent)
 
-   # Python Dependencies (for Text-to-Speech feature)
-   pip3 install -r requirements.txt     # Install Python dependencies (gtts)
-   # OR manually install:
-   pip3 install gtts                    # Google Text-to-Speech library
+   # Python ACE Agent
+   cd frontend/scripts
+   python3 run_ace_agent.py         # Test AI agent
+   python3 analyze_ace_memory.py    # Inspect learned memory
+
+   # Testing
+   cd unitTests
+   ./run_all_tests.sh               # Run all automated tests
 
 Troubleshooting
 ---------------
 
-**"Cannot read properties of null (reading 'session')" error:**
-   - Ensure ``.env.local`` file exists with all Neo4j variables
-   - Restart dev server after editing ``.env.local``
-   - Run ``npm run setup-neo4j`` to initialize database
-   - Check browser console for detailed error messages
+**For common issues and solutions, see:** ``TROUBLESHOOTING.md``
 
-**Supabase connection issues:**
-   - Verify ``.env.local`` has correct Supabase credentials
-   - Only authentication is needed - no database tables required
+**Quick Fixes:**
 
-**Neo4j connection issues:**
-   - Test connection with ``npm run setup-neo4j``
-   - Verify Neo4j AuraDB instance is running
-   - Check credentials in ``.env.local``
-   - Ensure URI starts with ``neo4j+s://``
-
-**Build failures:**
-   - Use ``npm install --legacy-peer-deps``
-   - Delete ``.next`` and ``node_modules`` folders, reinstall
-   - Ensure Node.js 18+ is installed
-
-**App loads but shows "Creating new chat" error:**
-   - Open browser console to see detailed error
-   - Most likely Neo4j connection issue
-   - Verify all environment variables are set correctly
+**"Cannot read properties of null (reading 'session')":**
+   * Ensure ``.env.local`` exists with all variables
+   * Restart dev server after editing ``.env.local``
+   * Run ``npm run setup-neo4j`` to initialize database
 
 **AI not responding:**
-   - Verify ``GEMINI_API_KEY`` is set in ``.env.local``
-   - Get API key from https://aistudio.google.com/app/apikey
-   - Check server console for Gemini API errors
-   - Ensure API key has no extra spaces or quotes
+   * Verify ``GEMINI_API_KEY`` is set in ``.env.local``
+   * Get key from: https://aistudio.google.com/app/apikey
+   * Check server console for errors
+   * Ensure no extra spaces or quotes in key
 
-**Group chat messages not showing:**
-   - Run ``npm run setup-groupchat`` to initialize group chat schema
-   - Verify Neo4j connection is working
-   - Check browser console for API errors
+**Neo4j connection failed:**
+   * Verify URI format: ``neo4j+s://xxxxx.databases.neo4j.io``
+   * Check Neo4j instance is running in Aura console
+   * Test connection: ``npm run setup-neo4j``
 
-**Thread panel not opening:**
-   - Ensure message has ``replyCount`` property in Neo4j
-   - Check for JavaScript errors in browser console
-   - Verify ThreadPanel component is imported in GroupChat.jsx
+**Python/ACE agent errors:**
+   * Verify Python 3.10+ installed: ``python3 --version``
+   * Install dependencies: ``pip3 install -r frontend/requirements.txt``
+   * Check ``GEMINI_API_KEY`` is exported
 
-**Pusher errors (400 status code):**
-   - Verify Pusher credentials in ``.env.local`` are correct
-   - Check that ``PUSHER_SECRET`` and ``NEXT_PUBLIC_PUSHER_KEY`` are not swapped
-   - Format should be:
-
-     - ``PUSHER_SECRET=`` (the secret value)
-     - ``NEXT_PUBLIC_PUSHER_KEY=`` (the key value)
-     - ``NEXT_PUBLIC_PUSHER_CLUSTER=`` (e.g., us2)
-
-   - Restart dev server after changing Pusher credentials
-   - Pusher is optional and can be disabled by commenting out variables
-
-**@ai not responding in group chat:**
-   - Ensure ``GEMINI_API_KEY`` is set in ``.env.local``
-   - Check server terminal for AI-related errors (look for 🤖 emoji logs)
-   - Verify AI detection is working: should see "AI mention detected" in terminal
-   - Server-side detection means browser cache won't affect @ai functionality
-   - AI responses are now asynchronous (fire-and-forget) for better performance
-
-**AI responses not showing up without refresh:**
-   - Fixed in latest version with real-time Pusher broadcasting
-   - AI responses now appear instantly via Pusher in both main channel and thread panel
-   - ThreadPanel now subscribes to Pusher for real-time thread updates
-   - Message nodes include ``parentId`` property for proper filtering
-
-**Text-to-Speech (TTS) failed error:**
-   - Install Python3 if not already installed
-   - Install Google Text-to-Speech library: ``pip3 install gtts``
-   - The ``requirements.txt`` file in ``frontend/`` contains: ``gtts==2.5.0``
-   - TTS uses a Python script located at ``frontend/scripts/text2audio.py``
-   - Only one audio can play at a time (previous audio stops when new one starts)
-
-**Cannot leave group - only admin error:**
-   - If you're the only admin AND there are other members, you cannot leave
-   - If you're the only member (even as admin), you can leave (group becomes empty)
-   - To leave as the only admin with other members, promote another member to admin first
-
-**Next.js viewport metadata warning:**
-   - Fixed by moving viewport settings to separate ``viewport`` export
-   - Now uses ``export const viewport: Viewport = {}`` instead of including in metadata
+**Build failures:**
+   * Use ``npm install --legacy-peer-deps`` (React 19 compatibility)
+   * Delete ``.next`` and ``node_modules``, reinstall
+   * Ensure Node.js 18+ installed
 
 Environment Variables Reference
 --------------------------------
 
-Required variables in ``frontend/.env.local``:
+**Required Variables:**
 
 .. code-block:: text
 
-   # Supabase (Authentication)
-   NEXT_PUBLIC_SUPABASE_URL=        # From Supabase dashboard → Settings → API
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=   # From Supabase dashboard → Settings → API
+   # Authentication
+   NEXT_PUBLIC_SUPABASE_URL=        # From Supabase dashboard → API
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=   # From Supabase dashboard → API
 
-   # Neo4j AuraDB (Database)
-   NEXT_PUBLIC_NEO4J_URI=           # From Neo4j console (format: neo4j+s://xxxxx.databases.neo4j.io)
+   # Database
+   NEXT_PUBLIC_NEO4J_URI=           # Format: neo4j+s://xxxxx.databases.neo4j.io
    NEXT_PUBLIC_NEO4J_USERNAME=      # Usually "neo4j"
-   NEXT_PUBLIC_NEO4J_PASSWORD=      # Password created during Neo4j setup
+   NEXT_PUBLIC_NEO4J_PASSWORD=      # From Neo4j setup
 
-   # Google Gemini AI (Required for AI features)
-   GEMINI_API_KEY=                  # From Google AI Studio (https://aistudio.google.com/app/apikey)
+   # AI Model
+   GEMINI_API_KEY=                  # From Google AI Studio
 
-   # Pusher (Optional - for real-time group chat)
-   PUSHER_APP_ID=                   # From Pusher dashboard
-   PUSHER_SECRET=                   # From Pusher dashboard
-   NEXT_PUBLIC_PUSHER_KEY=          # From Pusher dashboard
-   NEXT_PUBLIC_PUSHER_CLUSTER=      # From Pusher dashboard (e.g., us2)
+**Optional Variables:**
 
-**Note**: Variables starting with ``NEXT_PUBLIC_`` are available in the browser.
-``GEMINI_API_KEY`` and ``PUSHER_SECRET`` are server-only (no ``NEXT_PUBLIC_`` prefix).
+.. code-block:: text
+
+   # Real-time messaging
+   PUSHER_APP_ID=
+   PUSHER_SECRET=
+   NEXT_PUBLIC_PUSHER_KEY=
+   NEXT_PUBLIC_PUSHER_CLUSTER=
+
+   # Web search tool
+   TAVILY_API_KEY=
+
+   # ACE agent tuning
+   GEMINI_MODEL=gemini-2.5-flash
+   ACE_LLM_TEMPERATURE=0.2
+   ACE_CURATOR_USE_LLM=false
+
+**Complete guide:** See ``getting-started/03_CONFIGURATION.md``
+
+Deployment
+----------
+
+The application is designed to be deployed on **Render**.
+
+**Why Render:**
+
+* Supports Python (required for ACE agent)
+* No timeout limits (AI requests can take 10+ minutes)
+* Auto-deploy on git push
+* Better Next.js integration
+* Free tier available
+
+**Deployment Guide:** See ``deployment/RENDER.md`` for complete instructions.
+
+**Alternative Platforms:**
+
+* Railway: Also supported, see ``railway.toml`` configuration
+* Vercel: Not recommended (10s timeout limit, no Python support)
 
 Need Help?
 ----------
 
-1. Check ``setup/NEO4J_SETUP.md`` for database setup details
-2. Review ``README.md`` for architecture and configuration notes
-3. Check browser console for detailed error messages
-4. Open an issue on GitHub for bugs
+**Documentation:**
+
+* **Quick Start**: ``QUICKSTART.md`` - 5-minute setup for experienced developers
+* **Getting Started**: ``getting-started/`` - Step-by-step guides (numbered 00-08)
+* **User Guides**: ``user-guides/`` - How to use each feature
+* **Technical Docs**: ``technical/`` - Deep-dive references
+* **Troubleshooting**: ``TROUBLESHOOTING.md`` - Common issues and solutions
+
+**Support:**
+
+1. Check ``TROUBLESHOOTING.md`` for your issue
+2. Review relevant documentation in ``getting-started/``
+3. Check browser console for detailed errors
+4. Review server logs for backend errors
+5. Open GitHub issue for bugs
 
 Development Notes
 -----------------
 
 * Application uses ES6 modules (``"type": "module"`` in package.json)
-* Static export only - no server-side rendering
 * Neo4j driver connection uses singleton pattern
-* Database adapter provides abstraction layer for easy rollback if needed
+* Database adapter provides abstraction layer
 * Supabase Auth user IDs are used as Node IDs in Neo4j
+* ACE agent runs as Python subprocess spawned by API routes
+* XP leveling uses formula: ((level-1)² + 4)²
+* Memory system learns from every student interaction
 
-Deployment
-----------
+Recent Updates
+--------------
 
-The application can be deployed on Railway or Render. Vercel is no longer supported due to timeout limitations.
+**ACE Memory System:**
+   * Per-learner memory isolation with Neo4j storage
+   * Structured bullet storage with semantic/episodic/procedural types
+   * Automatic learning from every interaction
+   * Neo4j-only storage (JSON fallback removed for consistency)
 
-**Railway Deployment** (Recommended for AI/Voice Features):
+**Security Improvements:**
+   * Calculator tool uses AST parser (secure, no code execution)
+   * Enhanced trigger keywords for tool activation
+   * Simplified storage architecture (fail-fast on errors)
 
-* Supports long-running processes (60+ second timeouts)
-* Python environment for voice cloning
-* Better for AI workloads
-* See ``RAILWAY_DEPLOYMENT.md`` and ``RAILWAY_CLI_DEPLOY.md`` for details
+**Gamification:**
+   * XP rewards on all interactions (1.01-1.75 per action)
+   * Advanced leveling system with exponential progression
+   * Leaderboard with daily/weekly/monthly/all-time rankings
+   * Quiz rewards with gacha-style opening animations
 
-**Render Deployment** (Alternative):
+**User Experience:**
+   * Real-time optimistic updates (messages appear instantly)
+   * Theme system with 4 color options
+   * Customizable user avatars (emojis and colors)
+   * Smooth animations and glass morphism UI
 
-* Better Next.js build compatibility
-* Easier setup and deployment
-* Auto-deploy on git push
-* See ``setup/RENDER_DEPLOYMENT.md`` for details
+For Developers
+--------------
 
-**Configuration Files**:
+**First Time Setup:**
 
-* ``railway.toml`` - Railway configuration
-* ``nixpacks.toml`` - Build environment (Node.js 20 + Python 3.11)
-* ``Procfile`` - Start command
-* ``render.yaml`` - Render configuration
+1. Follow ``getting-started/`` guides in order (01 → 08)
+2. Start with ``01_PREREQUISITES.md`` to create accounts
+3. Complete ``03_CONFIGURATION.md`` to set environment variables
+4. Run database initialization scripts
+5. Test Python ACE agent
+6. Start development with ``06_LOCAL_DEVELOPMENT.md``
 
-Recent Updates (2025-10-11)
-----------------------------
+**Quick Reference:**
 
-**Infinite Scroll**:
-   * Messages now load 50 at a time
-   * Scroll to top to automatically load older messages
-   * Efficient pagination for groups with 100+ messages
+* **API Routes**: See ``technical/API_REFERENCE.md`` (11+ endpoint groups)
+* **Database Schema**: See ``technical/DATABASE_SCHEMA.md`` (complete graph model)
+* **Python Setup**: See ``technical/PYTHON_SETUP.md`` (ACE agent dependencies)
 
-**AI Message Persistence**:
-   * Fixed bug where AI responses disappeared when reopening threads
-   * AI messages now properly load with ``OPTIONAL MATCH`` in Cypher queries
+**Testing:**
 
-**Deployment Migration**:
-   * Migrated from Vercel to Railway/Render
-   * Removed all Vercel-specific configuration
-   * Added Python support for future voice cloning features
+* **Automated Tests**: ``cd unitTests && ./run_all_tests.sh``
+* **Manual Tests**: See ``docs/minimalTest/useCase.md``
+* **ACE Agent**: ``cd frontend/scripts && python3 run_ace_agent.py``
 
-**UI Improvements**:
-   * Removed unnecessary refresh button (everything is real-time)
-   * All messages update via Pusher in real-time
-   * Cleaner interface
+**Comprehensive Setup:**
 
+For a complete, all-in-one setup guide, see:
+``getting-started/08_COMPLETE_SETUP.md``
+
+This guide consolidates all steps from prerequisites through deployment in a single document.

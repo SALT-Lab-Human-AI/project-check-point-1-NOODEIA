@@ -1,143 +1,218 @@
-# ACE Quick Start (Project Edition)
+# ⚡ Quick Start Guide
 
-Follow these steps to exercise the ACE + Gemini agent that powers `/api/ai/chat`.
+5-minute setup for experienced developers.
+
+For detailed step-by-step instructions, see [getting-started/](./getting-started/) folder.
 
 ---
 
-## 1. Install Requirements
+## 🎯 Prerequisites
+
+Have these ready:
+- ✅ Node.js 18+ and Python 3.10+ installed
+- ✅ Supabase account with project created
+- ✅ Neo4j AuraDB instance created
+- ✅ Google AI Studio API key
+
+**Need accounts?** See [getting-started/01_PREREQUISITES.md](./getting-started/01_PREREQUISITES.md)
+
+---
+
+## 🚀 Setup (5 Minutes)
+
+### 1. Clone and Install
 
 ```bash
-pip3 install -r frontend/requirements.txt   # LangGraph, LangChain, Gemini client, Neo4j, Tavily, MCP, gTTS
-cd frontend
-npm install                                 # Only needed for the Next.js UI
+git clone https://github.com/SALT-Lab-Human-AI/project-check-point-1-NOODEIA.git
+cd project-check-point-1-NOODEIA/frontend
+
+# Install Node.js dependencies
+npm install --legacy-peer-deps
+
+# Install Python dependencies
+pip3 install -r requirements.txt
 ```
 
----
-
-## 2. Set Environment Variables
+### 2. Configure
 
 ```bash
-export GEMINI_API_KEY="your-google-api-key"
-export GEMINI_MODEL="gemini-2.5-flash"      # optional override
-# Optional Neo4j tool configuration
-export NEO4J_URI="bolt://localhost:7687"
-export NEO4J_USERNAME="neo4j"
-export NEO4J_PASSWORD="password"
+# Create environment file
+cp .env.local.example .env.local
+
+# Edit .env.local with your credentials
+nano .env.local  # or use your preferred editor
 ```
 
-`GEMINI_API_KEY` is mandatory—the Python runner raises a structured error if it is missing.
+**Add:**
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
----
+# Neo4j
+NEXT_PUBLIC_NEO4J_URI=neo4j+s://xxxxx.databases.neo4j.io
+NEXT_PUBLIC_NEO4J_USERNAME=neo4j
+NEXT_PUBLIC_NEO4J_PASSWORD=your-password
 
-## 3. Run the Agent from the CLI
+# Gemini
+GEMINI_API_KEY=your-gemini-key
+```
+
+### 3. Initialize Database
 
 ```bash
-cd frontend/scripts
+# Run all setup scripts
+npm run setup-neo4j && \
+npm run setup-groupchat && \
+npm run setup-markdown && \
+npm run setup-quiz
+```
+
+**Expected**: ✅ for each script
+
+### 4. Test ACE Agent
+
+```bash
+cd scripts
+export GEMINI_API_KEY="your-key"
 python3 run_ace_agent.py <<'EOF'
-{"messages": [
-  {"role": "system", "content": "You are a helpful math tutor."},
-  {"role": "user", "content": "Show me two ways to multiply 12 by 5."}
-]}
+{"messages":[{"role":"user","content":"Help me with 2+2"}]}
 EOF
+cd ..
 ```
 
-Expected result:
-```json
-{
-  "answer": "Method 1: 12×5 = (10×5)+(2×5)=60. Method 2: Think of five groups of 12 → 60.",
-  "mode": "react",
-  "scratch": {
-    "ace_delta": {"num_new_bullets": 1, "num_updates": 1, "num_removals": 0},
-    "ace_online_learning": true,
-    ...
-  }
-}
-```
+**Expected**: JSON response with answer
 
-This verifies Gemini access, tool wiring, and ACE learning in a single command.
-
----
-
-## 4. Optional – Start the Next.js UI
-
-> The Codex sandbox refuses to bind to local ports (`listen EPERM`). Run the server on your own machine if you need the web UI.
+### 5. Start Development
 
 ```bash
-cd frontend
-export GEMINI_API_KEY="..."
-npm run dev -- --hostname 127.0.0.1 --port 3001
+npm run dev
+# Open http://localhost:3000
 ```
 
-Open the AI assistant, ask a question, and inspect the network response—`metadata.mode` and `metadata.scratch.ace_delta` confirm ACE participation.
+**Test:**
+- Sign up at `/login`
+- Send AI message at `/ai`
+- Take quiz at `/quiz`
 
 ---
 
-## 5. Inspect Learned Memory (Neo4j)
+## ✅ Verification
 
-Each learner’s playbook now lives in Neo4j. To inspect it, you need the
-Supabase `user.id` that owns the memory. If you are unsure which ID maps to
-which playbook, run the following (from `cypher-shell` or the Aura console):
-
-```cypher
-MATCH (u:User)-[:HAS_ACE_MEMORY]->(m:AceMemoryState)
-RETURN u.id AS learner_id,
-       size(apoc.convert.fromJsonMap(m.memory_json).bullets) AS bullet_count,
-       m.access_clock
-ORDER BY m.updated_at DESC;
-```
-
-Once you know the learner id, supply it either via the `--learner` flag or the
-`ACE_ANALYZE_LEARNER_ID` environment variable:
+Quick checks:
 
 ```bash
-cd frontend/scripts
-# Example with explicit learner id
-python3 analyze_ace_memory.py --learner abcd-1234
-python3 analyze_ace_memory.py search "division" --learner abcd-1234
-python3 analyze_ace_memory.py export --learner abcd-1234
-python3 analyze_ace_memory.py cleanup --learner abcd-1234 --dry-run
-```
+# 1. Dependencies installed
+npm list next neo4j-driver
+pip3 show langgraph
 
-`analyze_ace_memory.py` connects to Neo4j using the same environment variables
-(`NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`).
+# 2. Database connected
+npm run setup-neo4j
 
----
+# 3. Server starts
+npm run dev
 
-## 6. Reset or Tune Memory
-
-Memory snapshots are stored per learner in Neo4j. To clear or tune settings,
-modify the `ACEMemory(...)` constructor in `frontend/scripts/langgraph_agent_ace.py`:
-
-```python
-ACEMemory(
-    max_bullets=100,
-    dedup_threshold=0.85,
-    prune_threshold=0.3,
-)
-```
-
-- Increase `max_bullets` for longer-lived playbooks.
-- Raise `dedup_threshold` to merge bullets more aggressively.
-- Raise `prune_threshold` to discard middling strategies faster.
-
-To wipe a learner’s memory, you can run a simple script:
-
-```python
-from ace_memory import ACEMemory
-from ace_memory_store import Neo4jMemoryStore
-
-mem = ACEMemory(storage=Neo4jMemoryStore("abcd-1234"))
-mem.clear()
+# 4. Tests pass
+cd ../unitTests && ./run_all_tests.sh
 ```
 
 ---
 
-## 7. Troubleshooting Cheat Sheet
+## 🚀 Deploy to Render (5 Minutes)
 
-| Issue | Fix |
-|-------|-----|
-| `GEMINI_API_KEY not configured` | Export the key in the same shell before running any Python scripts or the dev server. |
-| `/api/ai/chat` returns 500 | The JSON body now contains the detailed error from the Python runner (`metadata.error`). |
-| Dev server cannot start | Run Next.js outside the sandbox or choose an allowed port/host. |
+```bash
+# 1. Push to GitHub
+git push origin main
 
-That’s all you need to get ACE working in this directory. Start with the CLI test, inspect the learner’s Neo4j playbook with `analyze_ace_memory.py`, then plug the pipeline into any workflow that can hit `/api/ai/chat`.***
+# 2. Go to https://render.com/
+# 3. New + → Web Service
+# 4. Connect repository
+# 5. Add environment variables (same as .env.local)
+# 6. Deploy!
+```
+
+**Complete guide**: [deployment/RENDER.md](./deployment/RENDER.md)
+
+---
+
+## 🔧 Common Quick Fixes
+
+**AI not responding:**
+```bash
+export GEMINI_API_KEY="your-key" && npm run dev
+```
+
+**Neo4j connection failed:**
+```bash
+# Check URI format: neo4j+s://...
+npm run setup-neo4j
+```
+
+**Build fails:**
+```bash
+npm install --legacy-peer-deps
+```
+
+**Python errors:**
+```bash
+pip3 install -r requirements.txt
+```
+
+---
+
+## 📚 Full Documentation
+
+**This guide is abbreviated. For complete instructions:**
+
+**Getting Started** (Step-by-step):
+- [00_OVERVIEW.md](./getting-started/00_OVERVIEW.md) - Architecture
+- [01_PREREQUISITES.md](./getting-started/01_PREREQUISITES.md) - Accounts
+- [02_INSTALLATION.md](./getting-started/02_INSTALLATION.md) - Install
+- [03_CONFIGURATION.md](./getting-started/03_CONFIGURATION.md) - Configure
+- [04_DATABASE_SETUP.md](./getting-started/04_DATABASE_SETUP.md) - Database
+- [05_PYTHON_ACE_SETUP.md](./getting-started/05_PYTHON_ACE_SETUP.md) - Python
+- [06_LOCAL_DEVELOPMENT.md](./getting-started/06_LOCAL_DEVELOPMENT.md) - Development
+- [07_DEPLOYMENT.md](./getting-started/07_DEPLOYMENT.md) - Deploy
+- [08_COMPLETE_SETUP.md](./getting-started/08_COMPLETE_SETUP.md) - All-in-one
+
+**Technical References:**
+- [technical/DATABASE_SCHEMA.md](./technical/DATABASE_SCHEMA.md) - Complete schema
+- [technical/API_REFERENCE.md](./technical/API_REFERENCE.md) - All endpoints
+- [technical/PYTHON_SETUP.md](./technical/PYTHON_SETUP.md) - Python details
+- [technical/ACE_README.md](./technical/ACE_README.md) - ACE memory
+- [technical/AGENT.md](./technical/AGENT.md) - LangGraph agent
+
+**User Guides:**
+- [user-guides/](./user-guides/) - Feature usage guides
+
+**Troubleshooting:**
+- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues
+
+---
+
+## ⏱️ Time Estimates
+
+**Quick Start** (this guide):
+- Experienced developers: 5-10 minutes
+- Assumes accounts already created
+- Skip detailed explanations
+
+**Complete Setup** (full guides):
+- First-time setup: 50-90 minutes
+- Includes account creation
+- Thorough testing
+- Deployment
+
+**Choose based on your experience level!**
+
+---
+
+## 🎯 You're Ready!
+
+**You now have:**
+- ✅ Noodeia running locally
+- ✅ All features functional
+- ✅ Tests passing
+- ✅ Ready to deploy
+
+**Start building and learning!** 🚀✨

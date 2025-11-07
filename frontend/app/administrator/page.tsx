@@ -106,6 +106,7 @@ export default function AdministratorPage() {
                 <div className="flex items-center gap-2 rounded-2xl bg-white/30 border border-white/30 px-3 py-2">
                   <KeyRound className="w-4 h-4 text-gray-700" />
                   <input
+                    type="password"
                     value={keyInput}
                     onChange={e => setKeyInput(e.target.value)}
                     placeholder="Enter administrator key"

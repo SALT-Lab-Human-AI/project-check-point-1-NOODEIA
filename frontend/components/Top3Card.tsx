@@ -123,7 +123,13 @@ export default function Top3Card({
   return (
     <motion.div
       className={`relative flex flex-col items-center p-6 rounded-[2rem] bg-gradient-to-br ${style.gradient} ${style.shadow} ${style.height} ${style.width} backdrop-blur-md border border-white/30 transition-all ${
-        isCurrentUser ? 'ring-4 ring-purple-300 ring-offset-2' : ''
+        isCurrentUser 
+          ? rank === 1 
+            ? 'ring-2 ring-yellow-300 ring-offset-1' 
+            : rank === 2 
+            ? 'ring-2 ring-blue-300 ring-offset-1'
+            : 'ring-2 ring-orange-300 ring-offset-1'
+          : ''
       }`}
       style={{ 
         overflow: 'visible',

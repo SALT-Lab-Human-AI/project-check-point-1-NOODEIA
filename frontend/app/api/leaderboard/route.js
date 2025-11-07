@@ -20,67 +20,125 @@ export async function GET(request) {
       )
     }
 
+    // Query pattern matches administrator dashboard - use rolling windows for time-based filters
+    // Daily: last 24 hours (rolling window, timezone-agnostic)
+    // Weekly: last 7 days (rolling window)
+    // Monthly: first of current month in UTC
     const query = `
-      WITH 
-        $timeframe AS timeframe,
-        $type AS boardType,
-        CASE 
-          WHEN $timeframe = 'daily' THEN datetime() - duration({days: 1})
-          WHEN $timeframe = 'weekly' THEN datetime() - duration({days: 7})
-          WHEN $timeframe = 'monthly' THEN datetime() - duration({days: 30})
-          ELSE null
-        END AS cutoff
       MATCH (u:User)
       OPTIONAL MATCH (u)-[:COMPLETED]->(qs:QuizSession)
-      WITH u, boardType, timeframe, cutoff, collect(qs) AS sessions
+      WHERE qs IS NULL 
+         OR (qs.completedAt IS NOT NULL 
+             AND qs.totalQuestions IS NOT NULL 
+             AND toInteger(qs.totalQuestions) > 0
+             AND (
+               $timeframe = 'all-time' 
+               OR ($timeframe = 'daily' AND qs.completedAt >= datetime() - duration({hours: 24}))
+               OR ($timeframe = 'weekly' AND qs.completedAt >= datetime() - duration({days: 7}))
+               OR ($timeframe = 'monthly' AND qs.completedAt >= datetime({year: date().year, month: date().month, day: 1, hour: 0, minute: 0, second: 0}))
+             ))
+      WITH u, $timeframe AS timeframe, $type AS boardType, qs
       WITH 
         u,
-        boardType,
         timeframe,
-        [s IN sessions WHERE s IS NOT NULL AND (cutoff IS NULL OR (s.completedAt IS NOT NULL AND s.completedAt >= cutoff))] AS timeframeSessions
+        boardType,
+        [s IN collect(qs) WHERE s IS NOT NULL] AS timeframeSessions
       WITH 
         u,
-        boardType,
         timeframe,
-        timeframeSessions,
-        [s IN timeframeSessions WHERE s.totalQuestions IS NOT NULL AND toFloat(s.totalQuestions) > 0] AS validSessions
-      WITH 
-        u,
         boardType,
-        timeframe,
-        timeframeSessions,
-        validSessions,
-        size(validSessions) AS attemptCount,
-        reduce(timeframeXP = 0.0, s IN timeframeSessions | timeframeXP + COALESCE(s.xpEarned, 0)) AS timeframeXP
-      WITH 
-        u,
-        boardType,
-        timeframe,
-        attemptCount,
-        CASE 
-          WHEN timeframe = 'all-time' THEN COALESCE(u.xp, 0)
-          ELSE timeframeXP
-        END AS leaderboardXP,
-        timeframeXP
+        size(timeframeSessions) AS attemptCount,
+        COALESCE(toInteger(u.xp), 0) AS leaderboardXP
+      WHERE 
+        (timeframe = 'all-time' AND leaderboardXP > 0)
+        OR (timeframe <> 'all-time' AND attemptCount > 0)
       RETURN 
         u.id AS userId,
         COALESCE(u.name, u.email, 'Anonymous') AS name,
         leaderboardXP AS xp,
-        COALESCE(u.level, 1) AS level,
+        COALESCE(toInteger(u.level), 1) AS level,
         attemptCount AS attempts,
         u.iconType AS iconType,
         u.iconEmoji AS iconEmoji,
-        u.iconColor AS iconColor,
-        timeframeXP AS timeframeXP
+        u.iconColor AS iconColor
       ORDER BY 
         CASE WHEN boardType = 'attempts' THEN attemptCount ELSE leaderboardXP END DESC,
-        u.level DESC,
-        u.id ASC
+        level DESC,
+        userId ASC
     `
 
     const params = { timeframe, type }
+    
+    console.log('🔍 Leaderboard Query Params:', params)
+
+    // Enhanced debug query - check rolling 24h window
+    if (timeframe === 'daily') {
+      const debugQuery = `
+        MATCH (u:User {id: $userId})-[:COMPLETED]->(qs:QuizSession)
+        WHERE qs.completedAt IS NOT NULL
+        WITH qs, datetime() - duration({hours: 24}) AS cutoff24h
+        RETURN 
+          qs.completedAt as completedAt,
+          cutoff24h,
+          qs.completedAt >= cutoff24h as isWithin24h,
+          qs.xpEarned as xpEarned,
+          qs.totalQuestions as totalQuestions,
+          qs.id as sessionId
+        ORDER BY qs.completedAt DESC
+        LIMIT 10
+      `
+      const debugResult = await session.run(debugQuery, { userId })
+      console.log('🔍 Daily Debug - Rolling 24h Window:', {
+        userId,
+        totalSessions: debugResult.records.length,
+        sessions: debugResult.records.map(r => ({
+          sessionId: r.get('sessionId'),
+          completedAt: r.get('completedAt')?.toString(),
+          cutoff24h: r.get('cutoff24h')?.toString(),
+          isWithin24h: r.get('isWithin24h'),
+          xpEarned: neo4jService.toNumber(r.get('xpEarned')),
+          totalQuestions: neo4jService.toNumber(r.get('totalQuestions'))
+        }))
+      })
+
+      // Test the exact query pattern used in main query
+      const userCheckQuery = `
+        MATCH (u:User {id: $userId})
+        OPTIONAL MATCH (u)-[:COMPLETED]->(qs:QuizSession)
+        WHERE qs IS NULL 
+           OR (qs.completedAt IS NOT NULL 
+               AND qs.totalQuestions IS NOT NULL 
+               AND toInteger(qs.totalQuestions) > 0
+               AND qs.completedAt >= datetime() - duration({hours: 24}))
+        WITH u, [s IN collect(qs) WHERE s IS NOT NULL] AS timeframeSessions
+        RETURN 
+          u.id AS userId,
+          size(timeframeSessions) AS attemptCount,
+          COALESCE(toInteger(u.xp), 0) AS leaderboardXP
+      `
+      const userCheckResult = await session.run(userCheckQuery, { userId })
+      if (userCheckResult.records.length > 0) {
+        const record = userCheckResult.records[0]
+        console.log('🔍 Daily Debug - User Query Result (24h rolling window):', {
+          userId: record.get('userId'),
+          attemptCount: neo4jService.toNumber(record.get('attemptCount')),
+          leaderboardXP: neo4jService.toNumber(record.get('leaderboardXP'))
+        })
+      }
+    }
 
     const rankingsResult = await session.run(query, params)
+    
+    console.log('📊 Leaderboard Results:', {
+      timeframe,
+      type,
+      totalUsers: rankingsResult.records.length,
+      sampleUser: rankingsResult.records[0] ? {
+        userId: rankingsResult.records[0].get('userId'),
+        xp: rankingsResult.records[0].get('xp'),
+        attempts: rankingsResult.records[0].get('attempts')
+      } : null
+    })
 
     const allUsers = rankingsResult.records.map((record, index) => ({
       rank: index + 1,
