@@ -676,7 +676,115 @@ class Neo4jDataService {
         }
       }
 
-      return { days, weeks, quizDetails }
+      // Calculate current month and previous month average accuracy
+      const now = new Date()
+      const currentMonth = parseInt(now.getMonth() + 1, 10) // Neo4j months are 1-12, ensure integer
+      const currentYear = parseInt(now.getFullYear(), 10) // Ensure integer
+      const nextMonth = currentMonth === 12 ? 1 : parseInt(currentMonth + 1, 10)
+      const nextYear = currentMonth === 12 ? parseInt(currentYear + 1, 10) : parseInt(currentYear, 10)
+      
+      const previousMonth = currentMonth === 1 ? 12 : parseInt(currentMonth - 1, 10)
+      const previousYear = currentMonth === 1 ? parseInt(currentYear - 1, 10) : parseInt(currentYear, 10)
+      const previousNextMonth = previousMonth === 12 ? 1 : parseInt(previousMonth + 1, 10)
+      const previousNextYear = previousMonth === 12 ? parseInt(previousYear + 1, 10) : parseInt(previousYear, 10)
+
+      // Get current month average
+      const currentMonthResult = await session.run(
+        `
+        MATCH (u:User {id: $userId})-[:COMPLETED]->(qs:QuizSession)
+        WHERE qs.completedAt >= datetime({year: toInteger($currentYear), month: toInteger($currentMonth), day: 1, hour: 0, minute: 0, second: 0})
+          AND qs.completedAt < datetime({year: toInteger($nextYear), month: toInteger($nextMonth), day: 1, hour: 0, minute: 0, second: 0})
+        WITH sum(toFloat(qs.score)) as totalScore, sum(toFloat(qs.totalQuestions)) as totalQuestions
+        RETURN CASE WHEN totalQuestions > 0 THEN (totalScore / totalQuestions * 100) ELSE 0 END as avgAccuracy
+        `,
+        { 
+          userId, 
+          currentYear, 
+          currentMonth, 
+          nextYear, 
+          nextMonth
+        }
+      )
+
+      // Get previous month average
+      const previousMonthResult = await session.run(
+        `
+        MATCH (u:User {id: $userId})-[:COMPLETED]->(qs:QuizSession)
+        WHERE qs.completedAt >= datetime({year: toInteger($previousYear), month: toInteger($previousMonth), day: 1, hour: 0, minute: 0, second: 0})
+          AND qs.completedAt < datetime({year: toInteger($previousNextYear), month: toInteger($previousNextMonth), day: 1, hour: 0, minute: 0, second: 0})
+        WITH sum(toFloat(qs.score)) as totalScore, sum(toFloat(qs.totalQuestions)) as totalQuestions
+        RETURN CASE WHEN totalQuestions > 0 THEN (totalScore / totalQuestions * 100) ELSE 0 END as avgAccuracy
+        `,
+        { 
+          userId, 
+          previousYear, 
+          previousMonth, 
+          previousNextYear, 
+          previousNextMonth
+        }
+      )
+
+      // Get previous month's days online (same 14-day period from previous month)
+      const fourteenDaysAgo = new Date(now)
+      fourteenDaysAgo.setDate(now.getDate() - 14)
+      
+      // Calculate the same 14-day period from the previous month
+      const previousFourteenDaysAgo = new Date(fourteenDaysAgo)
+      previousFourteenDaysAgo.setMonth(previousFourteenDaysAgo.getMonth() - 1)
+      const previousFourteenDaysEnd = new Date(now)
+      previousFourteenDaysEnd.setMonth(previousFourteenDaysEnd.getMonth() - 1)
+
+      const previousMonthDaysResult = await session.run(
+        `
+        MATCH (u:User {id: $userId})-[:COMPLETED]->(qs:QuizSession)
+        WHERE qs.completedAt >= datetime({year: toInteger($prevStartYear), month: toInteger($prevStartMonth), day: toInteger($prevStartDay), hour: 0, minute: 0, second: 0})
+          AND qs.completedAt < datetime({year: toInteger($prevEndYear), month: toInteger($prevEndMonth), day: toInteger($prevEndDay), hour: 0, minute: 0, second: 0})
+        WITH date(qs.completedAt) as day
+        RETURN count(DISTINCT day) as daysOnline, sum(1) as totalAttempts
+        `,
+        { 
+          userId,
+          prevStartYear: previousFourteenDaysAgo.getFullYear(),
+          prevStartMonth: previousFourteenDaysAgo.getMonth() + 1,
+          prevStartDay: previousFourteenDaysAgo.getDate(),
+          prevEndYear: previousFourteenDaysEnd.getFullYear(),
+          prevEndMonth: previousFourteenDaysEnd.getMonth() + 1,
+          prevEndDay: previousFourteenDaysEnd.getDate()
+        }
+      )
+
+      const currentMonthAvg = currentMonthResult.records[0] 
+        ? neo4jService.toNumber(currentMonthResult.records[0].get('avgAccuracy')) || 0 
+        : 0
+      const previousMonthAvg = previousMonthResult.records[0] 
+        ? neo4jService.toNumber(previousMonthResult.records[0].get('avgAccuracy')) || 0 
+        : 0
+      
+      const previousMonthDaysOnline = previousMonthDaysResult.records[0]
+        ? neo4jService.toNumber(previousMonthDaysResult.records[0].get('daysOnline')) || 0
+        : 0
+      const previousMonthAttempts = previousMonthDaysResult.records[0]
+        ? neo4jService.toNumber(previousMonthDaysResult.records[0].get('totalAttempts')) || 0
+        : 0
+
+      // Calculate percentage change
+      let monthOverMonthChange = 0
+      if (previousMonthAvg > 0) {
+        monthOverMonthChange = ((currentMonthAvg - previousMonthAvg) / previousMonthAvg) * 100
+      } else if (currentMonthAvg > 0) {
+        monthOverMonthChange = 100 // 100% increase from 0
+      }
+
+      return { 
+        days, 
+        weeks, 
+        quizDetails,
+        monthOverMonthChange: Math.round(monthOverMonthChange * 10) / 10, // Round to 1 decimal
+        currentMonthAvg: Math.round(currentMonthAvg * 10) / 10,
+        previousMonthAvg: Math.round(previousMonthAvg * 10) / 10,
+        previousMonthDaysOnline,
+        previousMonthAttempts
+      }
     } catch (error) {
       console.error('Error getting daily and weekly stats:', error)
       throw error

@@ -107,7 +107,7 @@ export default function QuizPage() {
       // Check for saved quiz after authentication
       checkForSavedQuiz(session.user.id);
     } catch (error) {
-      console.error('Auth error:', error);
+      // Auth error
       router.push('/login');
     } finally {
       setLoading(false);
@@ -136,7 +136,7 @@ export default function QuizPage() {
       localStorage.setItem(`quiz_progress_${user.id}`, JSON.stringify(quizState));
       return true;
     } catch (error) {
-      console.error('Failed to save quiz progress:', error);
+      // Failed to save quiz progress
       return false;
     }
   };
@@ -176,7 +176,7 @@ export default function QuizPage() {
       setGameState('quiz');
       setHasSavedQuiz(false);
     } catch (error) {
-      console.error('Failed to load saved quiz:', error);
+      // Failed to load saved quiz
       clearSavedQuiz();
       setHasSavedQuiz(false);
     }
@@ -190,7 +190,7 @@ export default function QuizPage() {
       localStorage.removeItem(`quiz_progress_${user.id}`);
       setHasSavedQuiz(false);
     } catch (error) {
-      console.error('Failed to clear saved quiz:', error);
+      // Failed to clear saved quiz
     }
   };
 
@@ -210,7 +210,7 @@ export default function QuizPage() {
         }
       }
     } catch (error) {
-      console.error('Failed to check for saved quiz:', error);
+      // Failed to check for saved quiz
     }
   };
 
@@ -265,11 +265,11 @@ export default function QuizPage() {
         try {
           localStorage.setItem(`quiz_progress_${user.id}`, JSON.stringify(initialState));
         } catch (error) {
-          console.error('Failed to save initial quiz state:', error);
+          // Failed to save initial quiz state
         }
       }
     } catch (error) {
-      console.error('Start quiz error:', error);
+      // Start quiz error
       alert('Failed to start quiz. Please try again.');
     }
   };
@@ -401,7 +401,7 @@ export default function QuizPage() {
       setGameState('result');
 
     } catch (error) {
-      console.error('End quiz error:', error);
+      // End quiz error
       alert('Failed to submit quiz. Please try again.');
       setGameState('menu');
     }
@@ -422,7 +422,7 @@ export default function QuizPage() {
 
       router.push(`/quiz/reveal?${params.toString()}`);
     } catch (error) {
-      console.error('Navigation error:', error);
+      // Navigation error
       alert('Failed to open reveal page. Please try again.');
     }
   };

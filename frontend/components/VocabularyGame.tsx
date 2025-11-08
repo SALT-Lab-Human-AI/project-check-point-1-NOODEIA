@@ -176,7 +176,7 @@ export default function VocabularyGame({
           }
         }
       } catch (error) {
-        console.error('Failed to fetch user data:', error);
+        // Failed to fetch user data
       }
     };
     
@@ -278,7 +278,6 @@ export default function VocabularyGame({
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session?.user?.id) {
-        console.error('No user session found');
         return;
       }
 
@@ -294,7 +293,6 @@ export default function VocabularyGame({
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`✅ Awarded ${xpAmount} XP! Total: ${data.xp} XP, Level: ${data.level}`);
         
         // Update user data and trigger XP bar update
         setCurrentUser((prev: any) => ({
@@ -306,7 +304,7 @@ export default function VocabularyGame({
         setXpUpdateKey(prev => prev + 1); // Trigger GamificationBar update
       }
     } catch (error) {
-      console.error('Failed to award XP:', error);
+      // Failed to award XP
     }
   };
 
@@ -752,7 +750,7 @@ export default function VocabularyGame({
                       xpGain={xpGain}
                       key={xpUpdateKey}
                       onLevelUp={(newLevel, oldLevel) => {
-                        console.log(`Level up! ${oldLevel} → ${newLevel}`);
+                        // Level up
                       }}
                     />
                   </div>
@@ -844,7 +842,7 @@ export default function VocabularyGame({
                       xpGain={xpGain}
                       key={xpUpdateKey}
                       onLevelUp={(newLevel, oldLevel) => {
-                        console.log(`Level up! ${oldLevel} → ${newLevel}`);
+                        // Level up
                       }}
                     />
                   </div>
@@ -946,7 +944,7 @@ export default function VocabularyGame({
                       xpGain={xpGain}
                       key={xpUpdateKey}
                       onLevelUp={(newLevel, oldLevel) => {
-                        console.log(`Level up! ${oldLevel} → ${newLevel}`);
+                        // Level up
                       }}
                     />
                   </div>
@@ -1024,7 +1022,7 @@ export default function VocabularyGame({
                       xpGain={xpGain}
                       key={xpUpdateKey}
                       onLevelUp={(newLevel, oldLevel) => {
-                        console.log(`Level up! ${oldLevel} → ${newLevel}`);
+                        // Level up
                       }}
                     />
                   </div>

@@ -37,6 +37,37 @@ export async function POST(request) {
     // Default source if not provided
     const xpSource = source || 'unknown'
 
+    // Check if XP was already awarded for this source (e.g., quiz:sessionId)
+    // This prevents duplicate XP awarding for the same quiz session or game action
+    if (xpSource.startsWith('quiz:')) {
+      const existingXpCheck = await session.run(
+        `
+        MATCH (u:User {id: $userId})-[:EARNED_XP]->(xt:XPTransaction)
+        WHERE xt.source = $xpSource
+        RETURN count(xt) as existingCount
+        `,
+        { userId, xpSource }
+      )
+
+      if (existingXpCheck.records[0]?.get('existingCount') > 0) {
+        // XP already awarded for this session, return current XP without creating new transaction
+        const currentResult = await session.run(
+          `
+          MATCH (u:User {id: $userId})
+          RETURN COALESCE(u.xp, 0) as currentXp, COALESCE(u.level, 1) as level
+          `,
+          { userId }
+        )
+        const record = currentResult.records[0]
+        return NextResponse.json({
+          id: userId,
+          xp: record.get('currentXp'),
+          level: record.get('level'),
+          xpGained: 0 // No new XP gained (already awarded)
+        })
+      }
+    }
+
     // First get current XP
     const currentResult = await session.run(
       `
@@ -118,7 +149,6 @@ export async function POST(request) {
     })
 
   } catch (error) {
-    console.error("Error updating XP:", error)
     return NextResponse.json(
       { error: "Failed to update XP" },
       { status: 500 }
@@ -174,7 +204,6 @@ export async function GET(request) {
     })
 
   } catch (error) {
-    console.error("Error fetching XP:", error)
     return NextResponse.json(
       { error: "Failed to fetch XP" },
       { status: 500 }

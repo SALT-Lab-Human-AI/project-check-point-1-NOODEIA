@@ -77,7 +77,7 @@ export async function GET(request) {
       nodeType: record.get('nodeType'),
       score: neo4jService.toNumber(record.get('score')),
       totalQuestions: neo4jService.toNumber(record.get('totalQuestions')),
-      streak: neo4jService.toNumber(record.get('streak')),
+      streak: neo4jService.toNumber(record.get('streak') || 0), // Use quiz streak (consecutive correct answers)
       xpEarned: neo4jService.toNumber(record.get('xpEarned')),
       completedAt: record.get('completedAt')?.toStandardDate?.() || record.get('completedAt')
     }))
@@ -88,7 +88,6 @@ export async function GET(request) {
     }, { status: 200 })
 
   } catch (error) {
-    console.error('Achievements fetch error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch achievements' },
       { status: 500 }

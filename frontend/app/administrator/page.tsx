@@ -3,7 +3,7 @@
 import { useState } from "react"
 import React from "react"
 import { useRouter } from "next/navigation"
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
 import { KeyRound, User, ShieldCheck, TrendingUp, BarChart2, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react"
 
 function GlassCard({ className = "", children }: { className?: string; children: React.ReactNode }) {
@@ -39,6 +39,11 @@ export default function AdministratorPage() {
   const [quizDetails, setQuizDetails] = useState<Record<string, QuizDetail[]>>({})
   const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set())
   const [error, setError] = useState("")
+  const [monthOverMonthChange, setMonthOverMonthChange] = useState<number | null>(null)
+  const [currentMonthAvg, setCurrentMonthAvg] = useState<number | null>(null)
+  const [previousMonthAvg, setPreviousMonthAvg] = useState<number | null>(null)
+  const [previousMonthDaysOnline, setPreviousMonthDaysOnline] = useState<number | null>(null)
+  const [previousMonthAttempts, setPreviousMonthAttempts] = useState<number | null>(null)
 
   async function checkKey() {
     setError("")
@@ -66,6 +71,11 @@ export default function AdministratorPage() {
     setDays(data.days || [])
     setWeeks(data.weeks || [])
     setQuizDetails(data.quizDetails || {})
+    setMonthOverMonthChange(data.monthOverMonthChange ?? null)
+    setCurrentMonthAvg(data.currentMonthAvg ?? null)
+    setPreviousMonthAvg(data.previousMonthAvg ?? null)
+    setPreviousMonthDaysOnline(data.previousMonthDaysOnline ?? null)
+    setPreviousMonthAttempts(data.previousMonthAttempts ?? null)
     setExpandedWeeks(new Set()) // Reset expanded weeks
     if (data.days.length === 0 && data.weeks.length === 0) {
       setError(`✓ Student found, but no quiz data available for "${student}". They may not have completed any quizzes yet.`)
@@ -150,31 +160,103 @@ export default function AdministratorPage() {
             </GlassCard>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <GlassCard>
-                <div className="p-4 sm:p-5">
-                  <div className="text-xs font-semibold text-gray-600">Total Days Online (past 14 days)</div>
-                  <div className="mt-2 text-2xl font-black text-orange-600">{days.length}</div>
-                </div>
-              </GlassCard>
-              <GlassCard>
-                <div className="p-4 sm:p-5">
-                  <div className="text-xs font-semibold text-gray-600">Total Quiz Attempts (past 14 days)</div>
-                  <div className="mt-2 text-2xl font-black text-orange-600">
-                    {days.reduce((s, x) => s + (x.attempts || 0), 0)}
+              <GlassCard className="flex flex-col">
+                <div className="p-4 sm:p-5 flex flex-col flex-1">
+                  <div className="text-xs font-semibold text-gray-600 mb-2">Total Days Online (past 14 days)</div>
+                  <div className="flex-1 flex flex-col justify-between">
+                    <div className="text-2xl font-black text-orange-600 mb-2">{days.length}</div>
+                    <div className="flex items-baseline gap-1 flex-wrap">
+                      {previousMonthDaysOnline !== null && (() => {
+                        const currentDays = days.length
+                        if (previousMonthDaysOnline === 0 && currentDays === 0) return null
+                        const change = previousMonthDaysOnline > 0 
+                          ? ((currentDays - previousMonthDaysOnline) / previousMonthDaysOnline) * 100
+                          : (currentDays > 0 ? 100 : 0)
+                        const changeRounded = Math.round(change * 100) / 100
+                        if (changeRounded === 0) return null
+                        return (
+                          <>
+                            <div className={`text-sm font-bold ${
+                              changeRounded > 0 ? 'text-emerald-600' : changeRounded < 0 ? 'text-red-600' : 'text-gray-600'
+                            }`}>
+                              {changeRounded > 0 ? '+' : ''}{changeRounded.toFixed(2)}%
+                            </div>
+                            <div className="text-xs text-gray-500">compared to last month</div>
+                          </>
+                        )
+                      })()}
+                    </div>
                   </div>
                 </div>
               </GlassCard>
-              <GlassCard>
-                <div className="p-4 sm:p-5">
-                  <div className="text-xs font-semibold text-gray-600">Overall Average Accuracy (past 14 days)</div>
-                  <div className="mt-2 text-2xl font-black text-orange-600">
-                    {(() => {
-                      const totalAttempts = days.reduce((s, x) => s + (x.attempts || 0), 0)
-                      if (totalAttempts === 0) return '0%'
-                      // Weighted average: sum of (avgCorrect * attempts) / total attempts
-                      const weightedSum = days.reduce((s, x) => s + ((x.avgCorrect || 0) * (x.attempts || 0)), 0)
-                      return Math.round((weightedSum / totalAttempts) * 100) + '%'
-                    })()}
+              <GlassCard className="flex flex-col">
+                <div className="p-4 sm:p-5 flex flex-col flex-1">
+                  <div className="text-xs font-semibold text-gray-600 mb-2">Total Quiz Attempts (past 14 days)</div>
+                  <div className="flex-1 flex flex-col justify-between">
+                    <div className="text-2xl font-black text-orange-600 mb-2">
+                      {days.reduce((s, x) => s + (x.attempts || 0), 0)}
+                    </div>
+                    <div className="flex items-baseline gap-1 flex-wrap">
+                      {previousMonthAttempts !== null && (() => {
+                        const currentAttempts = days.reduce((s, x) => s + (x.attempts || 0), 0)
+                        if (previousMonthAttempts === 0 && currentAttempts === 0) return null
+                        const change = previousMonthAttempts > 0 
+                          ? ((currentAttempts - previousMonthAttempts) / previousMonthAttempts) * 100
+                          : (currentAttempts > 0 ? 100 : 0)
+                        const changeRounded = Math.round(change * 100) / 100
+                        if (changeRounded === 0) return null
+                        return (
+                          <>
+                            <div className={`text-sm font-bold ${
+                              changeRounded > 0 ? 'text-emerald-600' : changeRounded < 0 ? 'text-red-600' : 'text-gray-600'
+                            }`}>
+                              {changeRounded > 0 ? '+' : ''}{changeRounded.toFixed(2)}%
+                            </div>
+                            <div className="text-xs text-gray-500">compared to last month</div>
+                          </>
+                        )
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </GlassCard>
+              <GlassCard className="flex flex-col">
+                <div className="p-4 sm:p-5 flex flex-col flex-1">
+                  <div className="text-xs font-semibold text-gray-600 mb-2">Overall Average Accuracy (past 14 days)</div>
+                  <div className="flex-1 flex flex-col justify-between">
+                    <div className="text-2xl font-black text-orange-600 mb-2">
+                      {(() => {
+                        const totalAttempts = days.reduce((s, x) => s + (x.attempts || 0), 0)
+                        if (totalAttempts === 0) return '0%'
+                        // Weighted average: sum of (avgCorrect * attempts) / total attempts
+                        const weightedSum = days.reduce((s, x) => s + ((x.avgCorrect || 0) * (x.attempts || 0)), 0)
+                        return Math.round((weightedSum / totalAttempts) * 100) + '%'
+                      })()}
+                    </div>
+                    <div className="flex items-baseline gap-1 flex-wrap">
+                      {previousMonthAvg !== null && (() => {
+                        const totalAttempts = days.reduce((s, x) => s + (x.attempts || 0), 0)
+                        if (totalAttempts === 0) return null
+                        const weightedSum = days.reduce((s, x) => s + ((x.avgCorrect || 0) * (x.attempts || 0)), 0)
+                        const currentAvg = (weightedSum / totalAttempts) * 100
+                        if (previousMonthAvg === 0 && currentAvg === 0) return null
+                        const change = previousMonthAvg > 0 
+                          ? ((currentAvg - previousMonthAvg) / previousMonthAvg) * 100
+                          : (currentAvg > 0 ? 100 : 0)
+                        const changeRounded = Math.round(change * 100) / 100
+                        if (changeRounded === 0) return null
+                        return (
+                          <>
+                            <div className={`text-sm font-bold ${
+                              changeRounded > 0 ? 'text-emerald-600' : changeRounded < 0 ? 'text-red-600' : 'text-gray-600'
+                            }`}>
+                              {changeRounded > 0 ? '+' : ''}{changeRounded.toFixed(2)}%
+                            </div>
+                            <div className="text-xs text-gray-500">compared to last month</div>
+                          </>
+                        )
+                      })()}
+                    </div>
                   </div>
                 </div>
               </GlassCard>
@@ -182,34 +264,73 @@ export default function AdministratorPage() {
 
             <GlassCard>
               <div className="p-5 sm:p-6">
-                <div className="flex items-center gap-2 text-gray-800 font-semibold mb-3">
+                <div className="flex items-center gap-2 text-gray-800 font-semibold mb-4">
                   <TrendingUp className="w-5 h-5 text-purple-600" />
                   Biweekly Average Accuracy (%)
                 </div>
-                <div className="h-64 w-full">
+                <div className="h-96 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={days.map(d => ({ ...d, pct: Math.round((d.avgCorrect || 0) * 100) }))}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-                      <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                    <LineChart data={(() => {
+                      // Fill in all 14 days, even if no data
+                      const today = new Date()
+                      const allDays: DayPoint[] = []
+                      const daysMap = new Map(days.map(d => [d.date, d]))
+                      
+                      for (let i = 13; i >= 0; i--) {
+                        const date = new Date(today)
+                        date.setDate(date.getDate() - i)
+                        const dateStr = date.toISOString().split('T')[0]
+                        const existingDay = daysMap.get(dateStr)
+                        allDays.push(existingDay || {
+                          date: dateStr,
+                          avgCorrect: 0,
+                          attempts: 0
+                        })
+                      }
+                      return allDays.map(d => ({ ...d, pct: Math.round((d.avgCorrect || 0) * 100) }))
+                    })()}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
+                      <XAxis 
+                        dataKey="date" 
+                        tick={{ fontSize: 11, fill: '#6b7280' }} 
+                        axisLine={{ stroke: '#d1d5db', strokeWidth: 1 }}
+                        tickLine={{ stroke: '#d1d5db' }}
+                        interval={0}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                        tickFormatter={(value) => {
+                          const date = new Date(value)
+                          const month = date.toLocaleDateString('en-US', { month: 'short' })
+                          const day = date.getDate()
+                          return `${month} ${day}`
+                        }}
+                      />
+                      <YAxis 
+                        domain={[0, 100]} 
+                        tick={{ fontSize: 11, fill: '#6b7280' }}
+                        axisLine={{ stroke: '#d1d5db', strokeWidth: 1 }}
+                        tickLine={{ stroke: '#d1d5db' }}
+                        label={{ value: 'Accuracy (%)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6b7280', fontSize: 12 } }}
+                      />
                       <Tooltip
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload
                             return (
-                              <div className="rounded-lg border border-white/30 bg-white/90 backdrop-blur-sm p-3 shadow-lg">
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div className="flex flex-col">
-                                    <span className="text-xs uppercase text-gray-600">Accuracy</span>
-                                    <span className="font-bold text-gray-800">{payload[0].value}%</span>
+                              <div className="rounded-xl border border-white/40 bg-white/95 backdrop-blur-md p-4 shadow-xl">
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between gap-4">
+                                    <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Date</span>
+                                    <span className="font-bold text-gray-900 text-sm">{data.date}</span>
                                   </div>
-                                  <div className="flex flex-col">
-                                    <span className="text-xs uppercase text-gray-600">Date</span>
-                                    <span className="font-bold text-gray-800">{data.date}</span>
+                                  <div className="flex items-center justify-between gap-4">
+                                    <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Accuracy</span>
+                                    <span className="font-black text-orange-600 text-lg">{payload[0].value}%</span>
                                   </div>
                                   {data.attempts !== undefined && (
-                                    <div className="flex flex-col col-span-2">
-                                      <span className="text-xs uppercase text-gray-600">Attempts</span>
+                                    <div className="flex items-center justify-between gap-4 pt-2 border-t border-gray-200">
+                                      <span className="text-xs uppercase text-gray-500 font-semibold tracking-wide">Attempts</span>
                                       <span className="font-bold text-gray-800">{data.attempts}</span>
                                     </div>
                                   )}
@@ -220,7 +341,15 @@ export default function AdministratorPage() {
                           return null
                         }}
                       />
-                      <Line type="monotone" dataKey="pct" stroke="#f97316" strokeWidth={3} dot={false} activeDot={{ r: 5 }} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="pct" 
+                        stroke="#f97316" 
+                        strokeWidth={3}
+                        dot={{ r: 6, fill: '#f97316', stroke: '#fff', strokeWidth: 2 }}
+                        activeDot={{ r: 8, fill: '#f97316', stroke: '#fff', strokeWidth: 2 }}
+                      />
+                      <ReferenceLine y={50} stroke="#9ca3af" strokeDasharray="2 2" opacity={0.5} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
