@@ -224,12 +224,42 @@ export default function SettingsPage() {
 
       // Fetch user data from API
       const response = await fetch(`/api/user/profile?userId=${session.user.id}`)
+
       if (response.ok) {
         const userData = await response.json()
         setCurrentUser(userData)
         setIconType(userData.iconType || 'initials')
         setSelectedEmoji(userData.iconEmoji || '😀')
         setSelectedColor(userData.iconColor || '#F6B3DC')
+      } else if (response.status === 404) {
+        // User exists in Supabase but not in Neo4j - auto-create them
+        console.log('User not found in Neo4j, creating...')
+
+        const userEmail = session.user.email || 'user@example.com'
+        const userName = session.user.user_metadata?.name ||
+                        userEmail.split('@')[0] ||
+                        'User'
+
+        // Create user in Neo4j via database adapter
+        const { neo4jDataService } = await import('@/services/neo4j.service')
+        const userData = await neo4jDataService.createUser(
+          session.user.id,
+          userEmail,
+          userName
+        )
+
+        if (userData) {
+          setCurrentUser(userData)
+          setIconType(userData.iconType || 'initials')
+          setSelectedEmoji(userData.iconEmoji || '😀')
+          setSelectedColor(userData.iconColor || '#F6B3DC')
+        } else {
+          console.error('Failed to create user in Neo4j')
+          router.push('/login')
+        }
+      } else {
+        console.error('Failed to fetch user profile:', response.status)
+        router.push('/login')
       }
     } catch (error) {
       console.error('Auth check failed:', error)
