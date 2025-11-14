@@ -1,0 +1,36 @@
+{
+  "name": "noodeia-unit-tests",
+  "version": "1.0.0",
+  "description": "Automated unit tests for Noodeia platform - Based on docs/minimalTest/useCase.md",
+  "scripts": {
+    "test": "bash run_all_tests.sh",
+    "test:auth": "cd auth && node test_authentication_flows.js",
+    "test:quiz": "cd quiz && node test_quiz_node_assignment.js",
+    "test:gamification": "cd gamification && node test_xp_leveling.js",
+    "test:ai-chat": "cd ai_chat && node test_ai_chat_api.js",
+    "test:group-chat": "cd group_chat && node test_ai_mentions.js",
+    "test:persistence": "cd data_persistence && node test_neo4j_persistence.js",
+    "test:prompts": "cd prompts && bash verify_all.sh",
+    "test:ace-memory": "cd ace_memory && python3 test_memory_comparison.py"
+  },
+  "keywords": [
+    "noodeia",
+    "testing",
+    "unit-tests",
+    "neo4j",
+    "supabase",
+    "ace-memory"
+  ],
+  "author": "Noodeia Team",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "neo4j-driver": "^5.26.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

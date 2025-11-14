@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Navigation Bar Scroll Test - Windows Chrome</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+      min-height: 150vh; /* Make page scrollable */
+    }
+
+    .debug-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid #4CAF50;
+      border-radius: 10px;
+      padding: 15px;
+      width: 300px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 9999;
+    }
+
+    .debug-item {
+      margin: 8px 0;
+      padding: 5px;
+      background: #f5f5f5;
+      border-radius: 5px;
+      font-size: 14px;
+      font-family: monospace;
+    }
+
+    .debug-label {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .at-bottom {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .nav-simulator {
+      position: fixed;
+      bottom: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 20px;
+      padding: 20px 40px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: bottom 0.3s ease;
+      z-index: 1000;
+    }
+
+    .nav-simulator.visible {
+      bottom: 20px;
+    }
+
+    .content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .content h1 {
+      color: #333;
+    }
+
+    .content p {
+      line-height: 1.8;
+      margin: 20px 0;
+    }
+
+    .test-instructions {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <h1>Navigation Bar Scroll Test</h1>
+
+    <div class="test-instructions">
+      <h3>Testing Instructions:</h3>
+      <ol>
+        <li>Scroll to the bottom of this page</li>
+        <li>Watch the debug panel on the right</li>
+        <li>The navigation bar should appear when you reach the bottom</li>
+        <li>Check if the values match what you expect on Windows Chrome</li>
+      </ol>
+    </div>
+
+    <p>This is a test page to debug scroll detection issues on Windows Chrome. The navigation bar simulator at the bottom should appear when you scroll to the bottom of the page.</p>
+
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+
+    <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+    <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+
+    <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
+
+    <p>Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.</p>
+
+    <p>Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur?</p>
+
+    <p>Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?</p>
+
+    <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.</p>
+
+    <p style="font-size: 24px; text-align: center; margin-top: 100px; padding: 40px; background: #4CAF50; color: white; border-radius: 10px;">
+      🎯 You've reached the bottom! The nav bar should appear now.
+    </p>
+  </div>
+
+  <div class="debug-panel">
+    <h3 style="margin-top: 0; color: #4CAF50;">📊 Scroll Debug Info</h3>
+    <div class="debug-item">
+      <span class="debug-label">Platform:</span> <span id="platform">...</span>
+    </div>
+    <div class="debug-item">
+      <span class="debug-label">Browser:</span> <span id="browser">...</span>
+    </div>
+    <div class="debug-item">
+      <span class="debug-label">Is Windows Chrome:</span> <span id="is-windows-chrome">...</span>
+    </div>
+    <hr>
+    <div class="debug-item">
+      <span class="debug-label">Scroll Top:</span> <span id="scroll-top">0</span>px
+    </div>
+    <div class="debug-item">
+      <span class="debug-label">Scroll Height:</span> <span id="scroll-height">0</span>px
+    </div>
+    <div class="debug-item">
+      <span class="debug-label">Client Height:</span> <span id="client-height">0</span>px
+    </div>
+    <div class="debug-item">
+      <span class="debug-label">Remaining:</span> <span id="remaining">0</span>px
+    </div>
+    <div class="debug-item">
+      <span class="debug-label">Scroll %:</span> <span id="scroll-percentage">0</span>%
+    </div>
+    <hr>
+    <div class="debug-item" id="at-bottom-status">
+      <span class="debug-label">At Bottom:</span> <span id="at-bottom">NO</span>
+    </div>
+    <div class="debug-item">
+      <span class="debug-label">Nav Bar Should Show:</span> <span id="nav-should-show">NO</span>
+    </div>
+  </div>
+
+  <div class="nav-simulator" id="nav-simulator">
+    🚀 Navigation Bar (Simulated)
+  </div>
+
+  <script>
+    // Platform detection
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isWindows = /win/.test(userAgent) || /windows/.test(userAgent);
+    const isChrome = /chrome/.test(userAgent) && !/edg/.test(userAgent);
+    const isWindowsChrome = isWindows && isChrome;
+
+    // Update platform info
+    document.getElementById('platform').textContent = navigator.platform;
+    document.getElementById('browser').textContent = isChrome ? 'Chrome' : 'Other';
+    document.getElementById('is-windows-chrome').textContent = isWindowsChrome ? 'YES' : 'NO';
+
+    function updateScrollInfo() {
+      // Get scroll values using multiple methods
+      const scrollTop = Math.max(
+        window.pageYOffset || 0,
+        document.documentElement.scrollTop || 0,
+        document.body.scrollTop || 0
+      );
+
+      const scrollHeight = Math.max(
+        document.documentElement.scrollHeight || 0,
+        document.body.scrollHeight || 0,
+        document.documentElement.offsetHeight || 0,
+        document.body.offsetHeight || 0
+      );
+
+      const clientHeight = window.innerHeight ||
+                          document.documentElement.clientHeight ||
+                          document.body.clientHeight;
+
+      // Calculate remaining scroll
+      const remainingScroll = scrollHeight - (scrollTop + clientHeight);
+
+      // Calculate scroll percentage
+      const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+
+      // Determine if at bottom (using both methods)
+      const bottomThreshold = isWindowsChrome ? 25 : 2;
+      const isAtBottomPixels = remainingScroll <= bottomThreshold;
+      const isAtBottomPercentage = isWindowsChrome ?
+        scrollPercentage >= 0.97 :
+        scrollPercentage >= 0.99;
+
+      const isAtBottom = isAtBottomPixels || isAtBottomPercentage;
+      const hasScrollableContent = scrollHeight > (clientHeight + 5);
+      const navShouldShow = hasScrollableContent && isAtBottom;
+
+      // Update debug panel
+      document.getElementById('scroll-top').textContent = Math.round(scrollTop);
+      document.getElementById('scroll-height').textContent = scrollHeight;
+      document.getElementById('client-height').textContent = clientHeight;
+      document.getElementById('remaining').textContent = Math.round(remainingScroll);
+      document.getElementById('scroll-percentage').textContent = (scrollPercentage * 100).toFixed(1);
+      document.getElementById('at-bottom').textContent = isAtBottom ? 'YES' : 'NO';
+      document.getElementById('nav-should-show').textContent = navShouldShow ? 'YES' : 'NO';
+
+      // Update status colors
+      const atBottomDiv = document.getElementById('at-bottom-status');
+      if (isAtBottom) {
+        atBottomDiv.classList.add('at-bottom');
+      } else {
+        atBottomDiv.classList.remove('at-bottom');
+      }
+
+      // Show/hide nav simulator
+      const navSimulator = document.getElementById('nav-simulator');
+      if (navShouldShow) {
+        navSimulator.classList.add('visible');
+      } else {
+        navSimulator.classList.remove('visible');
+      }
+    }
+
+    // Add scroll listener
+    window.addEventListener('scroll', updateScrollInfo, { passive: true });
+    window.addEventListener('resize', updateScrollInfo);
+
+    // Initial check
+    updateScrollInfo();
+
+    // Also check after page load
+    window.addEventListener('load', updateScrollInfo);
+  </script>
+</body>
+</html>
