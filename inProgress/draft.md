@@ -129,7 +129,7 @@ SUS has generally been seen as providing this type of high-level subjective view
 
 ---
 
-# ✅ Proposed Short Survey for Noodeia AI Tutor
+# Proposed Short Survey for Noodeia AI Tutor
 
 Below are the **proposed subsets** (5 items each) from NASA-TLX and SUS that focus on kids’ experience with the Noodeia AI tutor, plus updated scoring formulas.
 
