@@ -10,27 +10,27 @@ function generateQuestion() {
 
   switch (op) {
     case '+':
-      // 5th/6th grade: 3-4 digit addition (100-2000)
-      num1 = Math.floor(Math.random() * 1900) + 100
-      num2 = Math.floor(Math.random() * 1900) + 100
+      // 1st/2nd grade: addition (0-200)
+      num1 = Math.floor(Math.random() * 201)
+      num2 = Math.floor(Math.random() * 201)
       answer = num1 + num2
       break
     case '-':
-      // 5th/6th grade: 3-4 digit subtraction with borrowing
-      num1 = Math.floor(Math.random() * 1900) + 500
-      num2 = Math.floor(Math.random() * (num1 - 50)) + 50
+      // 1st/2nd grade: subtraction (0-200)
+      num1 = Math.floor(Math.random() * 201)
+      num2 = Math.floor(Math.random() * (num1 + 1))
       answer = num1 - num2
       break
     case '×':
-      // 5th/6th grade: multiplication up to 25x25
-      num1 = Math.floor(Math.random() * 25) + 1
-      num2 = Math.floor(Math.random() * 25) + 1
+      // 1st/2nd grade: multiplication up to 15x15
+      num1 = Math.floor(Math.random() * 15) + 1
+      num2 = Math.floor(Math.random() * 15) + 1
       answer = num1 * num2
       break
     case '÷':
-      // 5th/6th grade: division with larger numbers, whole number results
-      num2 = Math.floor(Math.random() * 15) + 2
-      answer = Math.floor(Math.random() * 30) + 1
+      // 1st/2nd grade: division up to 15, whole number results
+      num2 = Math.floor(Math.random() * 14) + 2
+      answer = Math.floor(Math.random() * 15) + 1
       num1 = num2 * answer
       break
     default:
