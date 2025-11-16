@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 
-// Generate random math question
+// Generate random math question (3rd/4th grade level)
 function generateQuestion() {
   const operations = ['+', '-', '×', '÷']
   const op = operations[Math.floor(Math.random() * operations.length)]
@@ -10,23 +10,27 @@ function generateQuestion() {
 
   switch (op) {
     case '+':
-      num1 = Math.floor(Math.random() * 50) + 1
-      num2 = Math.floor(Math.random() * 50) + 1
+      // 5th/6th grade: 3-4 digit addition (100-2000)
+      num1 = Math.floor(Math.random() * 1900) + 100
+      num2 = Math.floor(Math.random() * 1900) + 100
       answer = num1 + num2
       break
     case '-':
-      num1 = Math.floor(Math.random() * 50) + 20
-      num2 = Math.floor(Math.random() * 20) + 1
+      // 5th/6th grade: 3-4 digit subtraction with borrowing
+      num1 = Math.floor(Math.random() * 1900) + 500
+      num2 = Math.floor(Math.random() * (num1 - 50)) + 50
       answer = num1 - num2
       break
     case '×':
-      num1 = Math.floor(Math.random() * 12) + 1
-      num2 = Math.floor(Math.random() * 12) + 1
+      // 5th/6th grade: multiplication up to 25x25
+      num1 = Math.floor(Math.random() * 25) + 1
+      num2 = Math.floor(Math.random() * 25) + 1
       answer = num1 * num2
       break
     case '÷':
-      num2 = Math.floor(Math.random() * 10) + 2
-      answer = Math.floor(Math.random() * 10) + 1
+      // 5th/6th grade: division with larger numbers, whole number results
+      num2 = Math.floor(Math.random() * 15) + 2
+      answer = Math.floor(Math.random() * 30) + 1
       num1 = num2 * answer
       break
     default:
@@ -35,10 +39,11 @@ function generateQuestion() {
       answer = 2
   }
 
-  // Generate wrong options
+  // Generate wrong options with appropriate range based on answer size
   const options = [answer]
+  const variance = answer > 100 ? 50 : 20
   while (options.length < 4) {
-    const wrong = answer + (Math.floor(Math.random() * 20) - 10)
+    const wrong = answer + (Math.floor(Math.random() * (variance * 2)) - variance)
     if (wrong > 0 && !options.includes(wrong)) {
       options.push(wrong)
     }
