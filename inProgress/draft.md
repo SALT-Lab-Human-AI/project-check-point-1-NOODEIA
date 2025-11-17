@@ -545,8 +545,8 @@ SUS: 62 → 71 → 78 (increasing usability ✓)
 
 1. **Timing:**
    - Administer immediately after a tutoring session (while experience is fresh)
-   - Ideal session length: 20-30 minutes before survey
-   - Allow 5-10 minutes for survey completion
+   - Ideal session length: 20-30 minutes
+   - Allow 5-10 minutes after session for survey completion
 
 2. **Instructions for Students:**
    ```
