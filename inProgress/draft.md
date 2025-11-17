@@ -557,6 +557,9 @@ SUS: 62 → 71 → 78 (increasing usability ✓)
    This should take about 5 minutes. Please answer based on how you 
    felt during today's session."
    ```
+   From here, each question will be read aloud to students one at a time regarding their session. 
+
+   After they mark their responses, students will switch to the other mode of learning (AI tutor or on paper).
 
 3. **Response Format:**
    - Use visual sliders or click-to-mark scales (more engaging than text boxes)
