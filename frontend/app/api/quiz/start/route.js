@@ -10,15 +10,15 @@ function generateQuestion() {
 
   switch (op) {
     case '+':
-      // 1st/2nd grade: addition (0-200)
-      num1 = Math.floor(Math.random() * 201)
-      num2 = Math.floor(Math.random() * 201)
+      // addition (50-500)
+      num1 = Math.floor(Math.random() * 451) + 50
+      num2 = Math.floor(Math.random() * 451) + 50
       answer = num1 + num2
       break
     case '-':
-      // 1st/2nd grade: subtraction (0-200)
-      num1 = Math.floor(Math.random() * 201)
-      num2 = Math.floor(Math.random() * (num1 + 1))
+      // subtraction (50-500)
+      num1 = Math.floor(Math.random() * 451) + 50
+      num2 = Math.floor(Math.random() * (num1 - 50 + 1)) + 50
       answer = num1 - num2
       break
     case '×':

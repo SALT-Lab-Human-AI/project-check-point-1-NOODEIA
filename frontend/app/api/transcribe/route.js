@@ -69,13 +69,14 @@ export async function POST(req) {
         reject(new Error(`Failed to spawn Python process: ${error.message}`))
       })
 
-      py.on('close', (code) => {
-        // Clean up temporary file
-        fs.unlink(tempPath).catch(() => {})
-        
+      py.on('close', async (code) => {
         if (code !== 0) {
+          // Clean up on error
+          await fs.unlink(tempPath).catch(() => {})
           reject(new Error(`Transcription failed: ${stderr || 'Unknown error'}`))
         } else {
+          // Clean up after successful transcription
+          await fs.unlink(tempPath).catch(() => {})
           resolve(stdout.trim())
         }
       })
