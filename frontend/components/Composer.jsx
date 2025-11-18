@@ -187,14 +187,12 @@ export default function Composer({ onSend, busy, xpGain, xpTrigger }) {
               type="button"
               onClick={isRecording ? stopRecording : startRecording}
               disabled={busy || sending || isTranscribing}
-              className={`rounded-xl p-2 glass-button transition-all disabled:opacity-50 ${
-                isRecording 
-                  ? 'text-white animate-pulse' 
-                  : 'glass-button-light text-zinc-700 hover:bg-white/30'
+              className={`rounded-xl p-2 glass-button glass-button-primary text-white transition-all disabled:opacity-50 ${
+                isRecording ? 'animate-pulse' : ''
               }`}
               style={isRecording ? {
                 background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.3))',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
+                border: '1px solid rgba(239, 68, 68, 1.0)',
                 boxShadow: '0 4px 24px rgba(239, 68, 68, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.3)'
               } : {}}
               title={isRecording ? 'Stop recording' : 'Start voice input'}
@@ -209,39 +207,43 @@ export default function Composer({ onSend, busy, xpGain, xpTrigger }) {
             </button>
             
             {/* Send Button */}
-            <button
-              type="submit"
-              disabled={disabled}
-              className="rounded-xl p-2 glass-button glass-button-primary text-white transition-all disabled:opacity-50"
-            >
-              {sending ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Send className="h-5 w-5" />
-              )}
-            </button>
-            <AnimatePresence>
-              {showXpAnimation && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 16 }}
-                  animate={{ opacity: 1, scale: 1, y: -16 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -40 }}
-                  transition={{ type: 'spring', stiffness: 220, damping: 18 }}
-                  className="absolute bottom-full right-0 mb-4 z-50 pointer-events-none"
-                >
-                  <div
-                    className="flex items-center gap-3 px-10 py-[0.35rem] text-white rounded-full shadow-[0_20px_48px_rgba(246,179,220,0.45)] border border-white/30"
-                    style={{ background: 'linear-gradient(to right, #F6B3DC, #F8C8E2)' }}
+            <div className="relative">
+              <button
+                type="submit"
+                disabled={disabled}
+                className="rounded-xl p-2 glass-button glass-button-primary text-white transition-all disabled:opacity-50"
+              >
+                {sending ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
+              </button>
+
+              {/* XP Gain Animation - appears above send button */}
+              <AnimatePresence>
+                {showXpAnimation && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, y: -20, scale: 1 }}
+                    exit={{ opacity: 0, y: -40, scale: 0.3 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                    className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none z-10"
                   >
-                    <TrendingUp className="w-3.5 h-3.5 drop-shadow" />
-                    <span className="flex items-center gap-1 font-black text-sm tracking-wide drop-shadow-[0_0_10px_rgba(255,255,255,0.65)]">
-                      +{xpAmount.toFixed(2)} XP
-                    </span>
-                    <Sparkles className="w-3.5 h-3.5 drop-shadow" />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    <div
+                      className="flex items-center gap-1 px-2 py-1 text-white rounded-full shadow-lg"
+                      style={{
+                        background: 'linear-gradient(to right, #F6B3DC, #F8C8E2)',
+                        fontSize: '12px'
+                      }}
+                    >
+                      <TrendingUp className="w-3 h-3" />
+                      <span className="font-bold">+{xpAmount.toFixed(2)}</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
         <div className="mt-2 text-xs text-zinc-500 hidden sm:block">

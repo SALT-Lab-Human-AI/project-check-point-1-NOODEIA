@@ -50,7 +50,7 @@ export async function POST(req) {
       const py = spawn(pythonCmd, [scriptPath, tempPath], {
         env: {
           ...process.env,
-          GROQ_API_KEY: process.env.GROQ_API_KEY
+          GEMINI_API_KEY: process.env.GEMINI_API_KEY
         }
       })
 
