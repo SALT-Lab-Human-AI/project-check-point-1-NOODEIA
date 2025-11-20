@@ -2,35 +2,24 @@ import { NextResponse } from 'next/server'
 import { spawn } from 'child_process'
 import path from 'path'
 import fs from 'fs/promises'
-import { createClient } from '@supabase/supabase-js'
-
 export const dynamic = 'force-dynamic'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
 
 export async function POST(req) {
   try {
-    // Check authentication
-    const authHeader = req.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    const token = authHeader.replace('Bearer ', '').trim()
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     // Get audio file from form data
     const formData = await req.formData()
     const audioFile = formData.get('audio')
     
     if (!audioFile) {
       return NextResponse.json({ error: 'No audio file provided' }, { status: 400 })
+    }
+
+    const groqApiKey = process.env.GROQ_API_KEY
+    if (!groqApiKey) {
+      return NextResponse.json(
+        { error: 'GROQ_API_KEY is not configured on the server' },
+        { status: 500 }
+      )
     }
 
     // Create temporary file
@@ -43,6 +32,11 @@ export async function POST(req) {
     await fs.writeFile(tempPath, buffer)
 
     const scriptPath = path.join(process.cwd(), 'scripts', 'audio2text.py')
+    await fs
+      .access(scriptPath)
+      .catch(() => {
+        throw new Error('audio2text.py script is missing in /scripts')
+      })
 
     // Call the Python script
     const transcribedText = await new Promise((resolve, reject) => {
@@ -50,7 +44,7 @@ export async function POST(req) {
       const py = spawn(pythonCmd, [scriptPath, tempPath], {
         env: {
           ...process.env,
-          GEMINI_API_KEY: process.env.GEMINI_API_KEY
+          GROQ_API_KEY: groqApiKey
         }
       })
 

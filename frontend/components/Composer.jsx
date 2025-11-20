@@ -119,22 +119,11 @@ export default function Composer({ onSend, busy, xpGain, xpTrigger }) {
   async function transcribeAudio(audioBlob) {
     setIsTranscribing(true)
     try {
-      // Get auth token from Supabase
-      const { supabase } = await import('../lib/supabase')
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session) {
-        throw new Error('Not authenticated')
-      }
-
       const formData = new FormData()
       formData.append('audio', audioBlob, 'recording.webm')
 
       const response = await fetch('/api/transcribe', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        },
         body: formData
       })
 
