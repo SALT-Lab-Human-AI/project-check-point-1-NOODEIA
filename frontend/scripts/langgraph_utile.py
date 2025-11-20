@@ -509,6 +509,92 @@ def _deep_research_schema() -> dict:
         },
     }
 
+def _google_search_run(args: Dict[str, Any]) -> str:
+    """
+    Google Custom Search API tool for web search.
+    Requires GOOGLE_API_KEY and GOOGLE_CSE_ID environment variables.
+    """
+    query = args.get("query") or ""
+    if not query:
+        return "GoogleSearch error: missing 'query'."
+    
+    api_key = os.getenv("GEMINI_API_KEY")
+    cse_id = os.getenv("GOOGLE_CSE_ID")
+    
+    if not api_key:
+        return "GoogleSearch error: GOOGLE_API_KEY not configured."
+    if not cse_id:
+        return "GoogleSearch error: GOOGLE_CSE_ID not configured."
+    
+    max_results = int(args.get("max_results", 5))
+    num_results = min(max_results, 10)
+    
+    try:
+        url = "https://www.googleapis.com/customsearch/v1"
+        params = {
+            "key": api_key,
+            "cx": cse_id,
+            "q": query,
+            "num": num_results,
+        }
+        
+        resp = requests.get(url, params=params, timeout=30)
+        if resp.status_code != 200:
+            error_data = resp.json() if resp.content else {}
+            error_msg = error_data.get("error", {}).get("message", resp.text)
+            return f"GoogleSearch error: {resp.status_code} - {error_msg}"
+        
+        data = resp.json()
+        items = data.get("items", [])
+        
+        # Format results similar to Tavily format for consistency
+        results = []
+        for item in items:
+            results.append({
+                "title": item.get("title", ""),
+                "url": item.get("link", ""),
+                "snippet": item.get("snippet", ""),
+            })
+        
+        output = {
+            "query": query,
+            "results": results,
+            "total_results": len(results),
+        }
+        
+        # Include search information if available
+        search_info = data.get("searchInformation", {})
+        if search_info:
+            output["search_time"] = search_info.get("searchTime")
+            output["total_available"] = search_info.get("totalResults")
+        
+        try:
+            return json.dumps(output, indent=2)
+        except Exception:
+            return str(output)
+            
+    except requests.exceptions.RequestException as e:
+        return f"GoogleSearch error: Network error - {str(e)}"
+    except Exception as e:
+        return f"GoogleSearch error: {str(e)}"
+
+def _google_search_schema() -> dict:
+    return {
+        "type": "function",
+        "function": {
+            "name": "google_search",
+            "description": "Web search via Google Custom Search API; returns JSON with search results including title, URL, and snippet for each result.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query to find information on the web."},
+                    "max_results": {"type": "integer", "default": 5, "description": "Maximum number of results to return (max 10)."},
+                },
+                "required": ["query"],
+            },
+        },
+    }
+
 # ---- Neo4j Retrieve+QA tool ----
 _NEO4J_CHAIN = None  # lazy singleton
 
@@ -839,8 +925,8 @@ def solve_react(state: GraphState) -> Dict[str, Any]:
     params = state["scratch"]
     max_turns = int(params.get("max_turns", 8))  # Increased from 6 to 8
     temp = float(params.get("temperature", 0.2))
-    # Build tool schemas dynamically: calculator + deep-research + neo4j
-    tool_schemas = [_calculator_schema(), _deep_research_schema(), _neo4j_retrieveqa_schema()]
+    # Build tool schemas dynamically: calculator + google-search + neo4j
+    tool_schemas = [_calculator_schema(), _google_search_schema(), _neo4j_retrieveqa_schema()]
     llm = LLM(temperature=temp)
     messages = [{"role": "system", "content": REACT_SYSTEM}] + state["messages"]
 
@@ -882,6 +968,8 @@ def solve_react(state: GraphState) -> Dict[str, Any]:
                 ##### Route to appropriate tool
                 if name == "calculator":
                     out = _calculator_run(parsed)
+                elif name == "google_search":
+                    out = _google_search_run(parsed)
                 elif name == "deep_research":
                     out = _deep_research_run(parsed)
                 elif name == "neo4j_retrieveqa":
@@ -913,5 +1001,11 @@ def solve_react(state: GraphState) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    tool = TavilySearchResults(max_results=3)
-    print(tool.invoke({"query": "current prime minister of Canada"}))
+    # Test Google Search tool
+    print("Testing Google Search tool...")
+    test_query = "current prime minister of Canada"
+    test_args = {"query": test_query, "max_results": 3}
+    result = _google_search_run(test_args)
+    print(f"\nQuery: {test_query}")
+    print(f"Result:\n{result}")
+    print("\nTest completed!")

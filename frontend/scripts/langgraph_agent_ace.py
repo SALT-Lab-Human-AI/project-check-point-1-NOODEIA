@@ -188,7 +188,7 @@ def planner_node(state: GraphState) -> GraphState:
         scratch.setdefault("temperature", 0.2)
     elif mode == "react":
         scratch.setdefault("max_turns", 8)
-        tool_schemas = [_calculator_schema(), _deep_research_schema(), _neo4j_retrieveqa_schema()]
+        tool_schemas = [_calculator_schema(), _google_search_schema(), _neo4j_retrieveqa_schema()]
         scratch["tool_names"] = [t["function"]["name"] for t in tool_schemas]
         scratch.setdefault("temperature", 0.2)
     elif mode == "cot":
