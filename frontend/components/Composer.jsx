@@ -187,14 +187,22 @@ export default function Composer({ onSend, busy, xpGain, xpTrigger }) {
               type="button"
               onClick={isRecording ? stopRecording : startRecording}
               disabled={busy || sending || isTranscribing}
-              className={`rounded-xl p-2 glass-button glass-button-primary text-white transition-all disabled:opacity-50 ${
+              className={`rounded-xl p-2 text-white transition-all disabled:opacity-50 ${
                 isRecording ? 'animate-pulse' : ''
               }`}
               style={isRecording ? {
                 background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.3))',
                 border: '1px solid rgba(239, 68, 68, 1.0)',
-                boxShadow: '0 4px 24px rgba(239, 68, 68, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.3)'
-              } : {}}
+                boxShadow: '0 4px 24px rgba(239, 68, 68, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)'
+              } : {
+                background: 'linear-gradient(135deg, rgba(68, 13, 15, 0.3), rgba(68, 13, 15, 0.1))',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(68, 13, 15, 0.2)',
+                boxShadow: '0 4px 24px rgba(68, 13, 15, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.3)'
+              }}
               title={isRecording ? 'Stop recording' : 'Start voice input'}
             >
               {isTranscribing ? (
@@ -211,7 +219,14 @@ export default function Composer({ onSend, busy, xpGain, xpTrigger }) {
               <button
                 type="submit"
                 disabled={disabled}
-                className="rounded-xl p-2 glass-button glass-button-primary text-white transition-all disabled:opacity-50"
+                className={`rounded-xl p-2 text-white transition-all disabled:opacity-50`}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(68, 13, 15, 0.3), rgba(68, 13, 15, 0.1))',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(68, 13, 15, 0.2)',
+                  boxShadow: '0 4px 24px rgba(68, 13, 15, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.3)'
+                }}
               >
                 {sending ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
