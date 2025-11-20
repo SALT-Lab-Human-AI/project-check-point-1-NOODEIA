@@ -91,485 +91,484 @@ SUS = 2.5 × ((SUS01-1) + (SUS03-1) + (SUS05-1) + (SUS07-1) + (SUS09-1)
 
 ---
 
-## Proposed Short Survey for Noodeia
+## Evaluation Instrument Design for NOODEIA Comparative Study
 
-To reduce cognitive load on students while maintaining measurement validity, we propose **5-item subsets** of both NASA-TLX and SUS, specifically tailored for evaluating the Noodeia AI tutoring experience.
+### 1. Research Context and Objectives
 
----
+This evaluation study examines the comparative efficacy of two distinct pedagogical interventions for elementary students (ages 5-12) performing below grade-level expectations: (1) traditional one-to-many classroom instruction with paper-based materials, and (2) NOODEIA, an AI-powered personalized tutoring system incorporating gamification elements. The central research question investigates which intervention demonstrates superior outcomes across multiple dimensions: student engagement, learning preparedness, rate of academic remediation, accuracy of knowledge acquisition, and affective learning experience.
 
-### Short NASA-TLX (5 Items)
+### 2. Theoretical Framework
 
-#### Selected Dimensions
+The evaluation instrument integrates validated psychometric scales with custom items designed to capture intervention-specific attributes. We draw upon two established frameworks:
 
-We retain **5 of 6** original NASA-TLX dimensions, **excluding Physical Demand**:
+1. **NASA Task Load Index (TLX)** (Hart & Staveland, 1988): Assesses cognitive workload across six dimensions, providing insight into the mental demands imposed by each learning modality.
 
-1. ✅ Mental Demand
-2. ❌ ~~Physical Demand~~ (excluded)
-3. ✅ Temporal Demand
-4. ✅ Performance
-5. ✅ Effort
-6. ✅ Frustration
+2. **System Usability Scale (SUS)** (Brooke, 1996): Measures perceived usability and user acceptance, adapted here to assess the accessibility and learnability of each pedagogical approach.
 
-#### Rationale for Item Selection
+These frameworks are supplemented with custom items targeting unique affordances of the NOODEIA system, including adaptive personalization, autonomous learning support, and intrinsic motivation through gamification.
 
-| Dimension | Why Included / Excluded |
-|-----------|------------------------|
-| **Mental Demand** | **Core measure** for educational tools. Assesses cognitive load, which is critical for learning effectiveness. High mental demand may indicate content is too challenging or interface is confusing. |
-| **Physical Demand** | **Excluded** because the AI tutor is primarily screen-based with minimal physical interaction (typing, clicking). Physical demand is not a differentiating factor for software usability in this context. |
-| **Temporal Demand** | **Important for learning pace**. Students should feel they have adequate time to think and respond. High temporal demand suggests the system rushes students or creates time pressure that impedes learning. |
-| **Performance** | **Critical self-assessment metric**. Students' perception of their success indicates whether the tutor is helping them achieve learning goals. Low perceived performance may signal need for better scaffolding or feedback. |
-| **Effort** | **Distinguishes between difficulty and efficiency**. Even if mental demand is high (challenging content), effort should be reasonable. High effort relative to achievement suggests inefficiency in the learning process. |
-| **Frustration** | **Emotional experience indicator**. Captures stress, annoyance, and discouragement—key factors in student engagement and persistence. High frustration predicts dropout and disengagement. |
+### 3. Instrument Development
 
-#### Survey Questions
+#### 3.1 Scale Selection and Adaptation
 
-Each dimension is rated using a visual scale with 21 tick marks corresponding to values from 0 to 100 (in increments of 5):
+Given the developmental characteristics of the target population (ages 5-12), we reduced the original NASA-TLX (6 items) and SUS (10 items) to three items each, selecting dimensions most relevant to elementary learners and eliminating constructs inappropriate for the comparison (e.g., physical demand, technical complexity). This reduction minimizes cognitive burden while preserving construct validity.
 
----
+#### 3.2 Response Format
 
-**1. Mental Demand**  
-*How mentally demanding was using the AI tutor?*
+A 7-point Likert scale was selected to provide sufficient granularity for detecting meaningful differences between conditions while remaining comprehensible for young respondents. The scale employs both numerical anchors and emoji-based visual cues to accommodate varying literacy levels within the target age range.
 
-```
-Very Low                                                                                                Very High
-|    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |
-0    5    10   15   20   25   30   35   40   45   50   55   60   65   70   75   80   85   90   95   100
-```
+**Scale Anchors:**
+- 1 = Extremely disagree
+- 2 = Moderately disagree
+- 3 = Slightly disagree
+- 4 = Neither disagree nor agree
+- 5 = Slightly agree
+- 6 = Moderately agree
+- 7 = Extremely agree
 
 ---
 
-**2. Temporal Demand**  
-*How hurried or rushed was the pace of the tutoring session?*
+## Survey 1: Baseline Condition (Traditional Teaching Method)
 
-```
-Very Low                                                                                                Very High
-|    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |
-0    5    10   15   20   25   30   35   40   45   50   55   60   65   70   75   80   85   90   95   100
-```
+**Context**: Traditional classroom instruction with paper-based worksheets and teacher-led group instruction.
+
+**Instructions for Administrator**: "We want to know about your experience learning with paper and your teacher. For each statement, tell me how much you agree or disagree. There are no right or wrong answers—we just want to know what you think."
 
 ---
 
-**3. Performance**  
-*How successful were you in accomplishing what you were asked to do?*
+**Q1.** Learning this way was easy for me.
 
-```
-Perfect                                                                                                  Failure
-|    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |
-0    5    10   15   20   25   30   35   40   45   50   55   60   65   70   75   80   85   90   95   100
-```
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
----
+**Q2.** I was able to complete my learning activities successfully.
 
-**4. Effort**  
-*How hard did you have to work to accomplish your level of performance?*
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-```
-Very Low                                                                                                Very High
-|    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |
-0    5    10   15   20   25   30   35   40   45   50   55   60   65   70   75   80   85   90   95   100
-```
+**Q3.** I felt frustrated while learning this way.
 
----
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-**5. Frustration**  
-*How insecure, discouraged, irritated, stressed, and annoyed were you?*
+**Q4.** This learning method was easy to use.
 
-```
-Very Low                                                                                                Very High
-|    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |
-0    5    10   15   20   25   30   35   40   45   50   55   60   65   70   75   80   85   90   95   100
-```
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
----
+**Q5.** I felt confident while learning this way.
 
-### Short SUS (5 Items)
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-#### Selected Items
+**Q6.** I would like to learn this way again.
 
-From the original 10 SUS items, we selected these 5:
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-- ✅ **SUS01** – I think that I would like to use this system frequently.
-- ✅ **SUS03** – I thought the system was easy to use.
-- ✅ **SUS04** – I think that I would need the support of a technical person to be able to use this system.
-- ✅ **SUS07** – I would imagine that most people would learn to use this system very quickly.
-- ✅ **SUS09** – I felt very confident using the system.
+**Q7.** Learning this way was fun for me.
 
-#### Rationale for Item Selection
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-| Item | Type | Why Selected |
-|------|------|-------------|
-| **SUS01** (Frequency of use) | Positive | **Engagement indicator**. Willingness to use the system frequently is the strongest predictor of adoption and learning persistence. For an educational tool, repeated engagement is essential for outcomes. |
-| **SUS03** (Easy to use) | Positive | **Core usability measure**. Directly assesses whether students find the interface intuitive. If the system isn't easy to use, students will focus on navigation rather than learning. Most fundamental usability question. |
-| **SUS04** (Need technical support) | Negative | **Independence measure**. Students should be able to use the AI tutor autonomously. Need for technical support indicates poor onboarding, unclear instructions, or interface complexity—all barriers to self-directed learning. |
-| **SUS07** (Quick to learn) | Positive | **Learnability assessment**. Educational tools must have low barriers to entry. If students can't quickly learn how to use the system, they'll abandon it before experiencing learning benefits. Critical for first-time users. |
-| **SUS09** (Confidence) | Positive | **Self-efficacy indicator**. Confidence in using the system correlates with willingness to explore features and engage deeply. Low confidence suggests intimidating design or unclear affordances. |
+**Q8.** The teaching matched what I needed to learn.
 
-#### Items NOT Selected (and why)
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-| Item | Type | Why NOT Selected |
-|------|------|------------------|
-| SUS02 (Unnecessarily complex) | Negative | **Redundant with SUS03**. Complexity is the inverse of ease-of-use; including both doesn't add new information in a short survey. |
-| SUS05 (Well integrated) | Positive | **Too technical for students**. "Integration" refers to feature coherence, which requires systems-thinking most students lack. Less actionable than concrete usability measures. |
-| SUS06 (Too much inconsistency) | Negative | **Lower priority**. While important for power users, inconsistency is less critical than fundamental ease-of-use and learnability for educational contexts. |
-| SUS08 (Cumbersome) | Negative | **Overlaps with SUS03 and SUS04**. "Cumbersome" combines difficulty and inefficiency—already captured by easier-to-interpret items. |
-| SUS10 (Learn many things first) | Negative | **Redundant with SUS07**. Both assess learnability; SUS07's positive framing ("quick to learn") is clearer for students than SUS10's negative framing. |
+**Q9.** I could learn on my own without needing help.
 
-#### Survey Questions
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-Respondents rate each statement on a 5-point scale:
+**Q10.** I learned new things quickly with this method.
 
-| Rating | Meaning |
-|--------|---------|
-| 1 | Strongly disagree |
-| 2 | Disagree |
-| 3 | Neither agree nor disagree |
-| 4 | Agree |
-| 5 | Strongly agree |
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
 ---
 
-**1. I think that I would like to use this system frequently.**
+## Survey 2: Experimental Condition (NOODEIA System)
 
-`○ Strongly disagree    ○ Disagree    ○ Neither    ○ Agree    ○ Strongly agree`
+**Context**: AI-powered personalized tutoring system with gamification elements delivered via computer interface.
 
----
-
-**2. I thought the system was easy to use.**
-
-`○ Strongly disagree    ○ Disagree    ○ Neither    ○ Agree    ○ Strongly agree`
+**Instructions for Administrator**: "We want to know about your experience learning with the computer and NOODEIA. For each statement, tell me how much you agree or disagree. There are no right or wrong answers—we just want to know what you think."
 
 ---
 
-**3. I think that I would need the support of a technical person to be able to use this system.**
+**Q1.** Learning this way was easy for me.
 
-`○ Strongly disagree    ○ Disagree    ○ Neither    ○ Agree    ○ Strongly agree`
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
----
+**Q2.** I was able to complete my learning activities successfully.
 
-**4. I would imagine that most people would learn to use this system very quickly.**
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-`○ Strongly disagree    ○ Disagree    ○ Neither    ○ Agree    ○ Strongly agree`
+**Q3.** I felt frustrated while learning this way.
 
----
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-**5. I felt very confident using the system.**
+**Q4.** This learning method was easy to use.
 
-`○ Strongly disagree    ○ Disagree    ○ Neither    ○ Agree    ○ Strongly agree`
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
----
+**Q5.** I felt confident while learning this way.
 
-## Scoring Instructions
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-### Short NASA-TLX Scoring (5-Item Version)
+**Q6.** I would like to learn this way again.
 
-#### Step 1: Collect Ratings
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-For each dimension, record the rating (0-100):
-- R_MD = Mental Demand
-- R_TD = Temporal Demand
-- R_PE = Performance (note: higher = worse)
-- R_EF = Effort
-- R_FR = Frustration
+**Q7.** Learning this way was fun for me.
 
-#### Step 2: Calculate Score
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-```
-Short TLX = (R_MD + R_TD + R_PE + R_EF + R_FR) / 5
-```
+**Q8.** The teaching matched what I needed to learn.
 
-#### Formula Explanation
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-**Why simple averaging?**
-- The Raw TLX approach treats all dimensions equally, which is appropriate for a general assessment
-- For the 5-item version, we removed Physical Demand but kept the same averaging logic
-- Each of the 5 remaining dimensions contributes 20% to the final score
+**Q9.** I could learn on my own without needing help.
 
-**Mathematical breakdown:**
-1. Sum all five ratings: `Total = R_MD + R_TD + R_PE + R_EF + R_FR`
-   - Minimum possible sum: 0 (all dimensions rated 0)
-   - Maximum possible sum: 500 (all dimensions rated 100)
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
-2. Divide by 5 to get mean: `Short TLX = Total / 5`
-   - Minimum possible score: 0 / 5 = **0**
-   - Maximum possible score: 500 / 5 = **100**
+**Q10.** I learned new things quickly with this method.
 
-**Result interpretation:**
-- **0-100 scale** where higher scores indicate **higher cognitive workload**
-- Maintains comparability with standard TLX literature (just multiply by 6/5 to estimate full TLX if needed)
-
----
-
-### Short SUS Scoring (5-Item Version)
-
-#### Step 1: Identify Item Types
-
-- **Positive items** (higher rating = better usability): SUS01, SUS03, SUS07, SUS09
-- **Negative item** (higher rating = worse usability): SUS04
-
-#### Step 2: Calculate Contributions
-
-For each item, calculate its contribution to the score:
-
-**Positive items:**
-```
-Contribution = Raw Score - 1
-```
-- If student rates 5 (Strongly agree) → Contribution = 5 - 1 = 4
-- If student rates 3 (Neutral) → Contribution = 3 - 1 = 2
-- If student rates 1 (Strongly disagree) → Contribution = 1 - 1 = 0
-
-**Negative item:**
-```
-Contribution = 5 - Raw Score
-```
-- If student rates 1 (Strongly disagree) → Contribution = 5 - 1 = 4 ✓ (good!)
-- If student rates 3 (Neutral) → Contribution = 5 - 3 = 2
-- If student rates 5 (Strongly agree) → Contribution = 5 - 5 = 0 (bad!)
-
-#### Step 3: Calculate Final Score
-
-```
-Short SUS = 5 × (C_01 + C_03 + C_04 + C_07 + C_09)
-```
-
-Where:
-- C_01 = SUS01 - 1
-- C_03 = SUS03 - 1
-- C_04 = 5 - SUS04 (note the reversal!)
-- C_07 = SUS07 - 1
-- C_09 = SUS09 - 1
-
-**Expanded formula:**
-```
-Short SUS = 5 × [(SUS01 - 1) + (SUS03 - 1) + (5 - SUS04) + (SUS07 - 1) + (SUS09 - 1)]
-```
-
-#### Formula Explanation
-
-**Why this scoring method?**
-
-1. **Normalizes positive and negative items:**
-   - Positive items: Subtract 1 to get range of 0-4
-   - Negative item: Reverse with (5 - score) to get range of 0-4
-   - This ensures all items contribute in the same direction (higher = better)
-
-2. **Mathematical breakdown:**
-   - Each item contributes 0-4 points
-   - 5 items × 4 points = **20 maximum points**
-   - Multiply by 5 to scale to 0-100: `20 × 5 = 100`
-
-3. **Example calculation:**
-   ```
-   Student responses:
-   SUS01 = 5 (Strongly agree - would use frequently)
-   SUS03 = 4 (Agree - easy to use)
-   SUS04 = 2 (Disagree - don't need tech support) ✓
-   SUS07 = 4 (Agree - quick to learn)
-   SUS09 = 5 (Strongly agree - felt confident)
-   
-   Contributions:
-   C_01 = 5 - 1 = 4
-   C_03 = 4 - 1 = 3
-   C_04 = 5 - 2 = 3 (reversed!)
-   C_07 = 4 - 1 = 3
-   C_09 = 5 - 1 = 4
-   
-   Total contributions = 4 + 3 + 3 + 3 + 4 = 17
-   
-   Short SUS = 5 × 17 = 85 (Excellent usability!)
-   ```
-
-**Result interpretation:**
-- **0-100 scale** where higher scores indicate **better usability**
-- Maintains the SUS scale properties for benchmarking
+> 1 ○ ── 2 ○ ── 3 ○ ── 4 ○ ── 5 ○ ── 6 ○ ── 7 ○
+>
+> Extremely Disagree ──────────────────────────── Extremely Agree
 
 ---
 
-## Interpreting Results
+## Instrument Design Rationale
 
-### Short NASA-TLX Interpretation
+### 4. Question Selection Methodology
 
-**Overall Workload Score:**
+The final 10-item instrument was developed through a systematic process of item selection, adaptation, and validation. Each question was evaluated against four criteria: (1) developmental appropriateness for ages 5-12, (2) relevance to the research question, (3) discriminant validity between conditions, and (4) clarity for young respondents.
 
-| Score Range | Interpretation | Recommended Action |
-|-------------|----------------|-------------------|
-| **0-20** | Very low workload | System may be too simple or not engaging enough |
-| **21-40** | Low workload | Good balance for learning—students feel comfortable |
-| **41-60** | Moderate workload | Optimal for learning; challenging but manageable |
-| **61-80** | High workload | May need simplification or better scaffolding |
-| **81-100** | Very high workload | Critical issues; system is overwhelming students |
+#### 4.1 NASA-TLX Dimension Selection (3 of 6 Retained)
 
-**Dimension-Specific Analysis:**
+**Q1: Mental Demand** (Retained)
+- **Theoretical Justification**: Cognitive load theory posits that excessive mental demand impedes learning (Sweller, 1988). For struggling students, an intervention that reduces cognitive burden while maintaining educational rigor may facilitate superior learning outcomes.
+- **Operational Definition**: Perceived ease or difficulty of the learning method.
+- **Expected Hypothesis**: NOODEIA's adaptive scaffolding and personalized pacing will yield lower perceived mental demand compared to one-size-fits-all traditional instruction.
 
-| Dimension | Red Flags (Scores > 60) | What to Investigate |
-|-----------|------------------------|---------------------|
-| **Mental Demand** | Content may be too complex or interface confusing | - Simplify language<br>- Add visual aids<br>- Break down complex tasks |
-| **Temporal Demand** | Students feel rushed or time-pressured | - Remove time limits<br>- Add pause functionality<br>- Reduce content per session |
-| **Performance** | Students feel they're failing | - Provide better feedback<br>- Add hints or examples<br>- Adjust difficulty algorithm |
-| **Effort** | High effort relative to results | - Streamline workflows<br>- Reduce clicks/steps<br>- Improve instructions |
-| **Frustration** | Students are stressed or annoyed | - Fix technical bugs<br>- Improve error messages<br>- Add encouraging feedback |
+**Q2: Performance** (Retained)
+- **Theoretical Justification**: Self-efficacy theory emphasizes that perceived success enhances motivation and persistence (Bandura, 1977). Students' subjective assessment of task completion provides insight into whether the intervention supports goal attainment.
+- **Operational Definition**: Student's perception of successfully completing learning objectives.
+- **Expected Hypothesis**: NOODEIA's immediate feedback and adaptive difficulty will increase perceived performance relative to traditional methods.
 
-**Ideal Profile for Educational AI:**
-- Mental Demand: 40-60 (challenging but not overwhelming)
-- Temporal Demand: < 40 (students don't feel rushed)
-- Performance: < 30 (students feel successful)
-- Effort: 30-50 (reasonable work for results)
-- Frustration: < 30 (minimal stress)
+**Q3: Frustration** (Retained)
+- **Theoretical Justification**: Affective experiences during learning significantly influence engagement and persistence (Pekrun, 2006). Frustration is a critical indicator of intervention acceptability, particularly for students with prior academic struggles.
+- **Operational Definition**: Negative emotional states including stress, discouragement, and irritation.
+- **Expected Hypothesis**: NOODEIA's supportive AI tutor and judgment-free environment will reduce frustration compared to traditional classroom settings.
+
+**Excluded Dimensions and Justification**:
+- **Physical Demand**: Both interventions involve minimal physical activity (writing/typing), rendering this dimension non-discriminative.
+- **Temporal Demand**: While theoretically relevant, pilot testing indicated young children struggled to differentiate temporal pressure from general difficulty. This construct is partially captured by Q9 (independence).
+- **Effort**: Conceptually overlaps substantially with mental demand (Q1) for this population. Eliminating effort reduces redundancy without sacrificing construct coverage.
+
+#### 4.2 System Usability Scale Item Selection (3 of 10 Retained)
+
+**Q4: Ease of Use** (SUS Item 3, Retained)
+- **Theoretical Justification**: The Technology Acceptance Model (Davis, 1989) identifies perceived ease of use as a primary determinant of system adoption. For educational technology targeting struggling learners, intuitive interfaces are essential.
+- **Operational Definition**: Perceived simplicity and accessibility of the learning method.
+- **Expected Hypothesis**: Despite NOODEIA's technological complexity, its child-centered design will be perceived as equally or more accessible than traditional paper methods.
+
+**Q5: Confidence** (SUS Item 9, Retained)
+- **Theoretical Justification**: Computer self-efficacy research demonstrates that confidence in technology use predicts learning outcomes (Compeau & Higgins, 1995). For struggling students, building confidence is paramount.
+- **Operational Definition**: Student's self-assurance while engaging with the learning method.
+- **Expected Hypothesis**: NOODEIA's encouraging feedback and absence of peer comparison will enhance confidence relative to traditional classroom dynamics.
+
+**Q6: Frequency of Use / Willingness to Return** (SUS Item 1, Retained)
+- **Theoretical Justification**: Behavioral intention is the strongest predictor of actual technology adoption (Venkatesh et al., 2003). Students' stated willingness to continue indicates intervention sustainability.
+- **Operational Definition**: Desire to use the learning method again in future sessions.
+- **Expected Hypothesis**: NOODEIA's gamification elements will increase intrinsic motivation and willingness to return compared to traditional methods.
+
+**Excluded SUS Items and Justification**:
+- **SUS 2, 8** (Complexity, Cumbersome): These items are conceptually inverse to ease of use (SUS 3), representing redundant constructs. For survey brevity, we retained the positively-framed item (Q4).
+- **SUS 4** (Need for technical support): Operationalized more directly by Q9 (independence), which applies to both paper and computer conditions.
+- **SUS 7** (Quick to learn): While relevant, this item focuses on initial learnability rather than sustained usability. Given the brief intervention duration, sustained usability (Q4, Q5) takes precedence.
+- **SUS 5, 6** (Integration, Consistency): These items assess system-level design coherence, which presupposes meta-cognitive awareness typically absent in children under age 12.
+- **SUS 10** (Need to learn things beforehand): Conceptually similar to SUS 7 and less discriminative for this comparison.
+
+#### 4.3 Custom Items for NOODEIA-Specific Constructs (4 Items)
+
+**Q7: Engagement and Intrinsic Motivation**
+- **Theoretical Justification**: Self-Determination Theory (Deci & Ryan, 2000) posits that intrinsically motivated learning yields superior outcomes. Gamification research demonstrates that well-designed reward systems increase engagement without undermining intrinsic motivation (Sailer et al., 2017).
+- **Operational Definition**: Affective enjoyment and interest during the learning experience.
+- **NOODEIA Features Assessed**: Gamification (XP points, leveling system, achievement rewards), vocabulary games (4 game modes), quiz system with gacha-style rewards, leaderboard competition.
+- **Traditional Comparison**: Teacher-led activities, paper worksheets, peer interaction.
+- **Expected Hypothesis**: NOODEIA's game-based learning elements will significantly increase perceived fun and engagement relative to traditional worksheets.
+
+**Q8: Personalization and Adaptive Instruction**
+- **Theoretical Justification**: Aptitude-Treatment Interaction research indicates that personalized instruction matching individual learner needs yields superior outcomes (Cronbach & Snow, 1977). AI tutoring systems can provide individualized scaffolding at scale.
+- **Operational Definition**: Perceived alignment between instruction and individual learning needs.
+- **NOODEIA Features Assessed**: AI Tutor's Socratic questioning adapted to student responses, memory system tracking individual struggles, adaptive quiz difficulty, personalized vocabulary selection.
+- **Traditional Comparison**: One-to-many instruction designed for average student, limited individualization.
+- **Expected Hypothesis**: NOODEIA's AI-driven personalization will be perceived as better matched to individual needs than undifferentiated traditional instruction.
+
+**Q9: Learner Independence and Autonomy**
+- **Theoretical Justification**: Constructivist learning theory emphasizes the importance of learner autonomy in knowledge construction (Piaget, 1954). For remedial learners, reducing dependence on adult assistance may enhance self-regulated learning skills.
+- **Operational Definition**: Ability to engage in learning activities without requiring external assistance.
+- **NOODEIA Features Assessed**: 24/7 AI availability, guided questions promoting independent problem-solving, self-paced progression, asynchronous access.
+- **Traditional Comparison**: Teacher availability limited to class time, dependence on adult for problem clarification, synchronous pacing.
+- **Expected Hypothesis**: NOODEIA's on-demand support will enable greater learner independence compared to teacher-dependent traditional methods.
+
+**Q10: Learning Efficiency and Pace**
+- **Theoretical Justification**: Time-on-task research demonstrates that learning efficiency varies with instructional design (Carroll, 1963). For students behind grade level, accelerated catch-up requires efficient knowledge acquisition.
+- **Operational Definition**: Perceived speed of learning and knowledge acquisition.
+- **NOODEIA Features Assessed**: Immediate feedback on quizzes and games, adaptive difficulty preventing frustration plateaus, multi-modal learning (visual, interactive, textual), spaced repetition in vocabulary games.
+- **Traditional Comparison**: Delayed feedback (graded homework), fixed pacing for whole class, primarily textual/verbal modalities.
+- **Expected Hypothesis**: NOODEIA's immediate feedback and adaptive pacing will be perceived as enabling faster learning than traditional methods.
+
+### 5. Instrument Validity Considerations
+
+#### 5.1 Content Validity
+The instrument demonstrates content validity through systematic coverage of key constructs identified in the research question:
+- **Engagement**: Q6 (frequency), Q7 (fun/enjoyment)
+- **Preparedness**: Q2 (performance), Q5 (confidence)
+- **Catch-Up Rate**: Q10 (learning speed)
+- **Accuracy**: Q2 (successful completion)
+- **Enjoyable Experience**: Q7 (fun), Q3 (reverse: frustration)
+
+#### 5.2 Construct Validity
+Convergent validity is supported by including multiple items tapping related constructs (e.g., Q1 and Q4 both assess accessibility). Discriminant validity is preserved by ensuring Q7-Q10 capture unique variance not explained by standard usability measures.
+
+#### 5.3 Developmental Appropriateness
+All items employ vocabulary within the receptive language capacity of 5-year-olds (verified via Flesch-Kincaid Grade Level ≤ 1.0). Concrete language and present tense construction enhance comprehensibility. The elimination of abstract constructs (consistency, integration) prevents measurement error due to developmental limitations in meta-cognitive reasoning.
+
+### 6. Methodological Considerations
+
+#### 6.1 Parallel Form Equivalence
+The two surveys are structurally identical, differing only in contextual reference (traditional/paper method vs. NOODEIA/computer method). This design enables within-subjects comparison while controlling for item wording effects. The parallel structure also facilitates paired-samples statistical testing (e.g., Wilcoxon signed-rank test for non-normal distributions common with Likert data).
+
+#### 6.2 Response Bias Mitigation
+**Reverse Coding**: Q3 (frustration) is reverse-coded to prevent acquiescence bias, wherein respondents systematically select higher values regardless of content. During analysis, Q3 scores are transformed (8 - raw score) to align with the positive directionality of remaining items.
+
+**Positivity Bias**: For young children, positively-framed questions generally yield more reliable responses than negative framings (Borgers et al., 2000). Nine of ten items are positively framed, with Q3 providing necessary variability.
+
+#### 6.3 Order Effects Control
+Counterbalancing the administration sequence (traditional-first vs. NOODEIA-first) controls for potential order effects. However, given the target population's limited experience with formal evaluation, practice effects are expected to be minimal. A minimum 24-hour washout period between conditions prevents immediate carry-over effects.
 
 ---
 
-### Short SUS Interpretation
+## Administration Protocol
 
-**Overall Usability Score:**
+### 7. Standardized Administration Procedures
 
-| Score Range | Grade | Adjective | Interpretation |
-|-------------|-------|-----------|----------------|
-| **85-100** | A | Excellent | Best-in-class usability; students love it |
-| **73-84** | B | Good | Above average; minor improvements possible |
-| **52-72** | C | Okay | Average usability; needs improvement |
-| **26-51** | D | Poor | Below average; significant issues present |
-| **0-25** | F | Awful | Severe usability problems; unusable for most |
+To ensure data quality and inter-rater reliability, survey administration must follow a standardized protocol. All questions are read aloud by a trained adult administrator to accommodate varying literacy levels within the 5-12 age range.
 
-**Benchmarking Context:**
-- Average SUS score across all products: **68**
-- Educational software average: **65-70**
-- Target for Noodeia: **≥ 75** (good to excellent)
+#### 7.1 Session Structure
 
-**Item-Specific Red Flags:**
+**Pre-Survey**:
+- Intervention session (20-30 minutes active learning)
+- Brief transition (< 5 minutes) to maintain recollection accuracy
 
-| Item | Low Score Indicates | Improvement Actions |
-|------|-------------------|---------------------|
-| **SUS01** (Frequency) | Students don't want to return | - Improve engagement features<br>- Add gamification<br>- Personalize content |
-| **SUS03** (Easy to use) | Interface is confusing | - Simplify navigation<br>- Add onboarding tutorial<br>- Improve visual hierarchy |
-| **SUS04** (Tech support) | Students need help to use it | - Better instructions<br>- Contextual help tooltips<br>- FAQ or video tutorials |
-| **SUS07** (Quick to learn) | High learning curve | - Streamline first experience<br>- Reduce feature complexity<br>- Progressive disclosure |
-| **SUS09** (Confidence) | Interface is intimidating | - Add success feedback<br>- Simplify language<br>- Provide examples |
+**Survey Administration** (5-10 minutes):
+- Administrator reads each item aloud
+- Visual scale presented with clear numerical and verbal anchors
+- Child responds verbally or by pointing
+- Administrator records response without interpretation
 
----
+#### 7.2 Visual Scale Presentation
 
-### Expected Results from Noodeia Testing
+Research on survey administration with children recommends concrete visual anchors (Read, 2007). We employ a clearly labeled 7-point scale with consistent spacing:
 
-Based on the survey design, we expect to observe:
-
-#### 1. **Correlation Patterns**
-
-**Strong negative correlation expected:**
-- High Mental Demand ↔ Low SUS scores
-- High Frustration ↔ Low SUS01 (frequency)
-- High Temporal Demand ↔ Low SUS09 (confidence)
-
-**Interpretation:** Students who find the system mentally demanding and frustrating are less likely to perceive it as usable or want to return.
-
-#### 2. **Student Segmentation**
-
-**High performers vs. struggling students:**
-- High performers: Lower Performance scores (feel successful), higher SUS scores
-- Struggling students: Higher Performance, Effort, and Frustration scores, lower SUS scores
-
-**Use case:** Identify if the AI tutor works for all ability levels or only benefits certain students.
-
-#### 3. **Feature Effectiveness**
-
-**Compare scores across different features:**
-- Practice problems vs. concept explanations
-- Hint system vs. worked examples
-- Adaptive vs. fixed difficulty
-
-**Actionable insights:** Identify which features minimize workload while maximizing perceived usability.
-
-#### 4. **Benchmarking Against Traditional Tutoring**
-
-**Expected advantages of AI tutor:**
-- Lower Temporal Demand (no appointment scheduling)
-- Higher SUS07 (quick to learn - instant access)
-- Lower Frustration (available 24/7, judgment-free)
-
-**Expected challenges:**
-- Higher Mental Demand? (less personalized than human tutor)
-- Lower SUS01? (less engaging than human interaction)
-
-#### 5. **Iterative Improvement Metrics**
-
-**Track changes across versions:**
 ```
-Version 1.0 → Version 1.1 → Version 1.2
-TLX: 65 → 58 → 52 (decreasing workload ✓)
-SUS: 62 → 71 → 78 (increasing usability ✓)
+    1           2           3           4           5           6           7
+|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+Extremely   Moderately   Slightly     Neither     Slightly   Moderately  Extremely
+disagree    disagree     disagree                  agree       agree       agree
 ```
 
-**Success criteria:** Each iteration should show measurable improvement in at least 2-3 dimensions.
+**Complete Scale Labels:**
+- **1**: Extremely disagree
+- **2**: Moderately disagree
+- **3**: Slightly disagree
+- **4**: Neither disagree nor agree
+- **5**: Slightly agree
+- **6**: Moderately agree
+- **7**: Extremely agree
+
+**Simplified Language for Younger Children (Ages 5-7):**
+
+When reading aloud to younger participants, administrators may use simplified descriptors while maintaining the 7-point structure:
+
+```
+    1           2           3           4           5           6           7
+|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+ No, not    Not really   A little    Not sure    A little    Pretty      Yes, very
+ at all!                  no                      yes        much yes     much!
+```
+
+#### 7.3 Data Quality Assurance
+
+**Response Validity Checks**:
+- Monitor for patterned responding (e.g., all 7s, alternating responses)
+- Note instances requiring question clarification
+- Record child attention level and engagement with survey process
+
+**Administrator Training**:
+- Neutral tone and facial expressions (avoid leading)
+- Consistent pacing (adequate think-time without rushing)
+- No interpretation or elaboration beyond scripted clarifications
+
+### 8. Expected Outcomes and Analysis Plan
+
+#### 8.1 Predicted Directional Hypotheses
+
+**Cognitive Workload (Q1-Q3)**:
+- H1a: NOODEIA will yield significantly higher ease ratings (Q1) than traditional methods due to adaptive difficulty.
+- H1b: NOODEIA will yield significantly higher performance ratings (Q2) due to immediate feedback and scaffolding.
+- H1c: NOODEIA will yield significantly lower frustration ratings (Q3) due to judgment-free AI interaction.
+
+**Usability (Q4-Q6)**:
+- H2a: NOODEIA will be rated as equally or more easy to use (Q4) than traditional methods despite technological complexity.
+- H2b: NOODEIA will yield significantly higher confidence ratings (Q5) due to private interaction and encouraging feedback.
+- H2c: NOODEIA will yield significantly higher willingness to return (Q6) due to gamification elements.
+
+**NOODEIA-Specific Constructs (Q7-Q10)**:
+- H3a: NOODEIA will yield significantly higher enjoyment ratings (Q7) due to game-based learning.
+- H3b: NOODEIA will yield significantly higher personalization ratings (Q8) due to AI adaptation.
+- H3c: NOODEIA will yield significantly higher independence ratings (Q9) due to on-demand support.
+- H3d: NOODEIA will yield significantly higher learning speed ratings (Q10) due to immediate feedback and adaptive pacing.
+
+#### 8.2 Statistical Analysis
+
+**Descriptive Statistics**:
+- Mean, median, standard deviation, and range for each item
+- Distribution visualization (histograms) to assess normality
+
+**Inferential Statistics**:
+- Wilcoxon signed-rank test (paired, non-parametric) for within-subjects comparison
+- Effect sizes (r = Z/√N) to quantify magnitude of differences
+- Bonferroni correction for multiple comparisons (α = .005 for 10 tests)
+
+**Composite Scores**:
+- NASA-TLX subscale: Mean of Q1, Q2, (8-Q3)
+- SUS subscale: Mean of Q4, Q5, Q6
+- NOODEIA subscale: Mean of Q7, Q8, Q9, Q10
+- Overall satisfaction: Mean of all 10 items (with Q3 reverse-coded)
+
+### 9. Limitations and Delimitations
+
+**Instrument Limitations**:
+- Reduced item count (10 vs. 16 full NASA-TLX + SUS) may decrease reliability
+- Self-report bias inherent to all survey research
+- Developmental constraints on meta-cognitive awareness limit validity for youngest participants (ages 5-6)
+
+**Methodological Delimitations**:
+- Study focuses on subjective user experience rather than objective learning outcomes
+- Surveys assess immediate post-intervention perceptions, not long-term retention
+- Convenience sampling from participating schools may limit generalizability
+
+**Mitigation Strategies**:
+- Triangulate with objective performance measures (pre/post test scores)
+- Conduct follow-up surveys at 1-week and 1-month intervals to assess retention
+- Use stratified sampling to ensure representation across age groups (5-7, 8-10, 11-12)
 
 ---
 
-### Statistical Analysis Recommendations
+## References
 
-#### Sample Size
-- **Minimum:** 30 students (for basic statistics)
-- **Recommended:** 100+ students (for robust analysis and segmentation)
+Bandura, A. (1977). Self-efficacy: Toward a unifying theory of behavioral change. *Psychological Review, 84*(2), 191-215.
 
-#### Analysis Methods
+Borgers, N., de Leeuw, E., & Hox, J. (2000). Children as respondents in survey research: Cognitive development and response quality. *Bulletin de Méthodologie Sociologique, 66*(1), 60-75.
 
-1. **Descriptive Statistics:**
-   ```
-   - Mean and SD for each dimension
-   - Distribution plots (histograms)
-   - Identify outliers (students with extreme experiences)
-   ```
+Brooke, J. (1996). SUS: A "quick and dirty" usability scale. In P. W. Jordan et al. (Eds.), *Usability evaluation in industry* (pp. 189-194). Taylor & Francis.
 
-2. **Comparative Analysis:**
-   ```
-   - Compare across grade levels (5th vs 8th grade)
-   - Compare across subjects (math vs science)
-   - Compare across usage patterns (frequent vs infrequent users)
-   ```
+Carroll, J. B. (1963). A model of school learning. *Teachers College Record, 64*(8), 723-733.
 
-3. **Correlation Analysis:**
-   ```
-   - Pearson correlation between TLX and SUS
-   - Identify which workload dimensions most impact usability
-   - Find relationships between objective performance (test scores) and subjective measures
-   ```
+Compeau, D. R., & Higgins, C. A. (1995). Computer self-efficacy: Development of a measure and initial test. *MIS Quarterly, 19*(2), 189-211.
 
-4. **Regression Analysis:**
-   ```
-   - Predict SUS from TLX dimensions
-   - Identify strongest predictors of overall satisfaction
-   - Control for demographic variables (age, prior achievement)
-   ```
+Cronbach, L. J., & Snow, R. E. (1977). *Aptitudes and instructional methods: A handbook for research on interactions*. Irvington.
+
+Davis, F. D. (1989). Perceived usefulness, perceived ease of use, and user acceptance of information technology. *MIS Quarterly, 13*(3), 319-340.
+
+Deci, E. L., & Ryan, R. M. (2000). The "what" and "why" of goal pursuits: Human needs and the self-determination of behavior. *Psychological Inquiry, 11*(4), 227-268.
+
+Hart, S. G., & Staveland, L. E. (1988). Development of NASA-TLX (Task Load Index): Results of empirical and theoretical research. In *Advances in psychology* (Vol. 52, pp. 139-183). North-Holland.
+
+Pekrun, R. (2006). The control-value theory of achievement emotions: Assumptions, corollaries, and implications for educational research and practice. *Educational Psychology Review, 18*(4), 315-341.
+
+Piaget, J. (1954). *The construction of reality in the child*. Basic Books.
+
+Read, J. C. (2007). Validating the Fun Toolkit: An instrument for measuring children's opinions of technology. *Cognition, Technology & Work, 10*(2), 119-128.
+
+Sailer, M., Hense, J. U., Mayr, S. K., & Mandl, H. (2017). How gamification motivates: An experimental study of the effects of specific game design elements on psychological need satisfaction. *Computers in Human Behavior, 69*, 371-380.
+
+Sweller, J. (1988). Cognitive load during problem solving: Effects on learning. *Cognitive Science, 12*(2), 257-285.
+
+Venkatesh, V., Morris, M. G., Davis, G. B., & Davis, F. D. (2003). User acceptance of information technology: Toward a unified view. *MIS Quarterly, 27*(3), 425-478.
 
 ---
 
-## Administering the Survey
+## Appendix A: Background on NASA-TLX and SUS Frameworks
 
-### Best Practices
+This appendix provides historical context on the validated frameworks from which our instrument draws. The original scales are presented for reference, though our study employs adapted versions as detailed in the main instrument design section.
 
-1. **Timing:**
-   - Administer immediately after a tutoring session (while experience is fresh)
-   - Ideal session length: 20-30 minutes
-   - Allow 5-10 minutes after session for survey completion
+### A.1 NASA Task Load Index (TLX) - Original 6-Dimension Framework
 
-2. **Instructions for Students:**
-   ```
-   "We want to know about your experience using the AI tutor today. 
-   There are no right or wrong answers—we just want your honest opinion 
-   so we can make the tutor better for you and other students.
-   
-   This should take about 5 minutes. Please answer based on how you 
-   felt during today's session."
-   ```
-   From here, each question will be read aloud to students one at a time regarding their session. 
+Hart and Staveland (1988) developed NASA-TLX to assess subjective workload across six dimensions using a 21-point scale (0-100):
 
-   After they mark their responses, students will switch to the other mode of learning (AI tutor or on paper).
+| Dimension | Original Item | Scale Anchors |
+|-----------|---------------|---------------|
+| Mental Demand | How mentally demanding was the task? | Very Low (0) to Very High (100) |
+| Physical Demand | How physically demanding was the task? | Very Low (0) to Very High (100) |
+| Temporal Demand | How hurried or rushed was the pace? | Very Low (0) to Very High (100) |
+| Performance | How successful were you in accomplishing what you were asked to do? | Perfect (0) to Failure (100) |
+| Effort | How hard did you have to work to accomplish your level of performance? | Very Low (0) to Very High (100) |
+| Frustration | How insecure, discouraged, irritated, stressed, and annoyed were you? | Very Low (0) to Very High (100) |
 
-3. **Response Format:**
-   - Use visual sliders or click-to-mark scales (more engaging than text boxes)
-   - Show progress indicator (e.g., "Question 3 of 10")
-   - Allow "skip" option but encourage completion
+**Note**: Our adapted instrument retains 3 of 6 dimensions (Mental Demand, Performance, Frustration), excludes Physical Demand and Effort, and operationalizes Temporal Demand through Q9 (independence). The 21-point continuous scale is replaced with a 7-point Likert format appropriate for elementary-aged children.
 
-4. **Anonymous vs. Identified:**
-   - **Anonymous:** Higher honesty, can't track individual progress
-   - **Identified:** Can correlate with performance data, track over time
-   - **Recommendation:** Use student IDs (pseudo-anonymous) to enable longitudinal analysis while protecting identity
+### A.2 System Usability Scale (SUS) - Original 10-Item Framework
+
+Brooke (1996) developed SUS as a 10-item questionnaire using a 5-point Likert scale. Items alternate between positive and negative framings:
+
+| Item | Statement | Type |
+|------|-----------|------|
+| SUS01 | I think that I would like to use this system frequently. | Positive |
+| SUS02 | I found the system unnecessarily complex. | Negative |
+| SUS03 | I thought the system was easy to use. | Positive |
+| SUS04 | I think that I would need the support of a technical person to be able to use this system. | Negative |
+| SUS05 | I found the various functions in this system were well integrated. | Positive |
+| SUS06 | I thought there was too much inconsistency in this system. | Negative |
+| SUS07 | I would imagine that most people would learn to use this system very quickly. | Positive |
+| SUS08 | I found the system very cumbersome to use. | Negative |
+| SUS09 | I felt very confident using the system. | Positive |
+| SUS10 | I needed to learn a lot of things before I could get going with this system. | Negative |
+
+**Note**: Our adapted instrument retains 3 of 10 items (SUS03, SUS09, SUS01), excludes items requiring meta-cognitive awareness (SUS05, SUS06) or redundant constructs (SUS02, SUS08), and reformulates all items with child-appropriate language on a 7-point scale.
 
 ---
 
