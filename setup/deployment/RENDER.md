@@ -58,7 +58,7 @@ Render auto-detects `render.yaml`, but verify settings:
 **Build Settings:**
 - **Build Command**:
   ```bash
-  cd frontend && npm install --legacy-peer-deps && npm run build
+  cd frontend && npm install --legacy-peer-deps && pip install -r requirements.txt && npm run build
   ```
 - **Start Command**:
   ```bash
@@ -128,7 +128,7 @@ ACE_LLM_TEMPERATURE=0.2
 
 **Build Steps:**
 1. Clone repository
-2. Install Node.js dependencies
+2. Install Node.js dependencies (npm packages)
 3. Install Python dependencies (from requirements.txt)
 4. Build Next.js application
 5. Start server
@@ -173,7 +173,7 @@ services:
     runtime: node
     plan: starter
     region: oregon
-    buildCommand: cd frontend && npm install --legacy-peer-deps && npm run build
+    buildCommand: cd frontend && npm install --legacy-peer-deps && pip install -r requirements.txt && npm run build
     startCommand: cd frontend && npm start
     envVars:
       - key: NODE_ENV
@@ -404,8 +404,17 @@ For multiple services:
 **Solution:**
 Ensure build command includes `--legacy-peer-deps`:
 ```bash
-cd frontend && npm install --legacy-peer-deps && npm run build
+cd frontend && npm install --legacy-peer-deps && pip install -r requirements.txt && npm run build
 ```
+
+**Error**: `ModuleNotFoundError: No module named 'langgraph'`
+
+**Solution:**
+Python dependencies aren't being installed. Update build command to include:
+```bash
+cd frontend && npm install --legacy-peer-deps && pip install -r requirements.txt && npm run build
+```
+This installs Python packages from `frontend/requirements.txt` which includes langgraph, langchain, neo4j driver, and other Python dependencies needed for the ACE agent.
 
 **Error**: `Module not found: Can't resolve 'react-is'`
 
@@ -649,7 +658,7 @@ cat .env.local | grep -E "(SUPABASE|NEO4J|GEMINI)"
 ### 3. Configure Build
 
 **Verify settings:**
-- Build Command: `cd frontend && npm install --legacy-peer-deps && npm run build`
+- Build Command: `cd frontend && npm install --legacy-peer-deps && pip install -r requirements.txt && npm run build`
 - Start Command: `cd frontend && npm start`
 - Node Version: 20
 
@@ -687,6 +696,7 @@ TAVILY_API_KEY → [your key]
 ==> Installing Node.js 20...
 ==> Running build command...
     npm install --legacy-peer-deps
+    pip install -r requirements.txt
     npm run build
 ==> Build successful!
 ==> Starting service...
