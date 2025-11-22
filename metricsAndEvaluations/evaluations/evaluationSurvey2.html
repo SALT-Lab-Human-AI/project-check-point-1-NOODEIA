@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey 2: Experimental Condition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 50px;
+            background: #fff;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .header-info {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .header-info strong {
+            display: inline-block;
+            min-width: 100px;
+        }
+
+        .underline {
+            display: inline-block;
+            border-bottom: 1px solid #333;
+            min-width: 200px;
+            margin-left: 5px;
+        }
+
+        hr {
+            border: none;
+            border-top: 2px solid #ddd;
+            margin: 25px 0;
+        }
+
+        h2 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin: 25px 0 15px 0;
+            background-color: #ecf0f1;
+            padding: 10px 15px;
+            border-left: 4px solid #3498db;
+        }
+
+        .instructions {
+            background-color: #fff9e6;
+            border: 1px solid #f1c40f;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            font-style: italic;
+            color: #555;
+        }
+
+        .scale-section {
+            background-color: #f8f9fa;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+
+        .scale-section h3 {
+            color: #2c3e50;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .question-block {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .question-number {
+            font-weight: bold;
+            color: #3498db;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 15px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .response-scale {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin: 15px 0;
+            padding: 10px 0;
+        }
+
+        .scale-point {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .scale-number {
+            font-weight: bold;
+            color: #3498db;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .scale-circle {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #3498db;
+            border-radius: 50%;
+            background-color: white;
+            position: relative;
+            z-index: 2;
+            margin-bottom: 10px;
+        }
+
+        .scale-label {
+            font-size: 10px;
+            color: #555;
+            text-align: center;
+            line-height: 1.2;
+            max-width: 100px;
+        }
+
+        .scale-line {
+            position: absolute;
+            top: 38px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #bdc3c7;
+            z-index: 1;
+        }
+
+        .end-section {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            background-color: #e8f5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+
+        @media print {
+            body {
+                padding: 20px;
+            }
+            
+            .question-block {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Survey 2: Experimental Condition<br>(NOODEIA System)</h1>
+    
+    <div class="header-info">
+        <div><strong>Student Initials:</strong><span class="underline"></span></div>
+        <div><strong>Date:</strong><span class="underline"></span></div>
+    </div>
+
+    <hr>
+
+    <h2>Instructions for Administrator</h2>
+    <div class="instructions">
+        "We want to know about your experience learning with the computer and NOODEIA. For each statement, tell me how much you agree or disagree. There are no right or wrong answers because we just want to know what you think."
+        <br><br>
+        <strong>Read each question aloud and show the child the scale below. Record their response by circling the number they choose.</strong>
+    </div>
+
+    <hr>
+
+    <div class="scale-section">
+        <h3>7-Point Scale</h3>
+        <div style="position: relative; padding: 10px 0;">
+            <div class="response-scale">
+                <div class="scale-point">
+                    <div class="scale-number">1</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">2</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">3</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">4</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Neither</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">5</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">6</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">7</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>agree</div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 20px;">7-Point Scale Child Friendly Version</h3>
+        <div style="position: relative; padding: 10px 0;">
+            <div class="response-scale">
+                <div class="scale-point">
+                    <div class="scale-number">1</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">No, not<br>at all!</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">2</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Not really</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">3</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">A little<br>no</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">4</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Not sure</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">5</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">A little<br>yes</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">6</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Pretty<br>much yes</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">7</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Yes, very<br>much!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <h2>Survey Questions</h2>
+
+    <div class="question-block">
+        <div class="question-number">Q1.</div>
+        <div class="question-text">Learning this way was easy for me.</div>
+        <div style="position: relative; padding: 10px 0;">
+            <div class="response-scale">
+                <div class="scale-point">
+                    <div class="scale-number">1</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">2</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">3</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">4</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Neither</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">5</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">6</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">7</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>agree</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-number">Q2.</div>
+        <div class="question-text">I was able to complete my learning activities successfully.</div>
+        <div style="position: relative; padding: 10px 0;">
+            <div class="response-scale">
+                <div class="scale-point">
+                    <div class="scale-number">1</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">2</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">3</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">4</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Neither</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">5</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">6</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">7</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>agree</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-number">Q3.</div>
+        <div class="question-text">I felt frustrated while learning this way.</div>
+        <div style="position: relative; padding: 10px 0;">
+            <div class="response-scale">
+                <div class="scale-point">
+                    <div class="scale-number">1</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">2</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">3</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">4</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Neither</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">5</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">6</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">7</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>agree</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-number">Q4.</div>
+        <div class="question-text">This learning method was easy to use.</div>
+        <div style="position: relative; padding: 10px 0;">
+            <div class="response-scale">
+                <div class="scale-point">
+                    <div class="scale-number">1</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">2</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">3</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">4</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Neither</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">5</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">6</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">7</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>agree</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-number">Q5.</div>
+        <div class="question-text">I felt confident while learning this way.</div>
+        <div style="position: relative; padding: 10px 0;">
+            <div class="response-scale">
+                <div class="scale-point">
+                    <div class="scale-number">1</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">2</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">3</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">4</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Neither</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">5</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">6</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">7</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>agree</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-number">Q6.</div>
+        <div class="question-text">I would like to learn this way again.</div>
+        <div style="position: relative; padding: 10px 0;">
+            <div class="response-scale">
+                <div class="scale-point">
+                    <div class="scale-number">1</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">2</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">3</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">4</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Neither</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">5</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">6</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">7</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>agree</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-number">Q7.</div>
+        <div class="question-text">Learning this way was fun for me.</div>
+        <div style="position: relative; padding: 10px 0;">
+            <div class="response-scale">
+                <div class="scale-point">
+                    <div class="scale-number">1</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">2</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">3</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">4</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Neither</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">5</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">6</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">7</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>agree</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-number">Q8.</div>
+        <div class="question-text">The teaching matched what I needed to learn.</div>
+        <div style="position: relative; padding: 10px 0;">
+            <div class="response-scale">
+                <div class="scale-point">
+                    <div class="scale-number">1</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">2</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">3</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">4</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Neither</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">5</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">6</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">7</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>agree</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-number">Q9.</div>
+        <div class="question-text">I could learn on my own without needing help.</div>
+        <div style="position: relative; padding: 10px 0;">
+            <div class="response-scale">
+                <div class="scale-point">
+                    <div class="scale-number">1</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">2</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">3</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">4</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Neither</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">5</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">6</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">7</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>agree</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="question-block">
+        <div class="question-number">Q10.</div>
+        <div class="question-text">I learned new things quickly with this method.</div>
+        <div style="position: relative; padding: 10px 0;">
+            <div class="response-scale">
+                <div class="scale-point">
+                    <div class="scale-number">1</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">2</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">3</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>disagree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">4</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Neither</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">5</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Slightly<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">6</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Moderately<br>agree</div>
+                </div>
+                <div class="scale-point">
+                    <div class="scale-number">7</div>
+                    <div class="scale-circle"></div>
+                    <div class="scale-label">Extremely<br>agree</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="end-section">
+        <h2 style="margin: 0; padding: 0; background: none; border: none; font-size: 20px;">End of Survey</h2>
+        <p style="margin-top: 10px;">Thank you for completing this survey!</p>
+    </div>
+
+</body>
+</html>

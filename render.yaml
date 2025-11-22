@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: noodeia
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: cd frontend && npm install --legacy-peer-deps && pip install -r requirements.txt && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=8192
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: NEXT_PUBLIC_NEO4J_URI
+        sync: false
+      - key: NEXT_PUBLIC_NEO4J_USERNAME
+        value: neo4j
+      - key: NEXT_PUBLIC_NEO4J_PASSWORD
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: PUSHER_APP_ID
+        value: "2059509"
+      - key: PUSHER_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_PUSHER_KEY
+        value: be045a5b3ce8f55949bd
+      - key: NEXT_PUBLIC_PUSHER_CLUSTER
+        value: us2
