@@ -1,0 +1,27 @@
+Participants,Ja N,SN,Jay N,LN,DN,11/21/2025 14:34:38,11/21/2025 14:37:13,11/21/2025 14:39:12,11/21/2025 14:39:46,11/21/2025 14:41:16,11/21/2025 15:22:50,11/21/2025 15:23:18,11/21/2025 17:52:48,11/21/2025 17:58:27,11/21/2025 19:52:49,11/22/2025 9:45:21,,,,,,,,
+,,,,,,,,,,,,,,,,,,Baseline,,,,,,
+Baseline,,,,,,,,,,,,,,,,,,Total Points,Average Points,,,Baseline ,Proposed Method,Percentage Changes
+Q1. Learning this way was easy for me,7,1,7,3,5,2,3,2,2,4,1,3,1,1,1,2,,45,2.813,,Question1 (higher better ↑),2.813,5.688,102.2040526%
+"Q2. I was able to complete my learning activities successfully
+",4,7,7,5,6,2,1,1,2,6,1,1,1,1,1,1,,47,2.938,,Question2 (higher better ↑),2.938,5.938,102.1102791%
+Q3. I felt frustrated while learning this way,1,1,6,5,1,5,5,6,4,4,7,7,7,7,7,7,,80,5,,Question3 (lower better ↓),5,2.313,-53.74%
+Q4. This learning method was easy to use,7,7,7,4,5,2,1,2,2,3,1,2,1,1,2,1,,48,3,,Question4 (higher better ↑),3,6.188,106.2666667%
+Q5. I felt confident while learning this way,1,7,1,4,6,2,3,2,2,3,2,2,2,2,1,1,,41,2.563,,Question5 (higher better ↑),2.563,6.25,143.8548576%
+Q6. I would like to learn this way again,7,7,7,3,3,3,4,2,2,4,3,2,1,1,1,2,,52,3.25,,Question6 (higher better ↑),3.25,5.75,76.92307692%
+Q7. Learning this way was fun for me,7,7,7,5,4,1,2,1,1,3,1,1,1,1,2,2,,46,2.875,,Question7 (higher better ↑),2.875,6.313,119.5826087%
+Q8. The teaching matched what I needed to learn,7,7,7,6,4,4,4,2,1,4,1,4,2,1,1,1,,56,3.5,,Question8 (higher better ↑),3.5,5.563,58.94285714%
+Q9. I could learn on my own without needing help,1,1,7,3,7,2,1,2,1,3,1,2,1,1,3,1,,37,2.313,,Question9 (higher better ↑),2.313,5.438,135.105923%
+Q10. I learned new things quickly with this method,7,1,7,7,7,2,3,2,1,4,1,2,1,1,1,1,,48,3,,Question10 (higher better ↑),3,6.375,112.5%
+,,,,,,,,,,,,,,,,,,,,,,,,
+Condition,,,,,,,,,,,,,,,,,,Proposed Method,,,,,,
+Q1. Learning this way was easy for me,7,7,1,5,5,6,5,6,6,4,7,5,7,7,7,6,,91,5.688,,,,,
+"Q2. I was able to complete my learning activities successfully
+",1,6,7,5,6,6,7,7,6,2,7,7,7,7,7,7,,95,5.938,,,,,
+Q3. I felt frustrated while learning this way,4,1,7,1,2,3,3,2,4,4,1,1,1,1,1,1,,37,2.313,,,,,
+Q4. This learning method was easy to use,7,7,1,7,7,6,7,6,6,5,7,6,7,7,6,7,,99,6.188,,,,,
+Q5. I felt confident while learning this way,7,7,7,7,6,6,5,6,6,5,6,6,6,6,7,7,,100,6.25,,,,,
+Q6. I would like to learn this way again,7,7,1,7,7,5,4,6,6,4,5,6,7,7,7,6,,92,5.75,,,,,
+Q7. Learning this way was fun for me,7,7,1,7,7,7,6,7,7,5,7,7,7,7,6,6,,101,6.313,,,,,
+Q8. The teaching matched what I needed to learn,7,7,1,6,5,4,4,6,7,4,7,4,6,7,7,7,,89,5.563,,,,,
+Q9. I could learn on my own without needing help,1,3,1,6,6,6,7,6,7,5,7,6,7,7,5,7,,87,5.438,,,,,
+Q10. I learned new things quickly with this method,7,6,7,7,6,6,5,6,7,4,7,6,7,7,7,7,,102,6.375,,,,,
