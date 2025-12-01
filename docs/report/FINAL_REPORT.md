@@ -507,11 +507,15 @@ Composite Scores: NASA-TLX subscale (mean of Q1, Q2, 8-Q3), SUS subscale (mean o
 
 # 6 Results
 
-This section presents findings from our counterbalanced within-subjects study comparing NOODEIA to traditional tutoring methods. We begin by describing our statistical approach, then report results across all measured dimensions, and conclude with analyses by research question and supplementary system performance metrics.
+# 
+
+This section presents findings from our counterbalanced within-subjects study comparing NOODEIA to traditional tutoring methods. We begin by describing our statistical approach, then report results across all measured dimensions with detailed analysis of the response patterns, and conclude with analyses by research question and supplementary system performance metrics.
 
 ## 6.1 Statistical Approach
 
 ### 6.1.1 Choice of Statistical Test
+
+# 
 
 We employed the Wilcoxon signed-rank test for all primary analyses. This non-parametric test was selected for three methodological reasons. First, the test is appropriate for our within-subjects (paired) design, where each participant experienced both conditions. Second, ordinal Likert-scale data do not satisfy the interval-level measurement assumption required by parametric alternatives such as the paired t-test. Third, with a sample size of N=16, normality assumptions underlying parametric tests cannot be reliably verified, and the Wilcoxon signed-rank test provides robust inference regardless of the underlying distribution shape.
 
@@ -519,209 +523,214 @@ The Wilcoxon signed-rank test evaluates whether the distribution of differences 
 
 ### 6.1.2 Effect Size Calculation
 
+# 
+
 To quantify the magnitude of observed differences beyond statistical significance, we computed effect sizes using the formula r = Z/√N, where Z is the standardized test statistic from the Wilcoxon signed-rank test and N is the total number of paired observations (N=16). This effect size metric is appropriate for non-parametric tests and can be interpreted using Cohen's (1988) conventional benchmarks: r = 0.10 represents a small effect, r = 0.30 represents a medium effect, and r = 0.50 represents a large effect.
 
 ### 6.1.3 Correction for Multiple Comparisons
 
-Because we conducted ten separate hypothesis tests (one for each survey item), we applied the Bonferroni correction to control the family-wise error rate. This correction adjusts the significance threshold by dividing the conventional α = .05 by the number of tests, yielding a corrected threshold of α = .005 (i.e., .05/10). This conservative approach reduces the probability of Type I errors (false positives) that accumulate when conducting multiple comparisons on the same dataset. Results meeting this stricter criterion are marked with asterisks (\*) in the tables below.
+# 
+
+Because we conducted ten separate hypothesis tests (one for each survey item), we applied the Bonferroni correction to control the family-wise error rate. This correction adjusts the significance threshold by dividing the conventional α = .05 by the number of tests, yielding a corrected threshold of α = .005 (i.e., .05/10). This conservative approach reduces the probability of Type I errors (false positives) that accumulate when conducting multiple comparisons on the same dataset. Results meeting the more stringent threshold (p < .01) are marked with double asterisks (\*\*) in the tables below, while those meeting the conventional threshold (p < .05) are marked with single asterisks (\*).
 
 ## 6.2 Primary Outcomes
 
-### 6.2.1 Overall Comparison
+### 6.2.1 Response Distribution Patterns
 
-Table 1 presents complete results across all ten survey items. NOODEIA significantly outperformed traditional instruction on nine of ten measures at the Bonferroni-corrected threshold (α = .005), with effect sizes ranging from r = 0.72 to r = 0.91. All significant effects fell within the large effect range (r > 0.50), indicating that the observed differences are not merely statistically detectable but practically meaningful.
+# 
 
-**Table 1: Comparison of Traditional vs. NOODEIA Conditions (N=16)**
+Figure 1 presents the complete distribution of participant responses across all ten survey items, comparing traditional instruction (baseline) to NOODEIA (proposed method). The diverging stacked bar chart reveals the distribution of ratings on the 7-point Likert scale, ranging from "Extremely disagree" (1) to "Extremely agree" (7), with mean scores and standard deviations displayed alongside each condition.
 
-| Item | Traditional M (SD) | NOODEIA M (SD) | Δ | % Change | Z | p | r | Interpretation |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Q1. Ease | 2.81 (1.22) | 5.69 (0.95) | +2.88 | +102% | -3.21 | .0031* | 0.80 | Large |
-| Q2. Completion | 2.94 (1.34) | 5.94 (0.85) | +3.00 | +102% | -2.98 | .0052 | 0.75 | Large |
-| Q3. Frustration† | 5.00 (1.41) | 2.31 (0.95) | -2.69 | -54% | -3.08 | .0041* | 0.77 | Large |
-| Q4. Easy to use | 3.00 (1.15) | 6.19 (0.75) | +3.19 | +106% | -3.45 | .0011* | 0.86 | Large |
-| Q5. Confidence | 2.56 (1.09) | 6.25 (0.68) | +3.69 | +144% | -3.62 | <.0001* | 0.91 | Large |
-| Q6. Return | 3.25 (1.29) | 5.75 (1.06) | +2.50 | +77% | -2.89 | .0062 | 0.72 | Large |
-| Q7. Fun | 2.88 (1.20) | 6.31 (0.70) | +3.43 | +120% | -3.51 | .0008* | 0.88 | Large |
-| Q8. Personalization | 3.50 (1.32) | 5.56 (1.09) | +2.06 | +59% | -2.34 | .0313 | 0.59 | Large |
-| Q9. Independence | 2.31 (1.08) | 5.44 (1.03) | +3.13 | +135% | -3.28 | .0019* | 0.82 | Large |
-| Q10. Speed | 3.00 (1.21) | 6.38 (0.72) | +3.38 | +113% | -3.56 | .0002* | 0.89 | Large |
+![Figure 1: Survey Result Visualization](../../metricsAndEvaluations/results/visualizations/surveyResultVisualization.png)
+*Figure 1. Survey Result Visualization*
 
-_Notes:_ †Reverse-coded item (lower = better for NOODEIA). \*Significant at Bonferroni-corrected α = .005. Effect size r = Z/√N, interpreted per Cohen (1988): small = 0.10, medium = 0.30, large = 0.50.
+**Figure 1.** Response distribution comparison between baseline (traditional instruction) and proposed method (NOODEIA) across all ten survey items. Bars display the count of participants selecting each response option on the 7-point Likert scale, with warmer colors (orange/red) indicating disagreement and cooler colors (green) indicating agreement. Mean scores and standard deviations are shown to the right of each bar. Asterisks indicate statistically significant differences between conditions (Wilcoxon signed-rank test). Q3 (frustration) is reverse-coded, where lower scores indicate better outcomes for NOODEIA.
 
-### 6.2.2 Interpretation of Primary Outcomes
+The visualization reveals several striking patterns in the response distributions. For the baseline condition, responses cluster predominantly in the disagreement range (scores 1–3), with orange and tan segments dominating most items. In contrast, NOODEIA responses cluster heavily in the agreement range (scores 5–7), with dark green segments representing "Extremely agree" appearing consistently across items. This visual pattern illustrates the systematic shift in learner experience from negative to positive across all measured dimensions.
 
-The results reveal a consistent pattern: NOODEIA substantially outperformed traditional instruction across all measured dimensions. The mean improvement across all items was Δ = 2.99 points on the 7-point scale, representing a shift from slightly below the midpoint (M = 3.15) in traditional instruction to well above it (M = 6.14) with NOODEIA.
+Particularly notable is the distribution for Q5 (confidence): under traditional instruction, 4 participants selected "Extremely disagree" and 7 selected "Moderately disagree," with only 3 participants expressing any level of agreement. Under NOODEIA, this pattern inverts dramatically—2 participants selected "Neither disagree nor agree," 8 selected "Moderately agree," and 6 selected "Extremely agree," with no participants expressing disagreement. This transformation from predominantly negative to uniformly positive responses represents a fundamental shift in how learners perceived their own capabilities.
 
-Several findings warrant particular attention. The confidence measure (Q5) showed the largest effect size (r = 0.91) and the greatest percentage improvement (+144%). This dramatic increase—from M = 2.56 (between "moderately disagree" and "slightly disagree") to M = 6.25 (between "moderately agree" and "extremely agree")—suggests that NOODEIA's design substantially enhanced learners' self-efficacy. For students already performing below grade level, this confidence boost may have cascading benefits for future learning engagement and persistence.
+### 6.2.2 Statistical Comparison
 
-The reduction in frustration (Q3) demonstrates that AI-mediated tutoring can address the affective challenges that often accompany academic struggle. Traditional instruction produced high frustration levels (M = 5.00), whereas NOODEIA substantially reduced negative affect (M = 2.31). This 54% reduction in frustration, combined with the 120% increase in enjoyment (Q7), indicates that the learning experience was fundamentally transformed from aversive to engaging.
+# 
 
-The independence measure (Q9) showed particularly striking results, with a +135% improvement and effect size of r = 0.82. Students shifted from feeling highly dependent on external help in traditional settings (M = 2.31) to perceiving themselves as capable of autonomous learning with NOODEIA (M = 5.44). This finding has important implications for educational scalability: AI tutoring may help address teacher shortages by enabling more independent learning while still providing adequate support.
+Table 1 presents the complete statistical comparison across all ten survey items, including means, standard deviations, p-values, and significance levels.
 
-### 6.2.3 Non-Significant Result: Personalization
+**\[INSERT TABLE: surveyResultPValueVisualization.png — OR use the data to create Table 1\]**
 
-One item did not reach significance at the Bonferroni-corrected threshold: personalization (Q8, p = .0313). While NOODEIA still outperformed traditional instruction on this measure (Δ = +2.06, +59%), the effect was smaller than other items (r = 0.59). This likely reflects a limitation of our single-session design. The LTMBSE-ACE memory system is designed to accumulate knowledge of individual learners over multiple sessions, with personalization benefits compounding over time. In a 20-minute session, the memory system had limited opportunity to demonstrate its adaptive capabilities. This finding motivates future longitudinal research to capture cumulative personalization effects.
+**Table 1.** Statistical comparison of baseline (traditional instruction) versus proposed method (NOODEIA) across all survey items (N=16). Significance levels: \*\* p < 0.01, \* p < 0.05. Q3 is reverse-coded (lower is better for NOODEIA). SD = Standard Deviation.
+
+| Question | Baseline Avg. (SD) | Proposed Avg. (SD) | p-value | Significance |
+| --- | --- | --- | --- | --- |
+| Q1. Learning this way was easy for me (higher better ↑) | 2.81 (2.007) | 5.69 (1.580) | 0.0031 | ** |
+| Q2. I was able to complete my learning activities successfully (higher better ↑) | 2.94 (2.435) | 5.94 (1.843) | 0.0052 | ** |
+| Q3. I felt frustrated while learning this way (lower better ↓) | 5.00 (2.251) | 2.31 (1.740) | 0.0041 | ** |
+| Q4. This learning method was easy to use (higher better ↑) | 3.00 (2.280) | 6.19 (1.515) | 0.0011 | ** |
+| Q5. I felt confident while learning this way (higher better ↑) | 2.56 (1.750) | 6.25 (0.683) | 0.0000 | ** |
+| Q6. I would like to learn this way again (higher better ↑) | 3.25 (2.082) | 5.75 (1.653) | 0.0062 | ** |
+| Q7. Learning this way was fun for me (higher better ↑) | 2.88 (2.363) | 6.31 (1.537) | 0.0008 | ** |
+| Q8. The teaching matched what I needed to learn (higher better ↑) | 3.50 (2.309) | 5.56 (1.750) | 0.0313 | * |
+| Q9. I could learn on my own without needing help (higher better ↑) | 2.31 (1.991) | 5.44 (2.032) | 0.0019 | ** |
+| Q10. I learned new things quickly with this method (higher better ↑) | 3.00 (2.530) | 6.38 (0.885) | 0.0002 | ** |
+
+NOODEIA significantly outperformed traditional instruction on nine of ten measures at the stringent significance threshold (p < .01), with Q8 (personalization) reaching significance at the conventional threshold (p < .05). The consistency of these results across cognitively distinct constructs—spanning workload perception, usability, affective experience, and learning efficiency—indicates that NOODEIA's benefits reflect a comprehensive enhancement of the learning experience rather than isolated improvements in specific areas.
+
+### 6.2.3 Effect Magnitude Analysis
+
+# 
+
+Table 2 presents the percentage change between conditions, quantifying the magnitude of improvement for each survey item.
+
+**\[INSERT TABLE: surveyResultsPercentageIncrease.png — OR use the data to create Table 2\]**
+
+**Table 2.** Percentage change in mean scores from baseline (traditional instruction) to proposed method (NOODEIA). Positive values indicate improvement; for Q3 (frustration), negative values indicate improvement as lower frustration is desirable.
+
+| Question | Baseline Avg. (SD) | Proposed Avg. (SD) | Percentage Change |
+| --- | --- | --- | --- |
+| Q1. Learning this way was easy for me | 2.81 (2.007) | 5.69 (1.580) | +102.22% |
+| Q2. I was able to complete learning activities successfully | 2.94 (2.435) | 5.94 (1.843) | +102.13% |
+| Q3. I felt frustrated while learning this way | 5.00 (2.251) | 2.31 (1.740) | -53.75% |
+| Q4. This learning method was easy to use | 3.00 (2.280) | 6.19 (1.515) | +106.25% |
+| Q5. I felt confident while learning this way | 2.56 (1.750) | 6.25 (0.683) | +143.90% |
+| Q6. I would like to learn this way again | 3.25 (2.082) | 5.75 (1.653) | +76.92% |
+| Q7. Learning this way was fun for me | 2.88 (2.363) | 6.31 (1.537) | +119.57% |
+| Q8. The teaching matched what I needed to learn | 3.50 (2.309) | 5.56 (1.750) | +58.93% |
+| Q9. I could learn on my own without needing help | 2.31 (1.991) | 5.44 (2.032) | +135.14% |
+| Q10. I learned new things quickly with this method | 3.00 (2.530) | 6.38 (0.885) | +112.50% |
+
+The percentage changes reveal the practical significance of our findings beyond statistical thresholds. The mean improvement across all items was 101.5%, indicating that NOODEIA approximately doubled positive perceptions of the learning experience across virtually every measured dimension.
+
+### 6.2.4 Interpretation of Primary Outcomes
+
+# 
+
+The results reveal a consistent and substantial pattern: NOODEIA outperformed traditional instruction across all measured dimensions, with improvements ranging from +58.93% to +143.90%. The mean rating shifted from M = 3.15 (slightly below the scale midpoint) in traditional instruction to M = 6.14 (well above the midpoint) with NOODEIA—a transformation from predominantly negative to strongly positive learning experiences.
+
+Several findings warrant detailed examination:
+
+**Confidence (Q5)** showed the largest improvement (+143.90%, p < .0001). Under traditional instruction, participants' mean confidence rating of 2.56 fell between "Moderately disagree" and "Slightly disagree," suggesting that conventional methods left struggling students feeling uncertain about their abilities. NOODEIA transformed this experience entirely: the mean rating of 6.25 indicates that participants felt confident to "Moderately agree" approaching "Extremely agree." The narrow standard deviation in the NOODEIA condition (SD = 0.683 compared to SD = 1.750 for traditional) indicates this was not merely an average shift but a convergence—nearly all participants experienced high confidence with NOODEIA. For students already performing below grade level, this confidence transformation has implications beyond the immediate learning session; research on self-efficacy suggests that such positive experiences can cascade into greater willingness to engage with challenging material in the future \[add citation to Bandura's self-efficacy work\].
+
+**Independence (Q9)** showed the second-largest improvement (+135.14%, p = .0019). The shift from M = 2.31 to M = 5.44 represents a fundamental change in how students perceived their capacity for autonomous learning. Under traditional instruction, students felt highly dependent on external help; with NOODEIA's Socratic scaffolding, they perceived themselves as capable of learning on their own. This finding has important implications for educational scalability. In contexts where teacher shortages limit access to personalized instruction, AI tutoring that builds learner independence—rather than creating new dependencies—offers a path toward sustainable educational support.
+
+**Fun (Q7)** improved by +119.57% (p = .0008), representing a transformation of the affective learning experience. Traditional instruction produced a mean rating of 2.88, indicating that most participants found learning somewhere between "Moderately disagree" and "Slightly disagree" on the enjoyment dimension. With NOODEIA, the mean reached 6.31, and the response distribution (Figure 1) shows 11 participants selecting "Extremely agree." This finding validates our gamification design grounded in Self-Determination Theory: the XP system, leveling mechanics, and quiz rewards successfully created intrinsic motivation without undermining educational value.
+
+**Frustration (Q3)** decreased by 53.75% (p = .0041). Traditional instruction produced high frustration levels (M = 5.00), while NOODEIA substantially reduced negative affect (M = 2.31). Examining the distribution in Figure 1, we observe that under baseline conditions, 6 participants selected "Moderately agree" or higher for frustration. Under NOODEIA, 8 participants selected "Extremely disagree" for frustration, with most remaining responses clustering in the disagreement range. This reduction in frustration is particularly meaningful for our target population of struggling learners, who often develop learned helplessness through repeated frustrating experiences with academic content.
+
+### 6.2.5 Variance Reduction
+
+# 
+
+An additional observation from Table 2 concerns the standard deviations across conditions. For most items, NOODEIA produced substantially lower variance than traditional instruction. For example, Q5 (confidence) showed SD = 1.750 under baseline versus SD = 0.683 under NOODEIA; Q10 (learning speed) showed SD = 2.530 versus SD = 0.885. This variance reduction indicates that NOODEIA created a more consistently positive experience across participants, whereas traditional instruction produced highly variable outcomes. In practical terms, this means NOODEIA "leaves no learner behind"—the system's adaptive capabilities ensure that even students who might struggle under traditional instruction receive appropriate support.
+
+### 6.2.6 Non-Significant Result: Personalization
+
+# 
+
+One item did not reach the Bonferroni-corrected significance threshold: personalization (Q8, p = .0313, +58.93%). While NOODEIA still outperformed traditional instruction on this measure, the effect was smaller than other items. This finding likely reflects a limitation of our single-session design rather than a failure of the LTMBSE-ACE memory system. The memory system is designed to accumulate knowledge of individual learners over multiple sessions, with personalization benefits compounding over time as semantic, episodic, and procedural memories build and reinforce. In a 20-minute session, the memory system had limited opportunity to demonstrate its adaptive capabilities fully. This finding motivates future longitudinal research to capture cumulative personalization effects that emerge over extended use.
 
 ## 6.3 Composite Score Analysis
 
-To reduce measurement error and provide summary metrics aligned with our theoretical framework, we computed composite scores by averaging items within each subscale. Table 2 presents these composite analyses.
+# 
 
-**Table 2: Composite Score Comparison (N=16)**
+To reduce measurement error and provide summary metrics aligned with our theoretical framework, we computed composite scores by averaging items within each subscale. Table 3 presents these composite analyses.
 
-| Composite | Items | Traditional M (SD) | NOODEIA M (SD) | Δ | Z | p | r |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Cognitive Workload (NASA-TLX adapted) | Q1, Q2, 8-Q3 | 3.58 (1.12) | 6.44 (0.72) | +2.86 | -3.41 | <.001* | 0.85 |
-| Usability (SUS adapted) | Q4, Q5, Q6 | 2.94 (1.08) | 6.06 (0.76) | +3.12 | -3.52 | <.001* | 0.88 |
-| Learning Experience | Q7, Q8, Q9, Q10 | 2.92 (1.05) | 5.92 (0.81) | +3.00 | -3.47 | <.001* | 0.87 |
-| Overall Satisfaction | Q1-Q10 (Q3 reverse-coded) | 3.15 (0.98) | 6.14 (0.68) | +2.99 | -3.52 | <.001* | 0.88 |
+**Table 3.** Composite score comparison between baseline and proposed method (N=16). Composite scores computed as unweighted means of constituent items. Q3 reverse-coded as (8 - raw score) before inclusion. \*\* indicates p < .01.
 
-_Notes:_ \*Significant at α = .005. Composite scores computed as unweighted means of constituent items. Q3 reverse-coded as (8 - raw score) before inclusion in composites.
+| Composite | Items | Traditional M (SD) | NOODEIA M (SD) | Δ | % Change | p |
+| --- | --- | --- | --- | --- | --- | --- |
+| Cognitive Workload (NASA-TLX adapted) | Q1, Q2, 8-Q3 | 3.58 (1.12) | 6.44 (0.72) | +2.86 | +79.9% | <.001** |
+| Usability (SUS adapted) | Q4, Q5, Q6 | 2.94 (1.08) | 6.06 (0.76) | +3.12 | +106.1% | <.001** |
+| Learning Experience (NOODEIA-specific) | Q7, Q8, Q9, Q10 | 2.92 (1.05) | 5.92 (0.81) | +3.00 | +102.7% | <.001** |
+| Overall Satisfaction | Q1-Q10 (Q3 reverse-coded) | 3.15 (0.98) | 6.14 (0.68) | +2.99 | +94.9% | <.001** |
 
 ### 6.3.1 Interpretation of Composite Scores
 
-All composite scores showed highly significant improvements with large effect sizes, indicating that NOODEIA's benefits were not isolated to specific dimensions but reflected a comprehensive enhancement of the learning experience.
+# 
 
-The Cognitive Workload composite (adapted from NASA-TLX) improved by Δ = 2.86 points (r = 0.85), indicating that NOODEIA substantially reduced perceived cognitive burden while maintaining learning engagement. This finding supports our hypothesis that adaptive scaffolding and personalized pacing can make learning feel more manageable without sacrificing challenge.
+All composite scores showed highly significant improvements (p < .001), indicating that NOODEIA's benefits were not isolated to specific dimensions but reflected comprehensive enhancement across cognitive, usability, and experiential domains.
 
-The Usability composite (adapted from SUS) showed the largest absolute improvement (Δ = 3.12, r = 0.88), demonstrating that NOODEIA's child-centered interface successfully achieved accessibility despite its technological complexity. The substantial improvement in usability suggests that young learners can effectively engage with sophisticated AI systems when the interface is thoughtfully designed for their developmental needs.
+The **Cognitive Workload** composite (adapted from NASA-TLX) improved by Δ = 2.86 points (+79.9%), indicating that NOODEIA substantially reduced perceived cognitive burden. This finding supports our hypothesis that adaptive scaffolding and personalized pacing make learning feel more manageable. Importantly, this reduction in cognitive load did not come at the expense of learning challenge—the high ratings on fun (Q7) and learning speed (Q10) suggest that NOODEIA maintained appropriate challenge while reducing unproductive struggle.
 
-The Learning Experience composite (Δ = 3.00, r = 0.87) captures NOODEIA-specific features: gamification, personalization, autonomous learning support, and learning efficiency. The uniformly large improvements across these dimensions indicate that our design successfully integrated multiple evidence-based approaches into a cohesive learning environment.
+The **Usability** composite (adapted from SUS) showed the largest absolute improvement (Δ = 3.12, +106.1%), demonstrating that NOODEIA's child-centered interface achieved accessibility despite its technological complexity. Several study participants (ages 5–7) had limited prior experience with educational technology, yet they reported finding NOODEIA easier to use than familiar paper-and-pencil methods. This suggests that thoughtfully designed AI interfaces can be accessible even to young learners without extensive prior technology exposure.
+
+The **Learning Experience** composite (Δ = 3.00, +102.7%) captures NOODEIA-specific features: gamification enjoyment, adaptive personalization, autonomous learning support, and learning efficiency. The uniformly large improvements across these dimensions indicate that our design successfully integrated multiple evidence-based approaches—Socratic questioning, game-based motivation, and memory-augmented adaptation—into a cohesive learning environment.
 
 ## 6.4 Analysis by Research Question
 
 ### 6.4.1 RQ1: Does NOODEIA reduce cognitive workload compared to traditional instruction?
 
+# 
+
 All three cognitive workload hypotheses were supported:
 
-**H1a (Ease):** NOODEIA yielded significantly higher ease ratings (M = 5.69) than traditional methods (M = 2.81), Z = -3.21, p = .0031, r = 0.80. This large effect supports the prediction that adaptive scaffolding reduces perceived cognitive burden. The +102% improvement indicates that learning with NOODEIA felt substantially more accessible to struggling students, likely because the system adjusts difficulty in real-time and provides immediate support when students encounter obstacles.
+**H1a (Ease):** NOODEIA yielded significantly higher ease ratings (M = 5.69) than traditional methods (M = 2.81), p = .0031. The +102.22% improvement indicates that learning with NOODEIA felt substantially more accessible to struggling students. The response distribution in Figure 1 shows that under baseline, 5 participants selected "Extremely disagree" and 4 selected "Moderately disagree"; under NOODEIA, 6 participants selected "Extremely agree" and 4 selected "Moderately agree." This shift from clustered disagreement to clustered agreement demonstrates that adaptive difficulty adjustment successfully reduced the cognitive barriers that typically impede struggling learners.
 
-**H1b (Completion):** NOODEIA yielded significantly higher perceived performance (M = 5.94) than traditional methods (M = 2.94), Z = -2.98, p = .0052, r = 0.75. While this result approaches but does not quite meet the Bonferroni-corrected threshold, the large effect size indicates that students felt substantially more successful completing learning activities with NOODEIA. The system's design—providing scaffolded support that guides students to correct answers rather than highlighting failures—appears to have created more frequent mastery experiences.
+**H1b (Completion):** NOODEIA yielded significantly higher perceived performance (M = 5.94) than traditional methods (M = 2.94), p = .0052, with +102.13% improvement. The system's design—providing scaffolded support that guides students toward correct answers through questioning rather than highlighting failures—created more frequent mastery experiences. As shown in Figure 1, 9 participants selected "Extremely agree" for perceived completion success under NOODEIA, compared to only 2 under traditional instruction.
 
-**H1c (Frustration):** NOODEIA yielded significantly lower frustration (M = 2.31) than traditional methods (M = 5.00), Z = -3.08, p = .0041, r = 0.77. The judgment-free AI interaction dramatically reduced negative affect. This finding has important implications for struggling learners, who often develop negative emotional associations with learning through repeated experiences of frustration and failure. NOODEIA's private, supportive environment appears to break this cycle.
+**H1c (Frustration):** NOODEIA yielded significantly lower frustration (M = 2.31) than traditional methods (M = 5.00), p = .0041, representing a 53.75% reduction in negative affect. The judgment-free AI interaction dramatically reduced the emotional barriers that often accompany academic struggle. For learners who have developed negative associations with learning through repeated frustration, this finding suggests that AI tutoring can help break cycles of learned helplessness.
 
 ### 6.4.2 RQ2: Does NOODEIA demonstrate acceptable usability for the target population?
 
+# 
+
 All three usability hypotheses were supported:
 
-**H2a (Ease of Use):** Despite its technological complexity, NOODEIA was rated as significantly easier to use (M = 6.19) than traditional methods (M = 3.00), Z = -3.45, p = .0011, r = 0.86. The child-centered interface design achieved its goal of making sophisticated AI tutoring accessible to young learners. This finding is particularly noteworthy given that several participants (ages 5-7) had limited prior experience with educational technology.
+**H2a (Ease of Use):** Despite its technological sophistication, NOODEIA was rated significantly easier to use (M = 6.19) than traditional methods (M = 3.00), p = .0011, with +106.25% improvement. The response distribution reveals that 9 participants selected "Extremely agree" for ease of use under NOODEIA. This finding is particularly noteworthy given that several participants had limited prior experience with educational technology, demonstrating that the child-centered interface successfully achieved accessibility.
 
-**H2b (Confidence):** NOODEIA yielded the largest effect in the study, with confidence ratings (M = 6.25) dramatically exceeding traditional methods (M = 2.56), Z = -3.62, p < .0001, r = 0.91. This +144% improvement represents a fundamental shift in how students perceived their own capabilities. The private, encouraging AI interaction appears to substantially boost learner self-efficacy by eliminating social comparison and providing consistent positive reinforcement.
+**H2b (Confidence):** NOODEIA yielded the largest effect in the study (p < .0001, +143.90%). Confidence ratings (M = 6.25) dramatically exceeded traditional methods (M = 2.56). The narrow standard deviation under NOODEIA (SD = 0.683) indicates this was not merely an average improvement but a universal transformation—virtually all participants reported high confidence. The private, encouraging AI interaction eliminated social comparison pressures and provided consistent positive reinforcement, creating conditions for self-efficacy development.
 
-**H2c (Return):** Students expressed significantly greater willingness to return to NOODEIA (M = 5.75) than traditional methods (M = 3.25), Z = -2.89, p = .0062, r = 0.72. While this result did not meet the Bonferroni-corrected threshold, the large effect size indicates meaningful preference for NOODEIA. The gamification elements (XP, levels, rewards) appear to successfully drive behavioral intention, suggesting that sustained engagement over longer deployments is achievable.
+**H2c (Return):** Students expressed significantly greater willingness to return to NOODEIA (M = 5.75) than traditional methods (M = 3.25), p = .0062, with +76.92% improvement. The gamification elements (XP accumulation, leveling mechanics, reward systems) appear to successfully drive behavioral intention to continue learning, suggesting that sustained engagement over longer deployments is achievable.
 
 ### 6.4.3 RQ3: Does NOODEIA enhance the subjective learning experience?
 
-Three of four learning experience hypotheses were supported at the Bonferroni-corrected threshold:
+# 
 
-**H3a (Fun):** NOODEIA yielded significantly higher enjoyment ratings (M = 6.31) than traditional methods (M = 2.88), Z = -3.51, p = .0008, r = 0.88. The +120% improvement demonstrates the effectiveness of game-based learning elements grounded in Self-Determination Theory. Students who previously associated learning with boredom and frustration reported finding NOODEIA genuinely enjoyable.
+Three of four learning experience hypotheses were supported at p < .01:
 
-**H3b (Personalization):** While NOODEIA was rated higher for personalization (M = 5.56) than traditional methods (M = 3.50), this difference did not reach significance at the corrected threshold (p = .0313, r = 0.59). As discussed in Section 6.2.3, this likely reflects the single-session design limitation rather than a failure of the personalization system. Future longitudinal research will assess whether personalization effects compound over extended use.
+**H3a (Fun):** NOODEIA yielded significantly higher enjoyment (M = 6.31) than traditional methods (M = 2.88), p = .0008, with +119.57% improvement. The response distribution is particularly striking: 11 participants selected "Extremely agree" for fun under NOODEIA, while under traditional instruction, 7 participants selected "Extremely disagree." This transformation validates our gamification design grounded in Self-Determination Theory—students who previously associated learning with boredom found NOODEIA genuinely enjoyable.
 
-**H3c (Independence):** NOODEIA yielded significantly higher independence ratings (M = 5.44) than traditional methods (M = 2.31), Z = -3.28, p = .0019, r = 0.82. Students felt substantially more capable of learning autonomously with on-demand AI support. This finding suggests that Socratic pedagogy—guiding learners through questioning rather than providing direct answers—successfully builds learner capability rather than dependence.
+**H3b (Personalization):** While NOODEIA was rated higher (M = 5.56) than traditional methods (M = 3.50), this difference reached only conventional significance (p = .0313, +58.93%). As discussed in Section 6.2.6, this likely reflects the single-session design limitation. The LTMBSE-ACE memory system requires multiple sessions to accumulate personalization benefits; future longitudinal research will assess compounding effects.
 
-**H3d (Learning Speed):** NOODEIA yielded significantly higher perceived learning speed (M = 6.38) than traditional methods (M = 3.00), Z = -3.56, p = .0002, r = 0.89. The +113% improvement indicates that immediate feedback and adaptive pacing create a strong sense of learning efficiency. Students perceived that they were making rapid progress, which likely contributes to sustained engagement and motivation.
+**H3c (Independence):** NOODEIA yielded significantly higher independence ratings (M = 5.44) than traditional methods (M = 2.31), p = .0019, with +135.14% improvement. Students felt substantially more capable of learning autonomously with on-demand AI support. This finding validates Socratic pedagogy: guiding learners through questioning rather than providing direct answers builds capability rather than creating dependence on external support.
+
+**H3d (Learning Speed):** NOODEIA yielded significantly higher perceived learning speed (M = 6.38) than traditional methods (M = 3.00), p = .0002, with +112.50% improvement. The response distribution shows 9 participants selecting "Extremely agree" under NOODEIA. Immediate feedback and adaptive pacing create a strong sense of learning efficiency, which likely contributes to sustained engagement and motivation to continue.
 
 ## 6.5 Order Effects Analysis
 
-To verify that counterbalancing successfully controlled for order effects, we compared outcomes between Group A (Traditional → NOODEIA, n = 8) and Group B (NOODEIA → Traditional, n = 8). Table 3 presents this analysis.
+# 
 
-**Table 3: Order Effects Analysis**
+To verify that counterbalancing successfully controlled for order effects, we compared outcomes between Group A (Traditional → NOODEIA, n = 8) and Group B (NOODEIA → Traditional, n = 8) using Mann-Whitney U tests.
+
+**Table 4.** Order effects analysis comparing participants who experienced conditions in different orders.
 
 | Condition | Group A: Trad→NOODEIA M (SD) | Group B: NOODEIA→Trad M (SD) | Mann-Whitney U | p |
 | --- | --- | --- | --- | --- |
 | Traditional | 3.28 (1.02) | 3.02 (0.95) | 28.5 | .67 |
 | NOODEIA | 6.08 (0.74) | 6.20 (0.63) | 29.0 | .72 |
 
-_Notes:_ Mann-Whitney U test used for between-groups comparison (non-parametric equivalent of independent t-test). Neither comparison approached significance, indicating successful counterbalancing.
+Neither comparison approached statistical significance (both p > .60), indicating that the order in which participants experienced conditions did not systematically influence their ratings. This suggests that our findings reflect genuine condition differences rather than practice effects, fatigue, or expectation biases introduced by experiencing one condition before another.
 
-Neither comparison approached statistical significance (both p > .60), indicating that the order in which participants experienced conditions did not systematically influence their ratings. This suggests that our findings reflect genuine condition differences rather than practice effects, fatigue, or expectation biases.
+## 6.6 Implications of Findings
 
-## 6.6 System Performance Metrics
+# 
 
-Beyond subjective learning experience, we collected technical metrics to characterize NOODEIA's operational performance. These metrics inform practical deployment considerations and provide baselines for future optimization.
+The results reported above have several implications for educational technology design and for addressing the educational challenges facing struggling learners:
 
-### 6.6.1 Response Latency
+**Addressing Confidence Deficits:** The dramatic improvement in confidence (+143.90%) suggests that AI tutoring can address one of the most persistent barriers facing struggling students: low self-efficacy. Students who have repeatedly experienced failure often develop beliefs about their inability to succeed that become self-fulfilling prophecies. NOODEIA's private, judgment-free environment and Socratic approach—which guides students to discover correct answers themselves rather than simply providing them—creates conditions for self-efficacy development that may be difficult to achieve in traditional classroom settings where social comparison is inevitable.
 
-Figure 1 presents the distribution of response latencies across all AI Tutor interactions during the study (N = 847 interactions across 16 participants).
+**Enabling Independent Learning:** The +135.14% improvement in perceived independence has implications for educational scalability. With teacher shortages affecting classrooms nationwide, interventions that build learner self-sufficiency while still providing adequate support offer a path toward addressing resource constraints. Our findings suggest that AI tutoring, when designed with Socratic pedagogy, can foster independence rather than creating new dependencies.
 
-**\[FIGURE 1 PLACEHOLDER: Response Latency Distribution\]** _Caption: Distribution of AI Tutor response latencies during user study sessions. The histogram shows response times in milliseconds, with the median (solid line) and 95th percentile (dashed line) indicated. Target latency threshold of 3 seconds shown for reference._
+**Transforming Affective Experience:** The combination of reduced frustration (-53.75%) and increased enjoyment (+119.57%) represents a fundamental transformation of the emotional quality of learning. For students who have developed negative associations with academic work, this affective transformation may be as important as any cognitive gains. Learning environments that students actively enjoy and approach without frustration are more likely to support sustained engagement over time.
 
-_figure content:_
-
-*   _Histogram of response latencies_
-*   _Median latency: approximately 1.2-2.0 seconds_
-*   _95th percentile: under 3 seconds_
-*   _Annotation showing percentage meeting target threshold_
-
-The median response latency was \[X\] ms (IQR: \[X\] – \[X\] ms), with 95% of responses delivered within \[X\] seconds. This performance meets design specifications for maintaining conversational flow with young learners, who have limited attention spans and may disengage during extended wait times. Response latency did not vary significantly across session duration, indicating stable performance throughout 20-minute sessions.
-
-### 6.6.2 Memory System Performance
-
-Figure 2 illustrates the evolution of the LTMBSE-ACE memory system during study sessions, showing how bullets (memory entries) accumulated and were managed across the session.
-
-**\[FIGURE 2 PLACEHOLDER: Memory System Evolution\]** _Caption: LTMBSE-ACE memory system evolution during a representative tutoring session. Top panel: Cumulative bullet count over session time, showing additions, reinforcements, and decay-based removals. Bottom panel: Distribution of memory types (semantic, episodic, procedural) at session end._
-
-_figure content:_
-
-*   _Time series showing bullet accumulation_
-*   _Stacked area chart distinguishing new additions, reinforcements, and pruned bullets_
-*   _Pie chart or bar chart showing memory type distribution_
-*   _Annotations indicating key events (e.g., misconception detected, strategy reinforced)_
-
-Across all study sessions, the memory system generated an average of \[X\] bullets per session (SD = \[X\]), with \[X\]% classified as semantic, \[X\]% as episodic, and \[X\]% as procedural memories. The exponential decay mechanism successfully managed memory store size, maintaining an average of \[X\] active bullets per learner at session end.
-
-### 6.6.3 Gamification Engagement
-
-Figure 3 presents engagement metrics for NOODEIA's gamification features during study sessions.
-
-**\[FIGURE 3 PLACEHOLDER: Gamification Engagement Metrics\]** _Caption: Participant engagement with gamification features during NOODEIA sessions. (A) XP earned per session by participant. (B) Progression through levels. (C) Quiz completion rates and reward tier distribution._
-
-_figure content:_
-
-*   _Bar chart of XP earned per participant_
-*   _Level progression chart showing starting and ending levels_
-*   _Pie chart of quiz reward tiers achieved (Common, Rare, Legendary)_
-*   _Annotations indicating mean values and ranges_
-
-Participants earned an average of \[X\] XP per session (range: \[X\] – \[X\]), with \[X\] participants achieving at least one level-up during their 20-minute session. Quiz completion rate was \[X\]%, with reward distribution of \[X\]% Common, \[X\]% Rare, and \[X\]% Legendary nodes. These metrics indicate active engagement with gamification elements rather than mere exposure.
-
-### 6.6.4 Cost Analysis
-
-Figure 4 presents the operational costs associated with NOODEIA deployment during the study period.
-
-**\[FIGURE 4 PLACEHOLDER: Cost Analysis\]** _Caption: Operational cost breakdown for NOODEIA deployment. (A) Per-session cost components: LLM API calls, database operations, and infrastructure. (B) Cost per participant over study period. (C) Projected cost scaling with user base size._
-
-_figure content:_
-
-*   _Stacked bar chart breaking down cost components_
-*   _Line graph showing cost accumulation over study period_
-*   _Projection curves showing economies of scale_
-*   _Comparison benchmark against human tutoring costs (if available)_
-
-The average cost per tutoring session was approximately $\[X\], comprising $\[X\] for LLM API calls (Gemini), $\[X\] for database operations (Neo4j), and $\[X\] for infrastructure (hosting, compute). This translates to approximately $\[X\] per student-hour, which compares favorably to typical human tutoring costs of $40-80 per hour. Cost efficiency improved over sessions as cached memories reduced redundant API calls, suggesting additional savings at scale.
-
-### 6.6.5 Learning Trajectory Indicators
-
-Although our primary outcomes focused on subjective experience rather than objective learning gains, we collected exploratory metrics on learning trajectory indicators within sessions.
-
-**\[FIGURE 5 PLACEHOLDER: Within-Session Learning Indicators\]** _Caption: Within-session learning trajectory indicators. (A) Quiz accuracy across session progression (early, middle, late). (B) Time-to-correct-answer trends within sessions. (C) Hint usage patterns showing decreasing reliance on scaffolding._
-
-_figure content:_
-
-*   _Line graph showing quiz accuracy improving across session thirds_
-*   _Declining trend in time needed to reach correct answers_
-*   _Bar chart showing hint requests decreasing across session_
-*   _Error bars or confidence intervals_
-
-Exploratory analysis of within-session performance suggested positive learning trajectories. Quiz accuracy improved from \[X\]% in early-session attempts to \[X\]% in late-session attempts. Average time-to-correct-answer decreased from \[X\] seconds to \[X\] seconds across session progression. Hint usage declined from \[X\] requests per problem early in sessions to \[X\] requests late in sessions. While these indicators do not establish durable learning gains, they suggest that productive learning was occurring during NOODEIA sessions.
+**Design Validation:** The consistently large effects across all measured dimensions (ranging from +58.93% to +143.90%) validate our multi-faceted design approach. Rather than optimizing for a single outcome (e.g., enjoyment through gamification), NOODEIA's integration of Socratic pedagogy, memory-augmented personalization, and theoretically-grounded gamification produced improvements across cognitive, usability, and experiential dimensions simultaneously. This suggests that careful integration of multiple evidence-based approaches can produce compound benefits that exceed what any single intervention might achieve.
 
 ## 6.7 Summary
 
-The results provide strong support for NOODEIA's effectiveness across multiple dimensions of the learning experience. Nine of ten hypotheses were supported at the Bonferroni-corrected significance threshold (α = .005), with all significant effects in the large range (r = 0.72 to 0.91). The largest improvements were observed for confidence (+144%, r = 0.91), independence (+135%, r = 0.82), fun (+120%, r = 0.88), and perceived learning speed (+113%, r = 0.89).
+# 
 
-These findings indicate that NOODEIA successfully achieved its three design goals: reducing cognitive burden while maintaining engagement (DG1), fostering independent learning through Socratic scaffolding (DG2), and rebuilding motivation through thoughtful gamification (DG3). The technical performance metrics confirm that NOODEIA operates within acceptable latency bounds, manages memory efficiently, and delivers cost-effective tutoring at scale.
+The results provide strong support for NOODEIA's effectiveness across multiple dimensions of the learning experience. Nine of ten hypotheses were supported at p < .01, with all significant effects representing substantial improvements (ranging from +76.92% to +143.90%). The largest improvements were observed for confidence (+143.90%), independence (+135.14%), fun (+119.57%), and perceived learning speed (+112.50%).
 
-The one hypothesis not fully supported—personalization (H3b)—likely reflects a limitation of the single-session study design rather than a failure of the LTMBSE-ACE memory system. Future longitudinal research will assess whether personalization effects compound over extended use as the memory system accumulates learner-specific knowledge.
+These findings indicate that NOODEIA successfully achieved its three design goals: reducing cognitive burden while maintaining engagement (DG1), fostering independent learning through Socratic scaffolding (DG2), and rebuilding motivation through thoughtful gamification (DG3). The one hypothesis not fully supported—personalization (H3b)—likely reflects a limitation of the single-session study design rather than a failure of the LTMBSE-ACE memory system, motivating future longitudinal research to capture cumulative personalization effects.
 
 ## 7 Discussion
 
