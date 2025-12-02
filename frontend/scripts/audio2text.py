@@ -1,7 +1,9 @@
 import sys
 import os
-import base64
 from google import genai
+
+# Use an audio-capable model (2.0 Flash Lite is text-only and rejects audio)
+DEFAULT_TRANSCRIBE_MODEL = os.getenv("GEMINI_TRANSCRIBE_MODEL", "gemini-1.5-flash")
 
 def transcribe_audio_file(audio_file_path):
     """Transcribe audio file using Gemini API with inline data"""
@@ -27,27 +29,21 @@ def transcribe_audio_file(audio_file_path):
         }
         mime_type = mime_type_map.get(file_ext, 'audio/webm')  # default to webm
         
-        # Read audio file as bytes and encode as base64
+        # Read audio file as bytes
         with open(audio_file_path, 'rb') as audio_file:
             audio_data = audio_file.read()
-            audio_base64 = base64.b64encode(audio_data).decode('utf-8')
         
         # Create the prompt for transcription
         prompt = 'Generate a transcript of the speech. Return only the transcribed text without any additional commentary.'
         
-        # Use the parts structure with inline_data for audio
-        # Format: contents = [{"parts": [{"text": "..."}, {"inline_data": {"mime_type": "...", "data": "..."}}]}]
-        contents = [{
-            "parts": [
-                {"text": prompt},
-                {"inline_data": {"mime_type": mime_type, "data": audio_base64}}
-            ]
-        }]
-        
         # Request transcription using Gemini with inline data
         response = gemini_client.models.generate_content(
-            model='gemini-2.0-flash-lite',
-            contents=contents
+            model=DEFAULT_TRANSCRIBE_MODEL,
+            contents=[
+                {"text": prompt},
+                {"inline_data": {"mime_type": mime_type, "data": audio_data}}
+            ],
+            config={"response_mime_type": "text/plain"}
         )
         text = response.text.strip()
         return text
@@ -76,4 +72,3 @@ if __name__ == "__main__":
     print(f"Transcribing audio file: {audio_file_path}", file=sys.stderr)
     transcribed_text = transcribe_audio_file(audio_file_path)
     print(transcribed_text)
-
