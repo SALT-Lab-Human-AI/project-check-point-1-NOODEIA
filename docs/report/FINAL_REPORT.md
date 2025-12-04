@@ -800,86 +800,111 @@ The narrow standard deviation for confidence under NOODEIA (SD = 0.683 vs. 1.750
 
 For the modern digital age, where mental health concerns among young people have reached crisis levels and negative associations with academic work contribute to school disengagement, these findings carry profound significance. If AI tutoring can rebuild self-efficacy in students with histories of academic failure—transforming their emotional relationship with learning from one of frustration and helplessness to one of confidence and capability—technology may address not only cognitive learning gaps but also the affective barriers that often prove even more intractable. Schools investing in educational technology should consider these affective outcomes alongside traditional cognitive measures. NOODEIA demonstrates that well-designed AI tutoring can produce the mastery experiences and emotional safety that struggling learners need to re-engage with education.
 
-* * *
+### 7.6 Conversational AI and User Interaction
 
-## 8 Limitations and Considerations
+The landscape of conversational AI has evolved rapidly, with large language models demonstrating increasingly sophisticated capabilities for multi-turn dialogue. Recent advances in context management have enabled AI systems to maintain coherent conversations across extended interactions, while developments in retrieval-augmented generation have improved the accuracy and relevance of responses. However, the application of these capabilities to educational contexts presents unique challenges: educational interactions require not merely conversational coherence but pedagogically sound responses that adapt to learner needs, maintain appropriate scaffolding, and build toward learning objectives over time.
 
-While our findings demonstrate substantial improvements across multiple dimensions, it is essential to acknowledge the limitations of our study and the broader considerations for deploying AI-powered tutoring systems in educational settings. This section examines the risks associated with generative AI in education and provides practical guidance for navigating LLM-generated tutoring content.
+A notable development in conversational AI has been the emergence of context-aware group chat functionality, enabling AI assistants to participate meaningfully in multi-user conversations. OpenAI announced their context-aware group chat feature in late 2024, allowing ChatGPT to engage with multiple users while maintaining awareness of the conversational context and individual participants. This capability represents a significant advance for collaborative learning scenarios, where AI tutors must navigate the complexity of multiple learners with different knowledge levels, questions, and learning needs within a single conversation.
 
-### 8.1 Generative AI Risks in Education
+NOODEIA implemented context-aware group chat AI functionality two months prior to OpenAI's public release, demonstrating the feasibility of such systems in educational contexts. The group chat feature enables collaborative learning scenarios where multiple students can interact with an AI tutor simultaneously, with the system maintaining awareness of each participant's contributions and learning trajectory. The @ai mention system allows targeted queries within group discussions, while the LTMBSE-ACE memory system ensures that the AI's responses account for each learner's individual history and demonstrated understanding.
 
-The rapid deployment of generative AI in educational settings has generated significant concern among researchers. Bastani et al. (2024), in their influential paper "Generative AI Can Harm Learning," presented experimental evidence that students who used ChatGPT for direct answers during practice showed *reduced* learning outcomes compared to control groups. They identified a "harm pathway" wherein AI dependency undermines the skill development that occurs through productive struggle. This finding sent ripples through educational technology communities, raising questions about whether the AI revolution in education might produce more harm than benefit. Merkle et al. (2024) added to these concerns by documenting that LLM tutors often provide "generic answers" rather than personalized scaffolding, limiting their educational effectiveness. Research published in Frontiers in AI (2024) noted additional risks: LLMs can produce "hallucinations" (confident but incorrect information) and frequently lack responses tailored to individual learning levels. Even Ritter et al. (2024), whose work showed that GPT-generated hints match human-authored hints in mathematics tutoring, emphasized that *how* hints are delivered matters more than *what* is delivered—suggesting that pedagogical design mediates AI's educational impact.
+However, NOODEIA's current implementation reveals an important limitation in the spectrum of AI interactivity: the system operates in a reactive rather than proactive mode. The AI tutor responds when invoked by students but does not independently initiate interactions based on observed learning patterns or predicted student needs. Research on human tutoring suggests that expert tutors frequently intervene proactively—noticing signs of confusion before students articulate them, offering encouragement at strategic moments, and redirecting attention when engagement wanes (VanLehn, 2011; Chi et al., 2001). This proactive dimension of tutoring may contribute substantially to the effectiveness of one-to-one instruction.
 
-NOODEIA's findings directly address and substantially challenge the "AI harms learning" narrative. The +135% improvement in perceived independence (p = .0019) demonstrates the opposite trajectory from what Bastani et al. predicted: students felt *more* capable of learning autonomously after using NOODEIA, not less. The +144% improvement in confidence (p < .0001) and -54% reduction in frustration (p = .0041) further indicate that NOODEIA enhanced rather than undermined the learning experience. These findings occurred with the same population Bastani et al. studied—students using AI for educational purposes—yet produced opposite results.
+The reactive nature of NOODEIA's interaction model reflects a deliberate design choice prioritizing student autonomy and reducing potential intrusiveness. However, future iterations could explore hybrid approaches that maintain student agency while enabling appropriate proactive interventions. Such systems might monitor engagement signals (response latency, error patterns, session duration) to identify moments where proactive support could enhance learning outcomes without undermining the student's sense of control. The challenge lies in calibrating proactive behavior to be helpful rather than disruptive—a balance that human tutors develop through experience and that AI systems must learn through careful design and evaluation.
 
-The critical distinction lies in pedagogical design. Bastani et al.'s participants used ChatGPT in its default mode, which provides direct answers to questions. NOODEIA, by contrast, implements Socratic pedagogy: rather than giving answers, the AI guides students through questioning, prompting them to discover solutions themselves. This design choice prevents the dependency mechanism that produces learning harm. When students are guided to construct knowledge rather than receive it passively, they build cognitive structures that persist beyond the interaction—precisely the outcome Bastani et al.'s participants failed to achieve.
-
-The -54% frustration reduction also counters Merkle et al.'s (2024) concerns about generic AI responses. NOODEIA's LTMBSE-ACE memory system enables personalized interactions that adapt to each learner's struggles and successes, providing the individualization that typical LLM tutors lack. The combination of Socratic scaffolding and persistent memory appears to address both the dependency risk and the personalization gap that critics have identified.
-
-These findings carry significant implications for educational AI policy in the digital age. The binary framing—"AI helps learning" versus "AI harms learning"—obscures the more nuanced reality that system design determines outcomes. Schools and policymakers considering AI adoption should focus not on whether to deploy AI but on *how* to deploy it. Specifically, our findings suggest that educational AI should guide through questioning rather than provide direct answers, maintain memory of learner-specific patterns to enable personalization, and build autonomous capability rather than create dependency. As generative AI becomes increasingly accessible to students through consumer applications, educational institutions may need to provide pedagogically designed alternatives that harness AI's potential while avoiding its pitfalls. NOODEIA demonstrates that such alternatives are feasible—and that they can produce substantially positive outcomes for struggling learners.
-
-### 8.2 Navigating LLM-Generated Tutoring: Trust and Limitations
-
-Our research highlights the potential of integrating LLM-based tutoring into educational settings, but it also reveals important considerations. The LTMBSE-ACE memory system aims to provide consistent, personalized responses grounded in observed learner behavior. However, LLM-based systems carry inherent risks of generating inconsistent or occasionally incorrect responses.
-
-To mitigate these risks, NOODEIA's Socratic approach emphasizes guiding students to discover answers rather than providing them directly, which reduces the impact of potential errors. The memory system's reinforcement mechanism also allows effective strategies to become more prominent over time while less effective approaches fade through decay.
-
-Future work should examine how learners and educators develop appropriate trust in AI tutoring systems and how system design can support calibrated reliance.
+For the rapidly evolving field of educational AI, the distinction between reactive and proactive interaction represents a frontier with significant implications. As LLMs become more capable of understanding context and predicting user needs, the opportunity to create truly proactive AI tutors grows. NOODEIA's foundation—persistent memory, multi-agent architecture, and context-aware design—provides the technical substrate upon which proactive capabilities could be built. Future work should explore how proactive AI tutoring might enhance learning outcomes while preserving the agency and confidence-building benefits that our evaluation demonstrated.
 
 * * *
 
-## 9 Study Limitations and Future Work
+## 8 Limitations and Future Work
 
-### 9.1 Instrument Limitations
+While our findings demonstrate substantial improvements across multiple dimensions, it is essential to acknowledge the limitations of our study and the broader considerations for deploying AI-powered tutoring systems in educational settings. This section examines both the methodological constraints that bound our conclusions and the inherent challenges of AI-based educational interventions, followed by concrete directions for addressing these limitations in future work.
 
-The reduced item count (10 items vs. 16 full NASA-TLX + SUS) may decrease reliability compared to full instruments. Self-report bias is inherent to all survey research. Developmental constraints on meta-cognitive awareness limit validity for youngest participants (ages 5-6), though we mitigated this through oral administration and simplified language.
+### 8.1 Study Limitations
 
-### 9.2 Methodological Limitations
+Our evaluation, while providing compelling evidence for NOODEIA's potential, is subject to several methodological and design constraints that limit the generalizability and scope of our conclusions.
 
-The small sample size (N=16) limits statistical power and generalizability. The single-session design prevents assessment of cumulative personalization effects—a particular limitation given that the LTMBSE-ACE system is designed for multi-session use. The study focuses on subjective experience rather than objective learning outcomes. Convenience sampling from one organization may limit external validity. Counterbalancing controls for order effects but cannot eliminate them entirely.
+#### 8.1.1 Sample Size and Statistical Power
 
-### 9.3 Technical Limitations
+The study sample (N=16) represents a meaningful limitation on statistical power and the ability to detect smaller effect sizes or conduct subgroup analyses. While the observed effects were large enough to achieve statistical significance even with this sample size, a larger study would enable more nuanced analyses—such as examining whether effects differ by age group, prior academic performance, or technology familiarity. The small sample also limits the precision of our effect size estimates, as reflected in the wider confidence intervals.
 
-The memory system benefits may only manifest over extended use, which our single-session design could not capture. The comparison involves multiple confounded variables (AI vs. human, computer vs. paper, individual vs. group). The traditional condition may not represent best practices in human tutoring.
+#### 8.1.2 Bias in Prompts and Training Data
 
-### 9.4 Ethical Considerations
+The AI tutor's responses are shaped by the system prompts and pedagogical guidelines we designed, which necessarily reflect our assumptions about effective tutoring strategies. While these were grounded in educational research (Socratic method, progressive scaffolding), alternative prompt designs might yield different results. Additionally, the underlying LLM (Gemini 2.5 Pro) carries its own training biases that may influence response patterns in ways we cannot fully characterize or control. The system's effectiveness is contingent on our prompt engineering choices, which may not generalize optimally across all learning contexts or student populations.
 
-We addressed several ethical considerations in our design and study:
+#### 8.1.3 Model Unpredictability
 
-| Consideration | Mitigation |
-| --- | --- |
-| Participant assent | Age-appropriate explanation and voluntary participation |
-| Data privacy | Per-learner isolated storage, no cross-user data sharing |
-| Equity concerns | System designed for struggling learners, not to widen achievement gaps |
-| AI dependency | Socratic method designed to build capability, not dependence |
+Large language models exhibit inherent stochasticity in their outputs, and while NOODEIA implements guardrails through its multi-agent architecture (router, planner, solver, critic), occasional unexpected or suboptimal responses remain possible. The memory system's reinforcement mechanism aims to surface effective strategies over time, but the fundamental unpredictability of LLM generation creates an irreducible source of variance in tutoring quality. In educational contexts where consistency matters for building student trust and learning habits, this unpredictability represents a meaningful concern.
 
-### 9.5 Future Directions
+#### 8.1.4 Privacy Considerations
 
-1.  Longitudinal Study: We plan to conduct extended deployment (8-12 weeks) to assess cumulative effects of persistent memory and measure objective learning outcomes through pre/post testing.  
-      
-    
-2.  Learning Outcome Validation: Future work will triangulate subjective experience measures with standardized assessments to establish whether improved experience translates to improved achievement.  
-      
-    
-3.  Memory System Analysis: We will examine the evolution of learner-specific memory over time to understand how the LTMBSE-ACE system adapts to individual needs.  
-      
-    
-4.  Population Expansion: We intend to test with larger, more diverse samples to establish generalizability across demographic groups and educational contexts.  
-      
-    
-5.  Comparative Memory Architectures: We plan to compare LTMBSE-ACE against alternative memory approaches (MemGPT, Generative Agents) to isolate the contribution of our specific design choices.  
+The LTMBSE-ACE memory system stores detailed information about each learner's interactions, struggles, and progress—data that enables personalization but also raises privacy concerns. While our implementation isolates per-learner data and does not share information across users, the accumulation of detailed learning profiles creates obligations for data protection and raises questions about data retention, student consent (especially for minors), and potential misuse. Our study did not comprehensively evaluate participant attitudes toward this data collection or test long-term implications of persistent memory storage.
+
+#### 8.1.5 Ecological Validity
+
+The study was conducted in a controlled after-school setting at Two By Two Learning Center, which differs from typical classroom environments, home learning contexts, or other educational settings where NOODEIA might be deployed. The study environment featured individual attention from research assistants, dedicated devices, and a structured session format—conditions that may not reflect real-world usage patterns. Students knew they were participating in a study, which may have influenced their engagement and responses. The Hawthorne effect cannot be ruled out, and the one-session design prevents assessment of how novelty effects might fade over extended use.
+
+#### 8.1.6 Single-Session Design
+
+The 20-minute evaluation session, while sufficient to demonstrate immediate experiential improvements, cannot capture the cumulative effects that the LTMBSE-ACE memory system is designed to produce. The relatively modest personalization result (+59%) likely reflects this temporal constraint rather than a fundamental limitation of the architecture. Furthermore, the single session cannot assess whether improvements in confidence and engagement persist over time or translate to measurable academic gains.
+
+#### 8.1.7 Comparison Condition Limitations
+
+The traditional instruction condition, while representing common tutoring center practices, may not reflect best practices in human tutoring. The comparison involves multiple confounded variables (AI vs. human, computer vs. paper, individual vs. group, immediate vs. delayed feedback) that prevent attribution of effects to specific design features. A more rigorous evaluation would isolate individual components through ablation studies.
+
+### 8.2 Future Directions
+
+Addressing the limitations identified above requires systematic research across multiple dimensions. We outline concrete directions for future work that would strengthen evidence for NOODEIA's effectiveness and advance the broader field of AI-powered education.
+
+#### 8.2.1 Larger-Scale Longitudinal Studies
+
+We plan to conduct extended deployment studies (8-12 weeks) with substantially larger samples (N>100) to assess cumulative effects of persistent memory and measure objective learning outcomes through pre/post standardized assessments. Longitudinal designs will enable evaluation of whether experiential improvements translate to measurable academic gains and whether the personalization benefits compound over time as the memory system accumulates learner-specific knowledge.
+
+#### 8.2.2 Prompt Optimization and Bias Mitigation
+
+Future work will systematically evaluate alternative prompt designs through controlled experiments, testing variations in Socratic questioning intensity, feedback style, and scaffolding progression. We will also implement bias detection mechanisms to identify and mitigate problematic response patterns, potentially incorporating human review of AI outputs during development cycles.
+
+#### 8.2.3 Uncertainty Quantification and Response Consistency
+
+To address model unpredictability, we plan to implement confidence scoring for AI responses, enabling the system to flag low-confidence outputs for human review or additional processing. The multi-agent architecture provides opportunities for ensemble approaches where multiple reasoning strategies are compared before delivering responses to students.
+
+#### 8.2.4 Privacy-Preserving Architectures
+
+Future iterations will explore federated learning approaches and local-first memory storage that maintain personalization benefits while minimizing centralized data collection. We will conduct user studies specifically examining student and parent attitudes toward learning data collection, informing the development of transparent consent mechanisms and data governance policies appropriate for educational contexts.
+
+#### 8.2.5 Diverse Deployment Contexts
+
+To improve ecological validity, we will evaluate NOODEIA across varied settings: traditional classrooms, home learning environments, and different tutoring center configurations. Multi-site studies with diverse student populations will test generalizability across demographic groups, geographic regions, and educational systems.
+
+#### 8.2.6 Component Ablation Studies
+
+We will design experiments that isolate the contribution of specific NOODEIA components (Socratic pedagogy, persistent memory, gamification, multi-agent coordination) by systematically varying or removing individual features. This will enable causal attribution of effects and inform prioritization of development efforts.
+
+#### 8.2.7 Proactive Interaction Development
+
+Building on our analysis of reactive vs. proactive tutoring, we will prototype and evaluate proactive intervention capabilities that enable the AI tutor to initiate interactions based on detected engagement patterns or predicted learning needs. Careful evaluation will assess whether proactive features enhance or undermine the autonomy and confidence benefits observed in our current study.
+
+#### 8.2.8 Comparative Memory Architectures
+
+We plan to compare LTMBSE-ACE against alternative memory approaches (MemGPT, Generative Agents, RAG-only systems) in controlled educational contexts to isolate the contribution of our specific design choices—particularly the three-tier memory structure and differential decay rates.
 
 * * *
 
-## 10 Conclusion
+## 9 Conclusion
 
-This paper presented NOODEIA, an AI-powered tutoring platform that implements Long-Term Memory Based Self-Evolving Agentic Context Engineering (LTMBSE-ACE) to provide persistent, personalized instruction for students performing below grade level. Our counterbalanced within-subjects study (N=16) demonstrated statistically significant improvements across nine of ten measured dimensions, with the largest effects on confidence (+144%), independence (+135%), fun (+120%), and perceived learning speed (+113%).
+We introduce NOODEIA, a novel AI-powered tutoring platform that employs Long-Term Memory Based Self-Evolving Agentic Context Engineering (LTMBSE-ACE) to provide persistent, personalized instruction for K-12 students performing below grade level. By integrating multi-agent coordination, Socratic pedagogy, and theoretically-grounded gamification within a memory-augmented architecture, NOODEIA addresses the longstanding challenge of delivering individualized tutoring at scale—a challenge that Bloom (1984) identified as the "two-sigma problem" and that has remained economically infeasible for most students until now.
 
-These findings suggest that memory-augmented AI tutoring can substantially enhance the learning experience for struggling students, potentially helping to address the educational challenges facing American schools. The LTMBSE-ACE architecture provides a technical foundation for persistent personalization that improves over time, while Socratic pedagogy and thoughtful gamification create an engaging, confidence-building learning environment.
+The technical contributions of this work span several dimensions. The LTMBSE-ACE architecture implements a three-tier memory system inspired by cognitive psychology—semantic memory for domain concepts (1% decay per access), episodic memory for learner-specific events (5% decay), and procedural memory for effective teaching strategies (0.2% decay)—enabling the system to accumulate teaching expertise while personalizing to individual students. The multi-agent LangGraph pipeline coordinates four specialized components (router, planner, solver, critic) that work together to produce pedagogically sound responses through deliberate reasoning rather than single-pass generation. NOODEIA also pioneered context-aware group chat AI functionality, implementing this capability two months prior to OpenAI's public release, demonstrating the feasibility of AI tutors that maintain awareness of multiple learners within collaborative learning scenarios.
 
-The dramatic improvements in affective outcomes, particularly confidence and enjoyment, highlight the importance of designing educational AI that addresses not just cognitive learning but also the emotional experience of learning. For students who have experienced repeated academic failure, rebuilding positive associations with learning may be as important as any specific content mastery.
+Through a counterbalanced within-subjects study (N=16) comparing NOODEIA against traditional tutoring center instruction, we demonstrated statistically significant improvements across nine of ten measured dimensions. The largest effects were observed for confidence (+144%, p < .0001), independence (+135%, p = .0019), fun (+120%, p = .0008), and perceived learning speed (+113%, p = .0002), with a mean improvement of +94.9% across all dimensions. The variance reduction observed across conditions—with nearly all participants converging on positive experiences under NOODEIA—indicates that the system successfully "leaves no learner behind," ensuring consistently positive outcomes even for students who would typically struggle.
 
-As AI tutoring systems continue to develop, we hope this work contributes both technical approaches for persistent personalization and design principles for creating engaging, effective learning experiences for the students who need them most.
+These findings provide empirical support for both VanLehn's (2011) interaction plateau hypothesis and Khan's (2023) vision of AI-enabled tutoring at scale. The +144% confidence improvement validates Bandura's (1977) mastery experiences framework, with private AI interaction eliminating the social comparison pressures that undermine self-efficacy in traditional classroom settings. The +120% enjoyment substantially exceeds meta-analytic averages for gamification interventions (Kurnaz, 2025: g = 0.654), demonstrating that Self-Determination Theory-grounded design produces amplified effects for struggling learners who begin with strongly negative academic associations. The relatively modest personalization result (+59%) aligns with RAG-PRISM's (Raul et al., 2025) finding that personalization benefits compound over time, reflecting the temporal constraints of our single-session design rather than a limitation of the memory architecture.
+
+Several limitations bound the scope of our conclusions. The small sample size (N=16) constrains statistical power and prevents meaningful subgroup analyses. The single-session design (20 minutes) could not capture the cumulative personalization effects that the LTMBSE-ACE memory system is designed to produce over extended use. The controlled tutoring center environment may not reflect real-world deployment conditions, and the Hawthorne effect cannot be ruled out. Furthermore, NOODEIA currently operates in a reactive rather than proactive mode—responding when invoked rather than initiating interactions based on observed learning patterns—representing an important limitation relative to expert human tutors who frequently intervene proactively.
+
+The user study highlighted NOODEIA's potential to bridge the gap between struggling learners and the personalized education they need, promoting a collaborative approach where students engage with an AI tutor in a dynamic exchange that builds confidence, independence, and positive associations with learning. For students who have experienced repeated academic failure, this affective transformation may be as important as cognitive gains—rebuilding the self-efficacy and motivation that are prerequisites for sustained academic engagement. The dramatic shift from predominantly negative learning experiences (M = 3.15) to strongly positive ones (M = 6.14) suggests that well-designed AI tutoring can address not only knowledge gaps but also the emotional barriers that often prove even more intractable.
+
+As AI tutoring systems continue to evolve, NOODEIA demonstrates that the combination of persistent memory, multi-agent coordination, Socratic pedagogy, and thoughtful gamification can produce compound benefits exceeding what any single component achieves alone. Future work exploring proactive interaction capabilities, longitudinal deployment across diverse contexts, and privacy-preserving memory architectures will determine whether such systems can fulfill their promise of delivering two-sigma quality education to every learner who needs it. We hope this work contributes both technical approaches for persistent personalization and design principles for creating engaging, effective learning experiences for the students who have historically been left behind by one-size-fits-all instruction.
 
 * * *
 
@@ -960,6 +985,8 @@ Zhong, W., Guo, L., Gao, Q., Ye, H., & Wang, Y. (2024). MemoryBank: Enhancing la
 ### Additional References (Literature Connections)
 
 Bastani, H., Bastani, O., Sungu, A., Ge, H., Kabakcı, Ö., & Mariman, R. (2024). Generative AI can harm learning. SSRN Electronic Journal. https://dx.doi.org/10.2139/ssrn.4895486
+
+Chi, M. T. H., Siler, S. A., Jeong, H., Yamauchi, T., & Hausmann, R. G. (2001). Learning from human tutoring. Cognitive Science, 25(4), 471-533.
 
 Chudziak, J. A., & Kostka, A. (2025). AI-powered math tutoring: Platform for personalized and adaptive education. arXiv preprint arXiv:2507.12484.
 

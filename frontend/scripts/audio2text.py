@@ -1,6 +1,7 @@
 import sys
 import os
 from google import genai
+from google.genai import types
 
 # Use an audio-capable model (2.0 Flash Lite is text-only and rejects audio).
 # The v1beta Gemini API expects the latest suffix for 1.5 audio-capable models.
@@ -14,8 +15,11 @@ def transcribe_audio_file(audio_file_path):
     if not gemini_api_key:
         print("Error: GEMINI_API_KEY environment variable is not set", file=sys.stderr)
         sys.exit(1)
-    
-    gemini_client = genai.Client(api_key=gemini_api_key)
+    api_version = os.getenv("GEMINI_API_VERSION", "v1")  # v1beta was rejecting audio models
+    gemini_client = genai.Client(
+        api_key=gemini_api_key,
+        http_options=types.HttpOptions(api_version=api_version)
+    )
     
     try:
         # Determine mime type from file extension
