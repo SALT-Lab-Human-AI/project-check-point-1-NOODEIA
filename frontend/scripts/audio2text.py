@@ -2,8 +2,9 @@ import sys
 import os
 from google import genai
 
-# Use an audio-capable model (2.0 Flash Lite is text-only and rejects audio)
-DEFAULT_TRANSCRIBE_MODEL = os.getenv("GEMINI_TRANSCRIBE_MODEL", "gemini-1.5-flash")
+# Use an audio-capable model (2.0 Flash Lite is text-only and rejects audio).
+# The v1beta Gemini API expects the latest suffix for 1.5 audio-capable models.
+DEFAULT_TRANSCRIBE_MODEL = os.getenv("GEMINI_TRANSCRIBE_MODEL", "gemini-1.5-flash-latest")
 
 def transcribe_audio_file(audio_file_path):
     """Transcribe audio file using Gemini API with inline data"""
