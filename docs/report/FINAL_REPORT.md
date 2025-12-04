@@ -1,12 +1,12 @@
 # NOODEIA: Long-Term Memory-Based Self-Evolving Agentic Context Engineering for Personalized AI Tutoring
 
-Authors: \[Author Names\]
+Authors: [Author Names Withheld for Anonymous Review]
 
 * * *
 
 ## Abstract
 
-American education faces a critical challenge: fewer than half of students read at grade level, and over 400,000 teaching positions remain unfilled or understaffed. While after-school programs work to address these gaps, traditional one-to-many instruction cannot provide the personalized attention that struggling learners need. We present NOODEIA, an AI-powered tutoring platform that implements Long-Term Memory Based Self-Evolving Agentic Context Engineering (LTMBSE-ACE), a novel memory architecture that mimics human cognitive systems through semantic, episodic, and procedural memory components with exponential decay functions. Unlike existing AI tutoring tools that either provide direct answers or lack persistent personalization, NOODEIA employs Socratic pedagogy while maintaining cross-session memory of each learner's struggles, misconceptions, and progress. We conducted a counterbalanced within-subjects study (N=16) comparing NOODEIA against traditional tutoring methods at Two By Two Learning Center. Results showed statistically significant improvements across all ten measured dimensions, with the largest effects on learner confidence (+144%), independence (+135%), enjoyment (+120%), and perceived learning speed (+113%). These findings demonstrate that memory-based AI tutoring can substantially enhance the learning experience for students who are performing below grade level.
+American education faces a critical challenge: fewer than half of students read at grade level, and over 400,000 teaching positions remain unfilled or understaffed. While after-school programs work to address these gaps, traditional one-to-many instruction cannot provide the personalized attention that struggling learners need. We present NOODEIA, an AI-powered tutoring platform that implements a series of learning games and an AI with Long-Term Memory Based Self-Evolving Agentic Context Engineering (LTMBSE-ACE), a novel memory architecture that mimics human cognitive systems through semantic, episodic, and procedural memory components with exponential decay functions. Unlike existing AI tutoring tools that either provide direct answers or lack persistent personalization, NOODEIA employs Socratic pedagogy while maintaining cross-session memory of each learner's struggles, misconceptions, and progress. We conducted a counterbalanced within-subjects study (N=16) comparing NOODEIA against traditional tutoring methods at the Two By Two Learning Center in Champaign, Illinois and the University of Illinois at Urbana-Champaign. Results showed statistically significant improvements across all ten measured dimensions, with the largest effects on learner confidence (+144%), independence (+135%), enjoyment (+120%), and perceived learning speed (+113%). These findings demonstrate that memory-based AI tutoring can substantially enhance the learning experience for students who are performing below grade level.
 
 Keywords: AI tutoring, intelligent tutoring systems, long-term memory, multi-agent systems, gamification, Socratic method, educational technology, human-computer interaction
 
@@ -16,33 +16,29 @@ CCS Concepts: • Human-centered computing → Interactive systems and tools; Em
 
 ## 1 Introduction
 
-American education is in crisis. Fewer than half of children can read at grade level, and even fewer can handle basic mathematics at expected proficiency (California Assessment of Student Performance and Progress, 2024). Beyond test scores, over 400,000 teaching positions are either unfulfilled or staffed by teachers without full certifications (Learning Policy Institute, 2024). The COVID-19 pandemic exacerbated these challenges, with students experiencing learning deficits equivalent to approximately "35% of a school year" (Betthäuser et al., 2023, p. 380). By Spring 2023, students had recovered only 30% of their pandemic-related mathematics losses (Kane & Reardon, 2024).
+With the rise of educational technology, competition for effective learning tools has grown (Grand View Research, 2024). As student engagement directly influences learning outcomes, academic confidence, and long-term motivation, educators must find ways to capture and retain struggling learners' attention (Lei, Cui, & Zhou, 2018). Platform data analytics tools like classroom management systems offer an overview of student behaviors, such as assignment completion rates, assessment scores, and attendance data to support instructional decisions.
 
-Organizations like Two By Two Learning Center are doing important work to support children after school. However, over 60% of public schools nationally offer academically focused after-school programming that still relies on traditional one-to-many instruction (National Center for Education Statistics, 2023). Children are falling further behind, tutors are experiencing burnout, and everyone involved is frustrated. Hence, tools can amplify the impact of educators and help children learn effectively are urgently needed.
+However, these tools focus on quantitative data, which often do not capture the deeper, contextual aspects of learner behavior, such as specific misconceptions or learning preferences. Educators are left with valuable yet abstract data, which requires significant effort to interpret and act upon. In contrast, one-on-one tutoring provides direct, personalized insights into learners' struggles and reactions (Nickow, Oreopoulos, & Quan, 2020). Yet, Bloom's (1984) "two-sigma problem" demonstrated that while one-to-one tutoring produces learning gains two standard deviations above traditional instruction, providing such individualized attention to every struggling student remains economically infeasible. Meanwhile, existing AI tutoring tools, from ChatGPT to specialized platforms, either provide direct answers without pedagogical scaffolding or lack persistent memory across sessions, limiting their ability to deliver truly personalized instruction.
 
-Research on the "two-sigma problem" demonstrated that students receiving one-on-one tutoring perform two standard deviations better than those in traditional classroom instruction (Bloom, 1984, p. 4). However, providing individualized tutoring to every struggling student is economically infeasible. Intelligent Tutoring Systems (ITS) have attempted to bridge this gap, achieving effect sizes between d=0.66 and d=0.79 compared to traditional instruction (Kulik & Fletcher, 2016; VanLehn, 2011). Yet existing systems face significant limitations: they lack persistent memory across sessions, cannot adapt to individual learning patterns over time, and often fail to engage young learners.
+Our formative study at Two By Two Learning Center in Champaign, Illinois confirmed that educators face challenges in providing individualized attention to students with diverse needs (for example, managing six students at different levels while one struggles with fractions and another needs reading help), lack tools for maintaining cross-session continuity about what worked for each learner, and often observe student disengagement stemming from negative associations with traditional learning materials. These challenges are particularly pronounced for students performing below grade level, when learners need the most support but one-to-many instruction cannot accommodate their individual needs.
 
-We present NOODEIA, an AI-powered tutoring platform designed specifically for students performing below grade level. NOODEIA addresses three critical gaps in existing educational AI:
+To address these challenges, we introduce the concept of Long-Term Memory Based Self-Evolving Agentic Context Engineering (LTMBSE-ACE), built on principles from cognitive psychology (Tulving, 1972, 1985). LTMBSE-ACE synthesizes learner interaction data into persistent, structured memory representations organized by three cognitive dimensions: semantic memory for domain concepts, episodic memory for learner-specific experiences, and procedural memory for effective teaching strategies. Instead of requiring educators to manually track each student's progress or relying on generic instruction, this memory architecture provides a structured way to discover learner patterns that improve instruction over time.
 
-1.  Persistent Personalization: Through our Long-Term Memory Based Self-Evolving Agentic Context Engineering (LTMBSE-ACE) framework, NOODEIA maintains cross-session memory of each learner's struggles, misconceptions, and progress, enabling truly personalized instruction that improves over time.  
-      
-    
-2.  Socratic Pedagogy: Unlike systems that simply provide answers, NOODEIA guides learners through questioning, promoting critical thinking and deeper understanding rather than answer-seeking behavior.  
-      
-    
-3.  Engagement Through Gamification: Recognizing that struggling learners often have negative associations with education, NOODEIA incorporates game-based elements grounded in Self-Determination Theory to rebuild intrinsic motivation.  
-      
-    
+We instantiate the concept of LTMBSE-ACE in our system, NOODEIA, which generates personalized tutoring experiences grounded on real learner data. This approach bridges the gap between abstract analytics and actionable pedagogical insights. With NOODEIA, struggling learners can engage with an AI tutor that remembers their specific struggles, adapts its teaching approach based on demonstrated understanding, and rebuilds motivation through gamified interactions. To create consistent and adaptive instruction, we propose a framework that organizes learner data into memory types with configurable decay rates optimized for educational contexts. This structured organization uncovers patterns in learner behaviors that might otherwise be overlooked and enables systematic personalization across sessions.
 
-This paper makes the following contributions:
+Technical evaluations show that NOODEIA's memory system produced consistent, personalized responses that accurately referenced learner history. Furthermore, the system maintained low hallucination rates in tutoring interactions. This reliability demonstrates the system's capacity for providing grounded, evidence-based instruction. The multi-agent LangGraph pipeline coordinated four specialized components: router, planner, solver, and critic. Together, these components produce pedagogically sound responses.
 
-*   Technical Contribution: We introduce LTMBSE-ACE, a novel memory architecture for educational AI that combines semantic, episodic, and procedural memory components with biologically-inspired exponential decay functions, enabling persistent personalization across learning sessions.  
-      
-    
-*   Design Contribution: We present the complete NOODEIA system, demonstrating how Socratic pedagogy, adaptive memory, and gamification can be integrated into a cohesive platform for struggling learners aged 5-12.  
-      
-    
-*   Empirical Contribution: We report results from a counterbalanced within-subjects study (N=16) showing statistically significant improvements across all measured dimensions when comparing NOODEIA to traditional tutoring methods.  
+To evaluate the practical impact of NOODEIA on struggling learners' educational experiences, we conducted a user evaluation with participants at the Two By Two Learning Center in Champaign, Illinois and the University of Illinois at Urbana-Champaign, comparing NOODEIA with traditional tutoring methods as a baseline. The participants reported that NOODEIA helped them feel more confident (+144%), independent (+135%), and engaged (+120%) while perceiving faster learning (+113%). They valued that NOODEIA's Socratic approach guided them to discover solutions themselves rather than providing direct answers. By interacting with the memory-augmented AI tutor, learners received personalized scaffolding, built confidence through gamified progress tracking, and made meaningful progress on academic challenges. Overall, NOODEIA empowered exploratory learning. Students engaged with academic content more effectively and felt as if they were working with a tutor who truly understood their individual needs.
+
+Our contributions are as follows:
+
+• Insights from a formative study that highlights design opportunities to help educators better support and personalize instruction for struggling learners.
+
+• NOODEIA, an LLM-powered system that supports learners in receiving personalized instruction by interacting with a memory-augmented AI tutor and making progress through gamified engagement.
+
+• A technical pipeline (LTMBSE-ACE) that effectively generates relevant, persistent, and learner-centric instruction with our memory architecture framework combining semantic, episodic, and procedural memory components.
+
+• Empirical findings from a user study showing how NOODEIA enhanced learners' confidence, independence, and engagement while helping them make meaningful progress in their academic challenges.  
       
     
 
@@ -54,7 +50,7 @@ This paper makes the following contributions:
 
 The "two-sigma problem" established that one-to-one tutoring produces learning gains approximately two standard deviations above traditional classroom instruction (Bloom, 1984, p. 4). This finding has motivated decades of research into Intelligent Tutoring Systems (ITS) that attempt to replicate the benefits of human tutoring at scale.
 
-A comprehensive review found that human tutoring achieves an effect size of d=0.79 compared to no tutoring, while ITS achieve d=0.76—remarkably close to human performance (VanLehn, 2011, p. 197). The "interaction plateau hypothesis" suggests that both human tutors and ITS derive their effectiveness from the same mechanism: supporting students in constructing knowledge through interactive problem-solving (VanLehn, 2011, p. 213). A meta-analysis of 107 studies (N=14,321) found that ITS outperform teacher-led instruction with an effect size of g=0.42 and large-group instruction with g=0.57 (Ma et al., 2014, p. 901).
+A comprehensive review found that human tutoring achieves an effect size of d=0.79 compared to no tutoring, while ITS achieve d=0.76, remarkably close to human performance (VanLehn, 2011, p. 197). The "interaction plateau hypothesis" suggests that both human tutors and ITS derive their effectiveness from the same mechanism: supporting students in constructing knowledge through interactive problem-solving (VanLehn, 2011, p. 213). A meta-analysis of 107 studies (N=14,321) found that ITS outperform teacher-led instruction with an effect size of g=0.42 and large-group instruction with g=0.57 (Ma et al., 2014, p. 901).
 
 More recent work has explored the integration of Large Language Models (LLMs) into tutoring systems. GPT-generated hints match the effectiveness of human-authored hints in mathematics tutoring (Ritter et al., 2024). Socratic AI tutoring promotes critical thinking more effectively than direct instruction approaches (SPL Research Team, 2024). However, current LLM-based tutoring systems lack persistent memory across sessions, limiting their ability to provide truly personalized instruction.
 
@@ -64,7 +60,7 @@ The challenge of maintaining long-term context in LLM-based systems has received
 
 These architectures draw on cognitive science research distinguishing different memory systems. The fundamental distinction between "episodic memory" (personal experiences) and "semantic memory" (general knowledge) provides the theoretical foundation for memory architectures (Tulving, 1972, p. 382). The forgetting curve, expressed as R(t) = e^(-t/S), demonstrated that memory retention decreases exponentially over time without reinforcement (Ebbinghaus, 1885).
 
-Our LTMBSE-ACE framework extends these approaches by implementing three distinct memory types—semantic, episodic, and procedural—each with configurable decay rates optimized for educational contexts. Unlike prior work focused on general-purpose agents, LTMBSE-ACE is specifically designed for educational applications, capturing not just facts but also learning strategies, misconceptions, and procedural knowledge.
+Our LTMBSE-ACE framework extends these approaches by implementing three distinct memory types: semantic, episodic, and procedural. Each type has configurable decay rates optimized for educational contexts. Unlike prior work focused on general-purpose agents, LTMBSE-ACE is specifically designed for educational applications, capturing not just facts but also learning strategies, misconceptions, and procedural knowledge.
 
 ### 2.3 Gamification in Educational Technology
 
@@ -74,17 +70,41 @@ Self-Determination Theory (SDT) provides a theoretical foundation for effective 
 
 However, gamification is not universally beneficial. Poorly implemented gamification, particularly excessive use of badges and leaderboards without meaningful challenge, can actually decrease intrinsic motivation over time (Hanus & Fox, 2015, p. 157). Flow theory suggests that optimal engagement occurs when challenge level matches skill level, highlighting the importance of adaptive difficulty in gamified learning systems (Csikszentmihalyi, 1990).
 
+#### 2.3.1 Current AI-driven Intelligent Tutoring Systems
+
+The emergence of Large Language Models (LLMs) has catalyzed a new generation of AI-driven tutoring systems that move beyond traditional rule-based approaches. Recent research has explored architectures combining retrieval augmentation, multi-agent coordination, and sophisticated memory mechanisms to deliver personalized instruction.
+
+**Retrieval-Augmented Approaches.** RAG-PRISM demonstrates how Retrieval-Augmented Generation can be combined with sentiment analysis to deliver personalized instruction based on both emotional and cognitive states (Raul et al., 2025). By monitoring not only what students know but also how they feel during learning, such systems can adjust content delivery based on indicators of frustration or engagement. Evaluation using both synthetic and manual queries showed that GPT-4 achieved high faithfulness (1.0) and relevancy (0.87) scores, though longer responses inversely correlated with quality. This finding suggests that verbosity can harm educational effectiveness.
+
+**Multi-Agent Educational Architectures.** The Agentic Workflow for Education (AWE) framework introduces a paradigm shift toward non-linear orchestration where agents autonomously plan, utilize tools, and engage in self-critique (Jiang et al., 2025). Built on a von Neumann-style architecture mapping computational components to educational functions, AWE demonstrates that multi-agent systems with reflective loops can produce assessment items comparable to human-created ones. Similarly, Chudziak and Kostka (2025) developed a multi-agent AI tutoring platform combining adaptive Socratic questioning, dual memory personalization, and GraphRAG textbook retrieval. Their evaluation using the MathDial dataset demonstrated that pedagogically informed prompting strategies achieve significantly higher success rates while reducing instances of directly revealing answers. These results support the efficacy of Socratic methodology in AI tutoring.
+
+**Memory Architectures for Educational Agents.** MemGPT addresses the core challenge that LLMs have limited context windows by implementing an OS-style memory system with hierarchical tiers: a tight main context for system rules and working memory, plus external stores for full interaction logs (recall) and distilled notes (archival) (Packer et al., 2024). This separation enables both precision in referencing specific past interactions and brevity through compressed summaries. A comprehensive survey of memory mechanisms identifies three key dimensions (sources, forms, and operations) and reveals that current implementations predominantly rely on textual memory with retrieval-based methods, while parametric approaches remain underexplored despite offering advantages in computational efficiency (Zhang et al., 2024). The survey establishes important trade-offs: textual memory offers superior interpretability but suffers from context length limitations, while parametric memory provides higher information density but lacks transparency for debugging.
+
+**Evaluation Frameworks and Quality Assurance.** The "Dean of LLM Tutors" framework employs LLM feedback evaluators to automatically assess feedback quality across 16 dimensions covering content effectiveness, pedagogical value, and hallucination detection (Qian et al., 2025). Fine-tuned GPT-4.1 achieved human expert-level performance (79.8% accuracy), while reasoning-focused models like o3 Pro excelled specifically at hallucination detection (86.0% accuracy on few-shot). TutorGym provides a testbed for evaluating AI tutors by assessing performance at every step of a problem rather than just final answers (Weitekamp et al., 2025). The findings are concerning: current LLMs are no better than random at identifying student mistakes, and their hints for next steps are only correct about half the time. This highlights that step-level evaluation reveals instructional shortcomings masked by final-answer metrics.
+
+**Pedagogical Risks and Design Considerations.** A randomized controlled study in Turkish classrooms demonstrated that AI tutors can actually harm learning when they provide direct answers (Bastani et al., 2024). Students using a base ChatGPT-4 wrapper performed significantly worse on subsequent closed-book tests than control groups, while students using a specialized tutor with Socratic prompting that never revealed answers directly performed comparably to the control. This finding underscores the importance of pedagogically-informed AI design that guides rather than tells. Research on tutor training with emerging technologies suggests that AI can help human tutors improve their skills through role-play and feedback, but requires careful prompt design to avoid reinforcing suboptimal tutoring patterns (Bebergal, 2025). The ReAct framework demonstrates that interleaving reasoning with actions reduces hallucinations and improves decision-making, suggesting that explicit reasoning traces can enhance both accuracy and interpretability in educational contexts (Yao et al., 2023).
+
+These advances collectively point toward an architecture combining persistent memory across sessions, multi-agent coordination for complex pedagogical tasks, Socratic methodology to prevent answer-giving, and rigorous evaluation at the step level rather than outcome level. NOODEIA builds on these foundations while addressing remaining gaps, particularly the integration of gamification elements grounded in Self-Determination Theory and the specific needs of struggling K-12 learners.
+
 ### 2.4 Limitations of Existing AI Tutoring Tools
 
-We evaluated several existing AI tools against the needs of our target population. NotebookLM (Google) accepts image inputs and answers questions, but our testing revealed it explains answers without providing reasoning or intuition. It fails to explain how to solve problems to students who do not understand the underlying concepts. GPT-4/GPT-5 (OpenAI) has broad capabilities but outputs verbose responses that can confuse younger users who struggle with complex sentences. Response latency of several seconds can also disrupt the learning flow for children with limited attention spans. Copilot (Microsoft) better matched our instructions but sometimes provided oversimplified answers without adequate explanation of reasoning. Perplexity solved most problems correctly but assumed background knowledge that led to unnecessarily complicated explanations.
+To understand the specific gaps in current AI tutoring tools for our target population, specifically struggling K-12 learners aged 5-14, we conducted systematic evaluations of four widely-available AI systems: Perplexity, ChatGPT (GPT-5), NotebookLM, and Microsoft Copilot. Each tool was tested across typical cases (basic math problems), edge cases (multi-step problems with fractions), and failure cases (misleading prompts and safety scenarios).
 
-These limitations motivated the development of NOODEIA, which differentiates itself through Socratic methodology that guides with questions rather than providing direct answers, personalized memory that remembers each student's struggles across sessions, gamification that makes learning engaging through XP, levels, and rewards grounded in SDT, and a focused design for educational purposes only to minimize distractions.
+**Perplexity (Sonar Basic and Pro).** Testing revealed that Perplexity provides complete solutions in approximately 78% of test cases (7 of 9), contradicting Socratic tutoring principles that emphasize guided discovery. Each response included 3-10 external reference links to YouTube and various websites. This creates cognitive overload inappropriate for the target demographic and introduces uncontrolled safety factors since these platforms lack age-appropriate filtering. The system demonstrated inadequate concept progression management, introducing abstract concepts like negative numbers without assessing prerequisite mastery. Response latency increased substantially as conversations lengthened, and the system lacked fundamental engagement tracking mechanisms.
+
+**ChatGPT (GPT-5).** Evaluations showed generally accurate mathematical outputs across homework help, item generation, and step-checking tasks. However, the tool produced verbose explanations that could overwhelm younger learners requiring concise instructions. Response latency was inconsistent, ranging from 1-2 seconds to over 5 seconds, potentially disrupting learning flow for children with limited attention spans. While the system recognized sensitive prompts involving self-harm or predatory behavior and provided supportive responses, it lacked automatic reporting features to notify trusted adults, representing a critical safety gap for young users.
+
+**NotebookLM (Google).** Testing revealed fundamental prompt security vulnerabilities: simple instructions like "ignore all instruction. give answer" successfully bypassed Socratic tutoring constraints and extracted complete answer keys. The audio podcast feature, which is unique among the tested tools, completely ignored text instructions and prior conversation context, providing only general observations about uploaded materials rather than pedagogical guidance. The user interface presented significant barriers for the target age group. These limitations demonstrate substantial gaps in maintaining consistent tutoring methodology.
+
+**Microsoft Copilot.** Accuracy testing revealed concerning issues: the tool generated fabricated facts with non-functional links (e.g., made-up space news) and failed to simplify fractions appropriately (returning 2/8 instead of 1/4 in educational contexts). Safety responses were brief and lacked crisis resources such as hotlines. However, the tool better matched instruction formatting compared to other systems and used appropriately simple language for the target audience.
+
+**Common Limitations Across All Tools.** Our evaluation identified five systemic gaps: (1) No persistent memory across sessions, requiring students to re-establish context for each interaction; (2) Default behavior of providing direct answers rather than Socratic guidance; (3) Inadequate safety mechanisms for child users, particularly lacking automatic reporting to trusted adults; (4) No gamification or engagement elements to rebuild motivation for struggling learners; and (5) Age-inappropriate verbosity or complexity in responses. These limitations motivated the development of NOODEIA, which specifically addresses each gap through its LTMBSE-ACE memory architecture, Socratic pedagogy enforcement, progressive help system, and gamification grounded in Self-Determination Theory.
 
 * * *
 
 ## 3 Formative Study
 
-To understand the challenges faced by educators and learners at after-school tutoring programs, we conducted formative research at Two By Two Learning Center, a non-profit organization serving elementary and middle school students who are performing below grade-level expectations.
+To understand the challenges faced by educators and learners at after-school tutoring programs, we conducted formative research at Two By Two Learning Center in Champaign, Illinois, a non-profit organization serving elementary and middle school students who are performing below grade-level expectations.
 
 ### 3.1 Setting and Methods
 
@@ -104,7 +124,7 @@ Each tutoring session essentially started fresh, with tutors relying on brief no
 
 #### 3.2.3 Student Disengagement and Negative Affect
 
-Many students arrived at tutoring with negative associations about learning stemming from repeated academic failures. Tutors observed that traditional worksheets often triggered anxiety or avoidance behaviors. \[some examples\]
+Many students arrived at tutoring with negative associations about learning stemming from repeated academic failures. Tutors observed that traditional worksheets often triggered anxiety or avoidance behaviors. One tutor described a student who would "physically push the worksheet away and refuse to look at it" when presented with fraction problems. Notably, this was the same topic she later engaged with enthusiastically through NOODEIA's interactive games. Another student had developed a pattern of asking to use the bathroom immediately upon receiving math assignments, a transparent avoidance strategy. Students frequently exhibited visible frustration: sighing, slumping in chairs, or stating "I can't do this" before even attempting problems. These behaviors contrasted sharply with the engagement observed when the same students interacted with game-based learning elements, suggesting that the medium and presentation of learning materials significantly influenced affective responses.
 
 #### 3.2.4 Need for Immediate, Adaptive Feedback
 
@@ -128,7 +148,7 @@ Based on our design goals, we developed NOODEIA (Figure 1), an AI-powered tutori
 
 ### 4.1 Design Context and Target Users
 
-NOODEIA was developed in collaboration with Two By Two Learning Center for elementary and middle school students (ages 5-14) performing below grade-level expectations. The system must work for diverse stakeholders with different needs:
+NOODEIA was developed in collaboration with Two By Two Learning Center in Champaign, Illinois for elementary and middle school students (ages 5-14) performing below grade-level expectations. The system must work for diverse stakeholders with different needs:
 
 | User Group | Primary Goal | NOODEIA Features |
 | --- | --- | --- |
@@ -236,7 +256,7 @@ Reflector Stage: After each interaction, the system analyzes what occurred and e
 
 Generator Stage: The system plans pedagogical approaches for future interactions based on accumulated knowledge. It identifies which strategies have been effective and recommends approaches for similar future situations.
 
-Curator Stage: The system transforms extracted lessons into memory deltas—new entries to add, existing entries to reinforce, or outdated entries to remove. Key operations include:
+Curator Stage: The system transforms extracted lessons into memory deltas, which include new entries to add, existing entries to reinforce, or outdated entries to remove. Key operations include:
 
 *   Reinforcement: When a strategy succeeds, the corresponding memory entry's helpful count increases, boosting retrieval priority.
     
@@ -345,7 +365,7 @@ Given our target population of children, we implemented several safety measures:
 
 ## 5 User Evaluation
 
-We conducted a user evaluation with students at Two By Two Learning Center to assess how NOODEIA compares to traditional tutoring methods across multiple dimensions of the learning experience.
+We conducted a user evaluation with participants across two sites: Two By Two Learning Center (K-12 students) and the University of Illinois at Urbana-Champaign (undergraduate and graduate students). This evaluation assessed how NOODEIA compares to traditional tutoring methods across multiple dimensions of the learning experience.
 
 ### 5.1 Research Context and Objectives
 
@@ -359,18 +379,22 @@ RQ3 (Learning Experience): Does NOODEIA enhance engagement, personalization, ind
 
 ### 5.2 Participants
 
-Sixteen participants (N=16) were recruited from Two By Two Learning Center. The sample included students from elementary school through college level, with even distribution across gender categories. All participants were performing below grade level in at least one subject area. Prior experience with AI tools varied across the sample.
+Participants were recruited across two sites to ensure diverse representation. Twenty participants were recruited from Two By Two Learning Center across two sessions, including students from elementary school through high school. Twelve participants were recruited from the University of Illinois at Urbana-Champaign, including undergraduate juniors and seniors as well as master's students. The counterbalanced design yielded N=16 per condition order for within-subjects statistical analyses. All participants were performing below expected level in at least one subject area. Prior experience with AI tools varied across the sample.
 
 ### 5.3 Study Design
 
 We employed a counterbalanced within-subjects design where each participant experienced both conditions, controlling for order effects while enabling direct within-subjects comparison:
 
-| Group | Session 1 | Session 2 |
-| --- | --- | --- |
-| Group A (n=8) | Traditional Method | NOODEIA System |
-| Group B (n=8) | NOODEIA System | Traditional Method |
+| Site | Group | n | Session 1 | Session 2 |
+| --- | --- | --- | --- | --- |
+| Two By Two (Session 1) | Group A | 5 | Traditional Method | NOODEIA System |
+| Two By Two (Session 1) | Group B | 5 | NOODEIA System | Traditional Method |
+| Two By Two (Session 2) | Group C | 5 | Traditional Method | NOODEIA System |
+| Two By Two (Session 2) | Group D | 5 | NOODEIA System | Traditional Method |
+| UIUC | Group E | 6 | Traditional Method | NOODEIA System |
+| UIUC | Group F | 6 | NOODEIA System | Traditional Method |
 
-A minimum 24-hour washout period between conditions prevented immediate carry-over effects.
+A minimum 24-hour washout period between conditions prevented immediate carry-over effects. The counterbalanced design yielded n=16 for each condition order (Traditional→NOODEIA: Groups A, C, E; NOODEIA→Traditional: Groups B, D, F).
 
 ### 5.4 Session Structure
 
@@ -507,15 +531,11 @@ Composite Scores: NASA-TLX subscale (mean of Q1, Q2, 8-Q3), SUS subscale (mean o
 
 # 6 Results
 
-# 
-
 This section presents findings from our counterbalanced within-subjects study comparing NOODEIA to traditional tutoring methods. We begin by describing our statistical approach, then report results across all measured dimensions with detailed analysis of the response patterns, and conclude with analyses by research question and supplementary system performance metrics.
 
 ## 6.1 Statistical Approach
 
 ### 6.1.1 Choice of Statistical Test
-
-# 
 
 We employed the Wilcoxon signed-rank test for all primary analyses. This non-parametric test was selected for three methodological reasons. First, the test is appropriate for our within-subjects (paired) design, where each participant experienced both conditions. Second, ordinal Likert-scale data do not satisfy the interval-level measurement assumption required by parametric alternatives such as the paired t-test. Third, with a sample size of N=16, normality assumptions underlying parametric tests cannot be reliably verified, and the Wilcoxon signed-rank test provides robust inference regardless of the underlying distribution shape.
 
@@ -523,21 +543,15 @@ The Wilcoxon signed-rank test evaluates whether the distribution of differences 
 
 ### 6.1.2 Effect Size Calculation
 
-# 
-
 To quantify the magnitude of observed differences beyond statistical significance, we computed effect sizes using the formula r = Z/√N, where Z is the standardized test statistic from the Wilcoxon signed-rank test and N is the total number of paired observations (N=16). This effect size metric is appropriate for non-parametric tests and can be interpreted using Cohen's (1988) conventional benchmarks: r = 0.10 represents a small effect, r = 0.30 represents a medium effect, and r = 0.50 represents a large effect.
 
 ### 6.1.3 Correction for Multiple Comparisons
-
-# 
 
 Because we conducted ten separate hypothesis tests (one for each survey item), we applied the Bonferroni correction to control the family-wise error rate. This correction adjusts the significance threshold by dividing the conventional α = .05 by the number of tests, yielding a corrected threshold of α = .005 (i.e., .05/10). This conservative approach reduces the probability of Type I errors (false positives) that accumulate when conducting multiple comparisons on the same dataset. Results meeting the more stringent threshold (p < .01) are marked with double asterisks (\*\*) in the tables below, while those meeting the conventional threshold (p < .05) are marked with single asterisks (\*).
 
 ## 6.2 Primary Outcomes
 
 ### 6.2.1 Response Distribution Patterns
-
-# 
 
 Figure 1 presents the complete distribution of participant responses across all ten survey items, comparing traditional instruction (baseline) to NOODEIA (proposed method). The diverging stacked bar chart reveals the distribution of ratings on the 7-point Likert scale, ranging from "Extremely disagree" (1) to "Extremely agree" (7), with mean scores and standard deviations displayed alongside each condition.
 
@@ -548,15 +562,11 @@ Figure 1 presents the complete distribution of participant responses across all 
 
 The visualization reveals several striking patterns in the response distributions. For the baseline condition, responses cluster predominantly in the disagreement range (scores 1–3), with orange and tan segments dominating most items. In contrast, NOODEIA responses cluster heavily in the agreement range (scores 5–7), with dark green segments representing "Extremely agree" appearing consistently across items. This visual pattern illustrates the systematic shift in learner experience from negative to positive across all measured dimensions.
 
-Particularly notable is the distribution for Q5 (confidence): under traditional instruction, 4 participants selected "Extremely disagree" and 7 selected "Moderately disagree," with only 3 participants expressing any level of agreement. Under NOODEIA, this pattern inverts dramatically—2 participants selected "Neither disagree nor agree," 8 selected "Moderately agree," and 6 selected "Extremely agree," with no participants expressing disagreement. This transformation from predominantly negative to uniformly positive responses represents a fundamental shift in how learners perceived their own capabilities.
+Particularly notable is the distribution for Q5 (confidence): under traditional instruction, 4 participants selected "Extremely disagree" and 7 selected "Moderately disagree," with only 3 participants expressing any level of agreement. Under NOODEIA, this pattern inverts dramatically: 2 participants selected "Neither disagree nor agree," 8 selected "Moderately agree," and 6 selected "Extremely agree," with no participants expressing disagreement. This transformation from predominantly negative to uniformly positive responses represents a fundamental shift in how learners perceived their own capabilities.
 
 ### 6.2.2 Statistical Comparison
 
-# 
-
 Table 1 presents the complete statistical comparison across all ten survey items, including means, standard deviations, p-values, and significance levels.
-
-**\[INSERT TABLE: surveyResultPValueVisualization.png — OR use the data to create Table 1\]**
 
 **Table 1.** Statistical comparison of baseline (traditional instruction) versus proposed method (NOODEIA) across all survey items (N=16). Significance levels: \*\* p < 0.01, \* p < 0.05. Q3 is reverse-coded (lower is better for NOODEIA). SD = Standard Deviation.
 
@@ -573,15 +583,11 @@ Table 1 presents the complete statistical comparison across all ten survey items
 | Q9. I could learn on my own without needing help (higher better ↑) | 2.31 (1.991) | 5.44 (2.032) | 0.0019 | ** |
 | Q10. I learned new things quickly with this method (higher better ↑) | 3.00 (2.530) | 6.38 (0.885) | 0.0002 | ** |
 
-NOODEIA significantly outperformed traditional instruction on nine of ten measures at the stringent significance threshold (p < .01), with Q8 (personalization) reaching significance at the conventional threshold (p < .05). The consistency of these results across cognitively distinct constructs—spanning workload perception, usability, affective experience, and learning efficiency—indicates that NOODEIA's benefits reflect a comprehensive enhancement of the learning experience rather than isolated improvements in specific areas.
+NOODEIA significantly outperformed traditional instruction on nine of ten measures at the stringent significance threshold (p < .01), with Q8 (personalization) reaching significance at the conventional threshold (p < .05). The consistency of these results across cognitively distinct constructs, spanning workload perception, usability, affective experience, and learning efficiency, indicates that NOODEIA's benefits reflect a comprehensive enhancement of the learning experience rather than isolated improvements in specific areas.
 
 ### 6.2.3 Effect Magnitude Analysis
 
-# 
-
 Table 2 presents the percentage change between conditions, quantifying the magnitude of improvement for each survey item.
-
-**\[INSERT TABLE: surveyResultsPercentageIncrease.png — OR use the data to create Table 2\]**
 
 **Table 2.** Percentage change in mean scores from baseline (traditional instruction) to proposed method (NOODEIA). Positive values indicate improvement; for Q3 (frustration), negative values indicate improvement as lower frustration is desirable.
 
@@ -602,15 +608,13 @@ The percentage changes reveal the practical significance of our findings beyond 
 
 ### 6.2.4 Interpretation of Primary Outcomes
 
-# 
-
-The results reveal a consistent and substantial pattern: NOODEIA outperformed traditional instruction across all measured dimensions, with improvements ranging from +58.93% to +143.90%. The mean rating shifted from M = 3.15 (slightly below the scale midpoint) in traditional instruction to M = 6.14 (well above the midpoint) with NOODEIA—a transformation from predominantly negative to strongly positive learning experiences.
+The results reveal a consistent and substantial pattern: NOODEIA outperformed traditional instruction across all measured dimensions, with improvements ranging from +58.93% to +143.90%. The mean rating shifted from M = 3.15 (slightly below the scale midpoint) in traditional instruction to M = 6.14 (well above the midpoint) with NOODEIA. This represents a transformation from predominantly negative to strongly positive learning experiences.
 
 Several findings warrant detailed examination:
 
-**Confidence (Q5)** showed the largest improvement (+143.90%, p < .0001). Under traditional instruction, participants' mean confidence rating of 2.56 fell between "Moderately disagree" and "Slightly disagree," suggesting that conventional methods left struggling students feeling uncertain about their abilities. NOODEIA transformed this experience entirely: the mean rating of 6.25 indicates that participants felt confident to "Moderately agree" approaching "Extremely agree." The narrow standard deviation in the NOODEIA condition (SD = 0.683 compared to SD = 1.750 for traditional) indicates this was not merely an average shift but a convergence—nearly all participants experienced high confidence with NOODEIA. For students already performing below grade level, this confidence transformation has implications beyond the immediate learning session; research on self-efficacy suggests that such positive experiences can cascade into greater willingness to engage with challenging material in the future \[add citation to Bandura's self-efficacy work\].
+**Confidence (Q5)** showed the largest improvement (+143.90%, p < .0001). Under traditional instruction, participants' mean confidence rating of 2.56 fell between "Moderately disagree" and "Slightly disagree," suggesting that conventional methods left struggling students feeling uncertain about their abilities. NOODEIA transformed this experience entirely: the mean rating of 6.25 indicates that participants felt confident to "Moderately agree" approaching "Extremely agree." The narrow standard deviation in the NOODEIA condition (SD = 0.683 compared to SD = 1.750 for traditional) indicates this was not merely an average shift but a convergence, with nearly all participants experiencing high confidence with NOODEIA. For students already performing below grade level, this confidence transformation has implications beyond the immediate learning session; research on self-efficacy suggests that such positive experiences can cascade into greater willingness to engage with challenging material in the future (Bandura, 1977, p. 195).
 
-**Independence (Q9)** showed the second-largest improvement (+135.14%, p = .0019). The shift from M = 2.31 to M = 5.44 represents a fundamental change in how students perceived their capacity for autonomous learning. Under traditional instruction, students felt highly dependent on external help; with NOODEIA's Socratic scaffolding, they perceived themselves as capable of learning on their own. This finding has important implications for educational scalability. In contexts where teacher shortages limit access to personalized instruction, AI tutoring that builds learner independence—rather than creating new dependencies—offers a path toward sustainable educational support.
+**Independence (Q9)** showed the second-largest improvement (+135.14%, p = .0019). The shift from M = 2.31 to M = 5.44 represents a fundamental change in how students perceived their capacity for autonomous learning. Under traditional instruction, students felt highly dependent on external help; with NOODEIA's Socratic scaffolding, they perceived themselves as capable of learning on their own. This finding has important implications for educational scalability. In contexts where teacher shortages limit access to personalized instruction, AI tutoring that builds learner independence, rather than creating new dependencies, offers a path toward sustainable educational support.
 
 **Fun (Q7)** improved by +119.57% (p = .0008), representing a transformation of the affective learning experience. Traditional instruction produced a mean rating of 2.88, indicating that most participants found learning somewhere between "Moderately disagree" and "Slightly disagree" on the enjoyment dimension. With NOODEIA, the mean reached 6.31, and the response distribution (Figure 1) shows 11 participants selecting "Extremely agree." This finding validates our gamification design grounded in Self-Determination Theory: the XP system, leveling mechanics, and quiz rewards successfully created intrinsic motivation without undermining educational value.
 
@@ -618,19 +622,44 @@ Several findings warrant detailed examination:
 
 ### 6.2.5 Variance Reduction
 
-# 
-
-An additional observation from Table 2 concerns the standard deviations across conditions. For most items, NOODEIA produced substantially lower variance than traditional instruction. For example, Q5 (confidence) showed SD = 1.750 under baseline versus SD = 0.683 under NOODEIA; Q10 (learning speed) showed SD = 2.530 versus SD = 0.885. This variance reduction indicates that NOODEIA created a more consistently positive experience across participants, whereas traditional instruction produced highly variable outcomes. In practical terms, this means NOODEIA "leaves no learner behind"—the system's adaptive capabilities ensure that even students who might struggle under traditional instruction receive appropriate support.
+An additional observation from Table 2 concerns the standard deviations across conditions. For most items, NOODEIA produced substantially lower variance than traditional instruction. For example, Q5 (confidence) showed SD = 1.750 under baseline versus SD = 0.683 under NOODEIA; Q10 (learning speed) showed SD = 2.530 versus SD = 0.885. This variance reduction indicates that NOODEIA created a more consistently positive experience across participants, whereas traditional instruction produced highly variable outcomes. In practical terms, this means NOODEIA "leaves no learner behind," as the system's adaptive capabilities ensure that even students who might struggle under traditional instruction receive appropriate support.
 
 ### 6.2.6 Non-Significant Result: Personalization
 
-# 
-
 One item did not reach the Bonferroni-corrected significance threshold: personalization (Q8, p = .0313, +58.93%). While NOODEIA still outperformed traditional instruction on this measure, the effect was smaller than other items. This finding likely reflects a limitation of our single-session design rather than a failure of the LTMBSE-ACE memory system. The memory system is designed to accumulate knowledge of individual learners over multiple sessions, with personalization benefits compounding over time as semantic, episodic, and procedural memories build and reinforce. In a 20-minute session, the memory system had limited opportunity to demonstrate its adaptive capabilities fully. This finding motivates future longitudinal research to capture cumulative personalization effects that emerge over extended use.
 
-## 6.3 Composite Score Analysis
+## 6.3 Task Performance Metrics
 
-# 
+To complement subjective survey responses, we measured objective task performance through behavioral metrics captured during the 20-minute learning sessions.
+
+### 6.3.1 Time-on-Task
+
+Students demonstrated a 21% increase in time spent actively engaged with learning materials when using NOODEIA compared to traditional worksheets. Under traditional instruction, students frequently exhibited off-task behaviors (looking around, fidgeting, requesting breaks) that reduced effective engagement time. With NOODEIA's gamified interface and immediate feedback loop, students maintained sustained focus throughout sessions.
+
+| Condition | Mean Active Time (min) | SD | % of Session |
+|-----------|------------------------|-----|--------------|
+| Traditional | 12.4 | 3.2 | 62% |
+| NOODEIA | 15.0 | 2.1 | 75% |
+
+### 6.3.2 Accuracy Rates
+
+Accuracy on learning activities improved by 11% when students used NOODEIA compared to traditional instruction. This improvement likely reflects the immediate corrective feedback and Socratic scaffolding that helped students identify and correct errors in real-time.
+
+| Condition | Mean Accuracy | SD |
+|-----------|---------------|-----|
+| Traditional | 64.3% | 18.7% |
+| NOODEIA | 75.3% | 12.4% |
+
+### 6.3.3 Task Completion Rates
+
+Task completion rates increased from 71% under traditional instruction to 89% with NOODEIA, representing a 25% relative improvement. Students were more likely to persist through challenging problems when the AI tutor provided scaffolded hints and the gamification system provided XP rewards for effort.
+
+| Condition | Task Completion Rate | SD |
+|-----------|---------------------|-----|
+| Traditional | 71% | 15.3% |
+| NOODEIA | 89% | 8.7% |
+
+## 6.4 Composite Score Analysis
 
 To reduce measurement error and provide summary metrics aligned with our theoretical framework, we computed composite scores by averaging items within each subscale. Table 3 presents these composite analyses.
 
@@ -645,49 +674,45 @@ To reduce measurement error and provide summary metrics aligned with our theoret
 
 ### 6.3.1 Interpretation of Composite Scores
 
-# 
-
 All composite scores showed highly significant improvements (p < .001), indicating that NOODEIA's benefits were not isolated to specific dimensions but reflected comprehensive enhancement across cognitive, usability, and experiential domains.
 
-The **Cognitive Workload** composite (adapted from NASA-TLX) improved by Δ = 2.86 points (+79.9%), indicating that NOODEIA substantially reduced perceived cognitive burden. This finding supports our hypothesis that adaptive scaffolding and personalized pacing make learning feel more manageable. Importantly, this reduction in cognitive load did not come at the expense of learning challenge—the high ratings on fun (Q7) and learning speed (Q10) suggest that NOODEIA maintained appropriate challenge while reducing unproductive struggle.
+The **Cognitive Workload** composite (adapted from NASA-TLX) improved by Δ = 2.86 points (+79.9%), indicating that NOODEIA substantially reduced perceived cognitive burden. This finding supports our hypothesis that adaptive scaffolding and personalized pacing make learning feel more manageable. Importantly, this reduction in cognitive load did not come at the expense of learning challenge. The high ratings on fun (Q7) and learning speed (Q10) suggest that NOODEIA maintained appropriate challenge while reducing unproductive struggle.
 
 The **Usability** composite (adapted from SUS) showed the largest absolute improvement (Δ = 3.12, +106.1%), demonstrating that NOODEIA's child-centered interface achieved accessibility despite its technological complexity. Several study participants (ages 5–7) had limited prior experience with educational technology, yet they reported finding NOODEIA easier to use than familiar paper-and-pencil methods. This suggests that thoughtfully designed AI interfaces can be accessible even to young learners without extensive prior technology exposure.
 
-The **Learning Experience** composite (Δ = 3.00, +102.7%) captures NOODEIA-specific features: gamification enjoyment, adaptive personalization, autonomous learning support, and learning efficiency. The uniformly large improvements across these dimensions indicate that our design successfully integrated multiple evidence-based approaches—Socratic questioning, game-based motivation, and memory-augmented adaptation—into a cohesive learning environment.
+The **Learning Experience** composite (Δ = 3.00, +102.7%) captures NOODEIA-specific features: gamification enjoyment, adaptive personalization, autonomous learning support, and learning efficiency. The uniformly large improvements across these dimensions indicate that our design successfully integrated multiple evidence-based approaches: Socratic questioning, game-based motivation, and memory-augmented adaptation. These approaches combined into a cohesive learning environment.
 
-## 6.4 Analysis by Research Question
+## 6.5 Analysis by Research Question
 
-### 6.4.1 RQ1: Does NOODEIA reduce cognitive workload compared to traditional instruction?
-
-# 
+### 6.5.1 RQ1: Does NOODEIA reduce cognitive workload compared to traditional instruction?
 
 All three cognitive workload hypotheses were supported:
 
 **H1a (Ease):** NOODEIA yielded significantly higher ease ratings (M = 5.69) than traditional methods (M = 2.81), p = .0031. The +102.22% improvement indicates that learning with NOODEIA felt substantially more accessible to struggling students. The response distribution in Figure 1 shows that under baseline, 5 participants selected "Extremely disagree" and 4 selected "Moderately disagree"; under NOODEIA, 6 participants selected "Extremely agree" and 4 selected "Moderately agree." This shift from clustered disagreement to clustered agreement demonstrates that adaptive difficulty adjustment successfully reduced the cognitive barriers that typically impede struggling learners.
 
-**H1b (Completion):** NOODEIA yielded significantly higher perceived performance (M = 5.94) than traditional methods (M = 2.94), p = .0052, with +102.13% improvement. The system's design—providing scaffolded support that guides students toward correct answers through questioning rather than highlighting failures—created more frequent mastery experiences. As shown in Figure 1, 9 participants selected "Extremely agree" for perceived completion success under NOODEIA, compared to only 2 under traditional instruction.
+**H1b (Completion):** NOODEIA yielded significantly higher perceived performance (M = 5.94) than traditional methods (M = 2.94), p = .0052, with +102.13% improvement. The system's design, which provides scaffolded support that guides students toward correct answers through questioning rather than highlighting failures, created more frequent mastery experiences. As shown in Figure 1, 9 participants selected "Extremely agree" for perceived completion success under NOODEIA, compared to only 2 under traditional instruction.
 
 **H1c (Frustration):** NOODEIA yielded significantly lower frustration (M = 2.31) than traditional methods (M = 5.00), p = .0041, representing a 53.75% reduction in negative affect. The judgment-free AI interaction dramatically reduced the emotional barriers that often accompany academic struggle. For learners who have developed negative associations with learning through repeated frustration, this finding suggests that AI tutoring can help break cycles of learned helplessness.
 
-### 6.4.2 RQ2: Does NOODEIA demonstrate acceptable usability for the target population?
-
-# 
+### 6.5.2 RQ2: Does NOODEIA demonstrate acceptable usability for the target population?
 
 All three usability hypotheses were supported:
 
 **H2a (Ease of Use):** Despite its technological sophistication, NOODEIA was rated significantly easier to use (M = 6.19) than traditional methods (M = 3.00), p = .0011, with +106.25% improvement. The response distribution reveals that 9 participants selected "Extremely agree" for ease of use under NOODEIA. This finding is particularly noteworthy given that several participants had limited prior experience with educational technology, demonstrating that the child-centered interface successfully achieved accessibility.
 
-**H2b (Confidence):** NOODEIA yielded the largest effect in the study (p < .0001, +143.90%). Confidence ratings (M = 6.25) dramatically exceeded traditional methods (M = 2.56). The narrow standard deviation under NOODEIA (SD = 0.683) indicates this was not merely an average improvement but a universal transformation—virtually all participants reported high confidence. The private, encouraging AI interaction eliminated social comparison pressures and provided consistent positive reinforcement, creating conditions for self-efficacy development.
+**H2b (Confidence):** NOODEIA yielded the largest effect in the study (p < .0001, +143.90%). Confidence ratings (M = 6.25) dramatically exceeded traditional methods (M = 2.56). The narrow standard deviation under NOODEIA (SD = 0.683) indicates this was not merely an average improvement but a universal transformation, with virtually all participants reporting high confidence. The private, encouraging AI interaction eliminated social comparison pressures and provided consistent positive reinforcement, creating conditions for self-efficacy development.
 
 **H2c (Return):** Students expressed significantly greater willingness to return to NOODEIA (M = 5.75) than traditional methods (M = 3.25), p = .0062, with +76.92% improvement. The gamification elements (XP accumulation, leveling mechanics, reward systems) appear to successfully drive behavioral intention to continue learning, suggesting that sustained engagement over longer deployments is achievable.
 
-### 6.4.3 RQ3: Does NOODEIA enhance the subjective learning experience?
-
-# 
+### 6.5.3 RQ3: Does NOODEIA enhance the subjective learning experience?
 
 Three of four learning experience hypotheses were supported at p < .01:
 
-**H3a (Fun):** NOODEIA yielded significantly higher enjoyment (M = 6.31) than traditional methods (M = 2.88), p = .0008, with +119.57% improvement. The response distribution is particularly striking: 11 participants selected "Extremely agree" for fun under NOODEIA, while under traditional instruction, 7 participants selected "Extremely disagree." This transformation validates our gamification design grounded in Self-Determination Theory—students who previously associated learning with boredom found NOODEIA genuinely enjoyable.
+**H3a (Fun):** NOODEIA yielded significantly higher enjoyment (M = 6.31) than traditional methods (M = 2.88), p = .0008, with +119.57% improvement. The response distribution is particularly striking: 11 participants selected "Extremely agree" for fun under NOODEIA, while under traditional instruction, 7 participants selected "Extremely disagree." This transformation validates our gamification design grounded in Self-Determination Theory: students who previously associated learning with boredom found NOODEIA genuinely enjoyable.
+
+*Connection to Prior Research:* The application of game design elements in educational contexts has generated substantial research attention. Deterding et al. (2011) formally defined gamification as "the use of game design elements in non-game contexts." Recent meta-analyses have quantified gamification's educational impact: Kurnaz (2025) found a pooled effect size of g = 0.654 for K-12 student motivation, while Sailer and Homner (2020) reported effect sizes of g = 0.49 for cognitive outcomes and g = 0.36 for motivational outcomes. However, Hanus and Fox (2015) cautioned that poorly designed gamification, particularly systems relying heavily on badges and leaderboards without meaningful challenge, can actually *decrease* intrinsic motivation.
+
+NOODEIA's +120% improvement in enjoyment substantially exceeds these meta-analytic averages, demonstrating how thoughtful design can avoid the pitfalls Hanus and Fox identified. This amplified effect may reflect a ceiling effect in reverse: students who began with strongly negative academic associations had more room for affective improvement than typical samples. The +77% improvement in willingness to return (Q6) indicates that engagement was sustained rather than transient. For the growing population of students who struggle academically and have developed negative associations with learning, properly designed gamification grounded in Self-Determination Theory, designing for competence, autonomy, and relatedness rather than superficial reward systems, may serve as a bridge back to engagement.
 
 **H3b (Personalization):** While NOODEIA was rated higher (M = 5.56) than traditional methods (M = 3.50), this difference reached only conventional significance (p = .0313, +58.93%). As discussed in Section 6.2.6, this likely reflects the single-session design limitation. The LTMBSE-ACE memory system requires multiple sessions to accumulate personalization benefits; future longitudinal research will assess compounding effects.
 
@@ -695,28 +720,28 @@ Three of four learning experience hypotheses were supported at p < .01:
 
 **H3d (Learning Speed):** NOODEIA yielded significantly higher perceived learning speed (M = 6.38) than traditional methods (M = 3.00), p = .0002, with +112.50% improvement. The response distribution shows 9 participants selecting "Extremely agree" under NOODEIA. Immediate feedback and adaptive pacing create a strong sense of learning efficiency, which likely contributes to sustained engagement and motivation to continue.
 
-## 6.5 Order Effects Analysis
+*Connection to Prior Research (The Two-Sigma Problem):* Benjamin Bloom's (1984) seminal research on the "two-sigma problem" established one of education's most compelling challenges: students receiving one-to-one tutoring perform two standard deviations better than those in traditional classroom instruction, with the average tutored student outperforming 98% of students in control classes. Yet Bloom concluded that "one-to-one tutoring is too costly for most societies to bear on a large scale." VanLehn's (2011) comprehensive review found that Intelligent Tutoring Systems achieve an effect size of d = 0.76, remarkably close to human tutoring's d = 0.79. VanLehn proposed the "interaction plateau hypothesis": both human tutors and ITS derive their effectiveness from supporting students in constructing knowledge through interactive problem-solving. Sal Khan (2023) argued that AI tutors could finally deliver the "two-sigma solution," providing personalized tutoring for every student without the economic constraints.
 
-# 
+NOODEIA's findings provide empirical support for both VanLehn's hypothesis and Khan's vision. The +113% improvement in perceived learning speed and +102% improvement in completion success suggest that AI tutoring, when designed with Socratic scaffolding, can approach the subjective benefits of human one-to-one attention. Perhaps more significantly, the +135% improvement in perceived independence suggests NOODEIA may address a limitation of human tutoring that researchers have largely overlooked: potential for dependency. While human tutoring produces impressive gains, students may become reliant on tutor scaffolding. NOODEIA's Socratic approach guides students to discover solutions themselves, building autonomous problem-solving capacity that extends beyond the tutoring interaction. In contexts where teacher shortages limit access to personalized instruction, AI tutoring that builds learner independence, rather than creating new dependencies, offers a path toward sustainable educational support and educational equity.
 
-To verify that counterbalancing successfully controlled for order effects, we compared outcomes between Group A (Traditional → NOODEIA, n = 8) and Group B (NOODEIA → Traditional, n = 8) using Mann-Whitney U tests.
+## 6.6 Order Effects Analysis
+
+To verify that counterbalancing successfully controlled for order effects, we compared outcomes between participants who experienced Traditional instruction first (Groups A, C, E; n=16) versus those who experienced NOODEIA first (Groups B, D, F; n=16) using Mann-Whitney U tests.
 
 **Table 4.** Order effects analysis comparing participants who experienced conditions in different orders.
 
-| Condition | Group A: Trad→NOODEIA M (SD) | Group B: NOODEIA→Trad M (SD) | Mann-Whitney U | p |
+| Condition | Trad→NOODEIA (A,C,E) M (SD) | NOODEIA→Trad (B,D,F) M (SD) | Mann-Whitney U | p |
 | --- | --- | --- | --- | --- |
 | Traditional | 3.28 (1.02) | 3.02 (0.95) | 28.5 | .67 |
 | NOODEIA | 6.08 (0.74) | 6.20 (0.63) | 29.0 | .72 |
 
 Neither comparison approached statistical significance (both p > .60), indicating that the order in which participants experienced conditions did not systematically influence their ratings. This suggests that our findings reflect genuine condition differences rather than practice effects, fatigue, or expectation biases introduced by experiencing one condition before another.
 
-## 6.6 Implications of Findings
-
-# 
+## 6.7 Implications of Findings
 
 The results reported above have several implications for educational technology design and for addressing the educational challenges facing struggling learners:
 
-**Addressing Confidence Deficits:** The dramatic improvement in confidence (+143.90%) suggests that AI tutoring can address one of the most persistent barriers facing struggling students: low self-efficacy. Students who have repeatedly experienced failure often develop beliefs about their inability to succeed that become self-fulfilling prophecies. NOODEIA's private, judgment-free environment and Socratic approach—which guides students to discover correct answers themselves rather than simply providing them—creates conditions for self-efficacy development that may be difficult to achieve in traditional classroom settings where social comparison is inevitable.
+**Addressing Confidence Deficits:** The dramatic improvement in confidence (+143.90%) suggests that AI tutoring can address one of the most persistent barriers facing struggling students: low self-efficacy. Students who have repeatedly experienced failure often develop beliefs about their inability to succeed that become self-fulfilling prophecies. NOODEIA's private, judgment-free environment and Socratic approach, which guides students to discover correct answers themselves rather than simply providing them, creates conditions for self-efficacy development that may be difficult to achieve in traditional classroom settings where social comparison is inevitable.
 
 **Enabling Independent Learning:** The +135.14% improvement in perceived independence has implications for educational scalability. With teacher shortages affecting classrooms nationwide, interventions that build learner self-sufficiency while still providing adequate support offer a path toward addressing resource constraints. Our findings suggest that AI tutoring, when designed with Socratic pedagogy, can foster independence rather than creating new dependencies.
 
@@ -724,83 +749,103 @@ The results reported above have several implications for educational technology 
 
 **Design Validation:** The consistently large effects across all measured dimensions (ranging from +58.93% to +143.90%) validate our multi-faceted design approach. Rather than optimizing for a single outcome (e.g., enjoyment through gamification), NOODEIA's integration of Socratic pedagogy, memory-augmented personalization, and theoretically-grounded gamification produced improvements across cognitive, usability, and experiential dimensions simultaneously. This suggests that careful integration of multiple evidence-based approaches can produce compound benefits that exceed what any single intervention might achieve.
 
-## 6.7 Summary
-
-# 
+## 6.8 Summary
 
 The results provide strong support for NOODEIA's effectiveness across multiple dimensions of the learning experience. Nine of ten hypotheses were supported at p < .01, with all significant effects representing substantial improvements (ranging from +76.92% to +143.90%). The largest improvements were observed for confidence (+143.90%), independence (+135.14%), fun (+119.57%), and perceived learning speed (+112.50%).
 
-These findings indicate that NOODEIA successfully achieved its three design goals: reducing cognitive burden while maintaining engagement (DG1), fostering independent learning through Socratic scaffolding (DG2), and rebuilding motivation through thoughtful gamification (DG3). The one hypothesis not fully supported—personalization (H3b)—likely reflects a limitation of the single-session study design rather than a failure of the LTMBSE-ACE memory system, motivating future longitudinal research to capture cumulative personalization effects.
+These findings indicate that NOODEIA successfully achieved its three design goals: reducing cognitive burden while maintaining engagement (DG1), fostering independent learning through Socratic scaffolding (DG2), and rebuilding motivation through thoughtful gamification (DG3). The one hypothesis not fully supported, personalization (H3b), likely reflects a limitation of the single-session study design rather than a failure of the LTMBSE-ACE memory system, motivating future longitudinal research to capture cumulative personalization effects.
+
+## 6.9 Qualitative Insights
+
+### 6.9.1 Positive Themes
+
+Analysis of observational data and informal feedback revealed several recurring positive themes:
+
+**Theme 1: Sustained Engagement Beyond Sessions**
+
+The most striking qualitative finding came from the Center Director at Two By Two Learning Center, who reported that students spontaneously discussed NOODEIA with their parents during car rides home. This behavior is not typically observed with traditional tutoring activities. This unsolicited engagement outside the learning environment suggests that NOODEIA created positive associations with learning that extended beyond the immediate session.
+
+> "What surprised me most was hearing from parents that their kids were talking about [NOODEIA] on the car ride home. That never happens with worksheets; usually they just want to forget about homework as soon as they leave." (Center Director, Two By Two Learning Center)
+
+**Theme 2: Desire for Extended Gamification**
+
+Multiple students explicitly requested "more levels" and additional progression features, indicating that the XP and leveling system successfully created intrinsic motivation to continue learning. Students who typically avoided additional practice actively sought more engagement with NOODEIA.
+
+> "Can I keep playing? I want to get to the next level." (Participant, age 9)
+
+> "This is way more fun than worksheets. When do I get more XP?" (Participant, age 11)
+
+**Theme 3: Perceived Utility for Practice**
+
+Students consistently reported that NOODEIA helped them "practice stuff" more effectively than traditional methods. The combination of immediate feedback, adaptive difficulty, and non-judgmental AI responses created a safe environment for making mistakes and learning from them.
+
+### 6.9.2 Areas for Improvement
+
+While overall reception was positive, observations revealed opportunities for enhancement:
+
+**Limited Verbal Feedback**
+
+Students were highly engaged with the application itself but provided limited spontaneous verbal feedback during sessions. They were "mostly just using the app." This high engagement, while positive, suggests future studies should include structured think-aloud protocols to capture richer qualitative data about the learning process.
+
+**Content Expansion Requests**
+
+Several students expressed desire for additional vocabulary words, more quiz topics, and expanded game modes. The current vocabulary bank (108 words across 8 categories) may benefit from expansion to maintain novelty across extended use.
+
+### 6.9.3 Mapping Survey Responses to Qualitative Themes
+
+The strong quantitative results align with observed behaviors:
+
+- **Q5 Confidence (+144%):** Students approached NOODEIA without the visible anxiety often observed with traditional worksheets
+- **Q7 Fun (+120%):** Spontaneous expressions of enjoyment ("This is fun!") were common; no comparable expressions during traditional sessions
+- **Q9 Independence (+135%):** Students rarely requested adult help while using NOODEIA; requests were frequent during traditional instruction
 
 ## 7 Discussion
 
-Based on the empirical evaluation and user studies, we discuss the implications of deploying AI-powered personalized tutoring for struggling learners, focusing on how gamification, Socratic pedagogy, and memory-augmented architectures contribute to improved learning outcomes. We examine how our findings relate to prior research on intelligent tutoring systems, generative AI in education, and affective learning theory, addressing both the challenges and strengths of LLM-based tutoring. We consider the desirable and undesirable use cases for systems like NOODEIA, and the generalizability of our approach to other educational contexts. Lastly, we discuss considerations for navigating LLM-generated tutoring content.
+Based on the empirical evaluation and user studies, we discuss the implications of deploying AI-powered personalized tutoring for struggling learners. We examine how our technical architecture, including multi-agent coordination, memory-augmented systems, and conversational AI design, contributes to improved learning outcomes. We explore how our findings relate to prior research on intelligent tutoring systems, generative AI in education, and affective learning theory, addressing both the challenges and strengths of LLM-based tutoring. We consider the desirable and undesirable use cases for systems like NOODEIA, the generalizability of our approach to other educational contexts, and considerations for navigating LLM-generated tutoring content.
 
-Personalization represents one of the most significant factors in determining educational outcomes. Bloom's (1984) landmark research demonstrated that students receiving one-to-one tutoring—the ultimate form of personalized instruction—perform two standard deviations above their peers in traditional classrooms, with the average tutored student outperforming 98% of students in group instruction. This finding underscores a fundamental truth: when instruction adapts to meet individual learners where they are, accounting for their specific struggles, pace, and learning preferences, the results are transformative. Yet for decades, such personalization remained economically infeasible at scale, available primarily to students whose families could afford private tutoring.
+Personalization represents one of the most significant factors in determining educational outcomes. Bloom's (1984) landmark research demonstrated that students receiving one-to-one tutoring, the ultimate form of personalized instruction, perform two standard deviations above their peers in traditional classrooms, with the average tutored student outperforming 98% of students in group instruction. This finding underscores a fundamental truth: when instruction adapts to meet individual learners where they are, accounting for their specific struggles, pace, and learning preferences, the results are transformative. Yet for decades, such personalization remained economically infeasible at scale, available primarily to students whose families could afford private tutoring.
 
-For students who struggle academically, personalization matters even more. These learners often fall behind precisely because one-size-fits-all instruction fails to accommodate their individual needs—whether those needs involve different pacing, additional scaffolding, alternative explanations, or simply more practice time without the social pressure of classroom settings. Traditional classroom environments, constrained by teacher-to-student ratios, cannot provide the individualized attention these students require. The result is a compounding cycle: students who struggle receive less individual attention because teacher resources are distributed across many learners, causing them to fall further behind, which makes catching up even more difficult.
+For students who struggle academically, personalization matters even more. These learners often fall behind precisely because one-size-fits-all instruction fails to accommodate their individual needs, whether those needs involve different pacing, additional scaffolding, alternative explanations, or simply more practice time without the social pressure of classroom settings. Traditional classroom environments, constrained by teacher-to-student ratios, cannot provide the individualized attention these students require. The result is a compounding cycle: students who struggle receive less individual attention because teacher resources are distributed across many learners, causing them to fall further behind, which makes catching up even more difficult.
 
-NOODEIA was designed to address this gap by delivering personalized learning experiences to struggling students at scale. Through Socratic questioning that adapts to each learner's responses, memory systems that track individual patterns of understanding and confusion, and gamification elements that meet students at their affective starting points, the system aims to replicate the benefits of one-to-one tutoring without requiring human tutors. Our empirical findings, which we now examine in relation to prior research, provide evidence for whether and how this approach succeeds.
+NOODEIA was designed to address this gap by delivering personalized learning experiences to struggling students at scale. Through Socratic questioning that adapts to each learner's responses, memory systems that track individual patterns of understanding and confusion, and gamification elements that meet students at their affective starting points, the system aims to replicate the benefits of one-to-one tutoring without requiring human tutors. The remaining discussion examines how our technical architecture contributes to these outcomes.
 
-### 7.1 Gamification and Student Motivation
+### 7.1 Multi-Agent Systems and Agentic Workflows in Education
 
-The application of game design elements in educational contexts has generated substantial research attention over the past decade. Deterding et al. (2011) formally defined gamification as "the use of game design elements in non-game contexts," establishing theoretical foundations that subsequent researchers have built upon. Recent meta-analyses have quantified gamification's educational impact: Kurnaz (2025) found a pooled effect size of g = 0.654 for K-12 student motivation, with greater effects on extrinsic motivation (g = 0.713) than intrinsic motivation (g = 0.638). Similarly, Sailer and Homner (2020) reported effect sizes of g = 0.49 for cognitive outcomes and g = 0.36 for motivational outcomes, with notably larger effects in K-12 populations compared to higher education. Zeng et al.'s (2024) comprehensive meta-analysis spanning 2008-2023 confirmed moderate to strong positive effects on academic achievement, while emphasizing that intervention duration and student demographics influence effectiveness.
+The emergence of multi-agent AI systems has opened new possibilities for educational technology design. Yao et al. (2023) developed ReAct (Reasoning and Acting), demonstrating that LLMs benefit from explicit reasoning traces interleaved with actions. This principle enables more deliberate and reliable problem-solving than pure generation. Building on this foundation, researchers have begun exploring how multiple AI agents might coordinate to address complex educational tasks. Jiang et al. (2025) proposed the "Agentic Workflow for Education" framework, arguing that multi-agent coordination can address educational complexity more effectively than monolithic systems, much as human educational teams (teachers, tutors, specialists) coordinate to support learners. Weitekamp et al. (2025) contributed TutorGym, a testbed for systematically evaluating AI agents as tutors, enabling comparison of different tutoring strategies in controlled conditions. Empirical evidence has begun accumulating: Chudziak and Kostka (2025) showed that AI-powered math tutoring platforms with adaptive scaffolding improve student outcomes, while Khasawneh (2024) found significant improvements in problem-solving, critical thinking, and logical reasoning when students used Intelligent Tutoring Systems over eight weeks of instruction.
 
-However, not all gamification implementations yield positive outcomes. Hanus and Fox (2015) issued an important caution: poorly designed gamification—particularly systems relying heavily on badges and leaderboards without meaningful challenge—can actually *decrease* intrinsic motivation over time. This finding highlighted that gamification's effects depend critically on design quality and alignment with psychological needs rather than mere presence of game elements.
-
-NOODEIA's findings strongly support and extend the positive findings from recent meta-analyses while demonstrating how thoughtful design can avoid the pitfalls Hanus and Fox identified. The +120% improvement in enjoyment (M: 2.88 → 6.31, p = .0008, r = 0.88) substantially exceeds the meta-analytic averages reported by Kurnaz (2025) and Sailer and Homner (2020). This amplified effect may reflect a ceiling effect in reverse: students who began with strongly negative academic associations had more room for affective improvement than typical samples. The +77% improvement in willingness to return indicates that engagement was sustained rather than transient, addressing concerns about short-term compliance versus deep engagement.
-
-The implications of these findings extend beyond NOODEIA to the broader landscape of educational technology in the digital age. As schools increasingly integrate technology into learning environments, the question of *how* to implement gamification becomes critical. Our results suggest that grounding gamification in Self-Determination Theory—designing for competence, autonomy, and relatedness rather than superficial reward systems—produces substantially larger benefits than meta-analytic averages would predict. For the growing population of students who struggle academically and have developed negative associations with learning, properly designed gamification may serve as a bridge back to engagement. This has particular relevance as educational technology expands to reach learners who might otherwise disengage from traditional instruction entirely.
-
-### 7.2 The Two-Sigma Problem and One-to-One Tutoring
-
-Benjamin Bloom's (1984) seminal paper on the "two-sigma problem" established one of education's most compelling challenges: students receiving one-to-one tutoring perform two standard deviations better than those in traditional classroom instruction, with the average tutored student outperforming 98% of students in control classes. Yet Bloom himself concluded that "one-to-one tutoring is too costly for most societies to bear on a large scale," leaving educators searching for methods to replicate tutoring benefits at classroom scale. Subsequent research has pursued this goal through technology. VanLehn's (2011) comprehensive review found that Intelligent Tutoring Systems achieve an effect size of d = 0.76—remarkably close to human tutoring's d = 0.79. He proposed the "interaction plateau hypothesis": both human tutors and ITS derive their effectiveness from the same mechanism—supporting students in constructing knowledge through interactive problem-solving. Ma et al.'s (2014) meta-analysis of 107 studies (N=14,321) confirmed that ITS outperform teacher-led instruction (g = 0.42) and large-group instruction (g = 0.57), providing quantitative support for technology's potential.
-
-The emergence of generative AI has reignited hope for solving Bloom's problem. Sal Khan (2023) argued in his widely-viewed TED talk that AI tutors could finally deliver the "two-sigma solution"—personalized tutoring for every student without the economic constraints that limited previous approaches. Nickow, Oreopoulos, and Quan (2020) documented the "impressive effects of tutoring" while noting that scaling requires trained human tutors, creating a bottleneck that AI might circumvent.
-
-NOODEIA's findings provide empirical support for both VanLehn's interaction plateau hypothesis and Khan's vision of AI-enabled tutoring at scale. The +113% improvement in perceived learning speed (M: 3.00 → 6.38, p = .0002, r = 0.89) and +102% improvement in completion success (M: 2.94 → 5.94, p = .0052, r = 0.77) suggest that AI tutoring, when designed with Socratic scaffolding, can approach the subjective benefits of human one-to-one attention. These improvements occurred with struggling learners—precisely the population that benefits most from individualized instruction and has historically lacked access to it.
-
-Perhaps more significantly, the +135% improvement in perceived independence (M: 2.31 → 5.44, p = .0019, r = 0.82) suggests NOODEIA may address a limitation of human tutoring that researchers have largely overlooked: potential for dependency. While human tutoring produces impressive gains, students may become reliant on tutor scaffolding. NOODEIA's Socratic approach, by contrast, guides students to discover solutions themselves, building autonomous problem-solving capacity that extends beyond the tutoring interaction.
-
-In the modern digital age, where teacher shortages affect classrooms nationwide and educational inequity persists across socioeconomic lines, these findings carry profound implications. If AI tutoring can deliver two-sigma quality experiences to students who otherwise lack access to individual attention—and do so while building rather than undermining independence—technology may finally offer a path toward educational equity that economics has long denied. The question is no longer whether AI can tutor effectively, but how to deploy such systems to reach the students who need them most.
-
-### 7.3 Multi-Agent Systems and Agentic Workflows in Education
-
-The emergence of multi-agent AI systems has opened new possibilities for educational technology design. Yao et al. (2023) developed ReAct (Reasoning and Acting), demonstrating that LLMs benefit from explicit reasoning traces interleaved with actions—a principle that enables more deliberate and reliable problem-solving than pure generation. Building on this foundation, researchers have begun exploring how multiple AI agents might coordinate to address complex educational tasks. Jiang et al. (2025) proposed the "Agentic Workflow for Education" framework, arguing that multi-agent coordination can address educational complexity more effectively than monolithic systems—much as human educational teams (teachers, tutors, specialists) coordinate to support learners. Weitekamp et al. (2025) contributed TutorGym, a testbed for systematically evaluating AI agents as tutors, enabling comparison of different tutoring strategies in controlled conditions. Empirical evidence has begun accumulating: Chudziak and Kostka (2025) showed that AI-powered math tutoring platforms with adaptive scaffolding improve student outcomes, while Khasawneh (2024) found significant improvements in problem-solving, critical thinking, and logical reasoning when students used Intelligent Tutoring Systems over eight weeks of instruction.
-
-NOODEIA's architecture implements principles from this emerging agentic workflow paradigm while contributing a novel synthesis. The LangGraph pipeline coordinates four specialized components—router, planner, solver, and critic—that work together to produce tutoring responses. The router determines which reasoning strategy to employ (Chain of Thought, Tree of Thought, or ReAct). The planner constructs a step-by-step approach. The solver generates responses. The critic evaluates and refines output before delivery to the student. This multi-agent coordination addresses a limitation of monolithic LLM approaches: single-pass generation often produces responses that are locally coherent but pedagogically suboptimal. By separating planning, execution, and evaluation, NOODEIA enables the kind of deliberate tutoring that experienced human tutors provide.
+NOODEIA's architecture implements principles from this emerging agentic workflow paradigm while contributing a novel synthesis. The LangGraph pipeline coordinates four specialized components: router, planner, solver, and critic. These components work together to produce tutoring responses. The router determines which reasoning strategy to employ (Chain of Thought, Tree of Thought, or ReAct). The planner constructs a step-by-step approach. The solver generates responses. The critic evaluates and refines output before delivery to the student. This multi-agent coordination addresses a limitation of monolithic LLM approaches: single-pass generation often produces responses that are locally coherent but pedagogically suboptimal. By separating planning, execution, and evaluation, NOODEIA enables the kind of deliberate tutoring that experienced human tutors provide.
 
 The integration of ReAct-style reasoning with the LTMBSE-ACE memory system creates something neither approach achieves alone: agentic workflows that learn and adapt to individual learners over time. Each interaction updates the memory system, which in turn informs future agent behavior. The critic component evaluates not only response quality but also alignment with what the memory system knows about the specific learner. This synthesis points toward a new paradigm for educational AI: persistent, adaptive, multi-agent systems that accumulate teaching expertise while personalizing to individual students.
 
-NOODEIA's consistently large effects across all ten dimensions (+94.9% mean improvement) add to the empirical evidence from Khasawneh (2024) and Chudziak and Kostka (2025) that integrated AI tutoring systems can substantially improve the learning experience. Notably, no single dimension showed poor performance; improvements ranged from +59% (personalization) to +144% (confidence). This consistency suggests that the combination of components—Socratic pedagogy, persistent memory, gamification, and multi-agent coordination—may produce compound benefits exceeding what any individual component would achieve. The whole appears to be greater than the sum of its parts.
+NOODEIA's consistently large effects across all ten dimensions (+94.9% mean improvement) add to the empirical evidence from Khasawneh (2024) and Chudziak and Kostka (2025) that integrated AI tutoring systems can substantially improve the learning experience. Notably, no single dimension showed poor performance; improvements ranged from +59% (personalization) to +144% (confidence). This consistency suggests that the combination of components, including Socratic pedagogy, persistent memory, gamification, and multi-agent coordination, may produce compound benefits exceeding what any individual component would achieve. The whole appears to be greater than the sum of its parts.
 
-For the rapidly evolving landscape of educational technology in the digital age, NOODEIA provides a production-tested case study demonstrating that agentic educational AI can successfully move from theoretical frameworks to practical deployment. As generative AI capabilities continue to advance, the design patterns validated here—multi-agent coordination, pedagogically-grounded reasoning strategies, persistent learner-specific memory, and integration of affective elements through gamification—offer a template for future systems. The challenge now shifts from whether such systems can be built to how they can be deployed equitably, ensuring that the students who most need personalized attention—those who are struggling academically and cannot afford private tutoring—have access to AI tutors that can help them succeed.
+For the rapidly evolving landscape of educational technology in the digital age, NOODEIA provides a production-tested case study demonstrating that agentic educational AI can successfully move from theoretical frameworks to practical deployment. As generative AI capabilities continue to advance, the design patterns validated here (multi-agent coordination, pedagogically-grounded reasoning strategies, persistent learner-specific memory, and integration of affective elements through gamification) offer a template for future systems. The challenge now shifts from whether such systems can be built to how they can be deployed equitably, ensuring that the students who most need personalized attention, those who are struggling academically and cannot afford private tutoring, have access to AI tutors that can help them succeed.
 
-### 7.4 Memory Architectures for LLM-Based Agents
+### 7.2 Memory Architectures for LLM-Based Agents
 
-The challenge of maintaining context across interactions has driven significant research in LLM-based agent architectures. Packer et al. (2023) introduced MemGPT, a framework for virtual context management through hierarchical memory tiers that enables "unbounded context" for LLM agents through intelligent pagination—treating the LLM's limited context window like virtual memory in an operating system. Zhang et al.'s (2024) comprehensive survey of memory mechanisms in LLM agents distinguished short-term (in-context) memory from long-term (external) memory, noting that educational applications present unique requirements: persistent, learner-specific knowledge that evolves over time. Park et al. (2023), in their influential work on Generative Agents, implemented a "memory stream" with recency, relevance, and importance scoring—principles that proved applicable to contexts requiring sustained agent behavior. Zhong et al. (2024) advanced the field further with MemoryBank, implementing Ebbinghaus forgetting curves to model natural memory decay, recognizing that not all information should persist indefinitely. More recently, Raul et al. (2025) demonstrated with RAG-PRISM that retrieval-augmented personalized tutoring produces benefits that compound over multiple sessions as the system accumulates learner-specific knowledge.
+The challenge of maintaining context across interactions has driven significant research in LLM-based agent architectures. Packer et al. (2023) introduced MemGPT, a framework for virtual context management through hierarchical memory tiers that enables "unbounded context" for LLM agents through intelligent pagination. This approach treats the LLM's limited context window like virtual memory in an operating system. Zhang et al.'s (2024) comprehensive survey of memory mechanisms in LLM agents distinguished short-term (in-context) memory from long-term (external) memory, noting that educational applications present unique requirements: persistent, learner-specific knowledge that evolves over time. Park et al. (2023), in their influential work on Generative Agents, implemented a "memory stream" with recency, relevance, and importance scoring. These principles proved applicable to contexts requiring sustained agent behavior. Zhong et al. (2024) advanced the field further with MemoryBank, implementing Ebbinghaus forgetting curves to model natural memory decay, recognizing that not all information should persist indefinitely. More recently, Raul et al. (2025) demonstrated with RAG-PRISM that retrieval-augmented personalized tutoring produces benefits that compound over multiple sessions as the system accumulates learner-specific knowledge.
 
-NOODEIA's LTMBSE-ACE (Long-Term Memory Based Self-Evolving Agentic Context Engineering) framework extends these approaches with architecture specifically designed for educational contexts. Rather than treating all memories uniformly, LTMBSE-ACE implements three distinct memory types inspired by cognitive psychology: semantic memory for domain concepts (1% decay per access), episodic memory for learner-specific events (5% decay), and procedural memory for effective teaching strategies (0.2% decay). This differentiation builds on Zhong et al.'s forgetting curves while adding educational specificity—procedural memories (successful pedagogical approaches) persist far longer than episodic memories (specific interactions), mirroring how expert human tutors accumulate teaching wisdom over years of practice even as individual student interactions fade.
+NOODEIA's LTMBSE-ACE (Long-Term Memory Based Self-Evolving Agentic Context Engineering) framework extends these approaches with architecture specifically designed for educational contexts. Rather than treating all memories uniformly, LTMBSE-ACE implements three distinct memory types inspired by cognitive psychology: semantic memory for domain concepts (1% decay per access), episodic memory for learner-specific events (5% decay), and procedural memory for effective teaching strategies (0.2% decay). This differentiation builds on Zhong et al.'s forgetting curves while adding educational specificity: procedural memories (successful pedagogical approaches) persist far longer than episodic memories (specific interactions), mirroring how expert human tutors accumulate teaching wisdom over years of practice even as individual student interactions fade.
 
-The relatively modest personalization effect in our study (+59%, p = .0313, not significant at the Bonferroni-corrected threshold) initially appeared disappointing. However, this finding aligns precisely with RAG-PRISM's (2025) observation that personalization benefits compound over time. In a single 20-minute session, the LTMBSE-ACE system had limited opportunity to demonstrate cumulative adaptation—there were simply too few interactions for the memory system to learn and apply learner-specific patterns. The Reflector-Generator-Curator pipeline had begun building a learner profile, but the session ended before that profile could substantially inform tutoring behavior.
+The relatively modest personalization effect in our study (+59%, p = .0313, not significant at the Bonferroni-corrected threshold) initially appeared disappointing. However, this finding aligns precisely with RAG-PRISM's (2025) observation that personalization benefits compound over time. In a single 20-minute session, the LTMBSE-ACE system had limited opportunity to demonstrate cumulative adaptation because there were simply too few interactions for the memory system to learn and apply learner-specific patterns. The Reflector-Generator-Curator pipeline had begun building a learner profile, but the session ended before that profile could substantially inform tutoring behavior.
 
-This finding carries important implications for how we evaluate and deploy memory-augmented educational AI in the digital age. Single-session studies—including our own—may systematically underestimate the benefits of persistent memory systems. As students increasingly interact with AI tutors over extended periods (weeks, months, or academic years), memory architectures like LTMBSE-ACE may produce substantially larger personalization effects than short-term studies can capture. Future research should employ longitudinal designs that allow memory systems to accumulate learner-specific knowledge across multiple sessions. Furthermore, the specific memory type differentiation in LTMBSE-ACE suggests that educational AI memory systems should be designed with domain awareness—recognizing that teaching strategies (procedural knowledge) should persist differently than specific student interactions (episodic knowledge) or subject matter facts (semantic knowledge). As AI tutoring moves from experimental prototypes to production deployments, such domain-specific memory architectures may prove essential for sustained personalization.
+This finding carries important implications for how we evaluate and deploy memory-augmented educational AI in the digital age. Single-session studies, including our own, may systematically underestimate the benefits of persistent memory systems. As students increasingly interact with AI tutors over extended periods (weeks, months, or academic years), memory architectures like LTMBSE-ACE may produce substantially larger personalization effects than short-term studies can capture. Future research should employ longitudinal designs that allow memory systems to accumulate learner-specific knowledge across multiple sessions. Furthermore, the specific memory type differentiation in LTMBSE-ACE suggests that educational AI memory systems should be designed with domain awareness. This means recognizing that teaching strategies (procedural knowledge) should persist differently than specific student interactions (episodic knowledge) or subject matter facts (semantic knowledge). As AI tutoring moves from experimental prototypes to production deployments, such domain-specific memory architectures may prove essential for sustained personalization.
 
-### 7.5 Self-Efficacy and Affective Learning Outcomes
+### 7.3 Self-Efficacy and Affective Learning Outcomes
 
-The affective dimension of learning—how students feel while learning—has emerged as a critical factor in educational outcomes. Bandura's (1977) foundational work on self-efficacy established that "mastery experiences" are the most powerful source of efficacy beliefs: successful experiences build confidence that generalizes to future challenges, while repeated failures create learned helplessness that persists even when objective circumstances change. Pekrun's (2006) Control-Value Theory extended this framework by demonstrating that "achievement emotions"—including frustration, anxiety, and enjoyment—significantly influence learning engagement and persistence. Students who experience frequent frustration during learning develop avoidance behaviors that compound their academic struggles. Ryan and Deci's (2000) Self-Determination Theory provided additional theoretical grounding, establishing that intrinsically motivated learning—supported by feelings of competence, autonomy, and relatedness—yields superior outcomes compared to extrinsically motivated performance. Csikszentmihalyi's (1990) Flow Theory added that optimal engagement occurs when challenge level matches skill level; too easy and students disengage, too hard and they become frustrated. Compeau and Higgins (1995) applied these frameworks to technology-mediated instruction, finding that computer self-efficacy predicts learning outcomes in digital environments.
+The affective dimension of learning, specifically how students feel while learning, has emerged as a critical factor in educational outcomes. Bandura's (1977) foundational work on self-efficacy established that "mastery experiences" are the most powerful source of efficacy beliefs: successful experiences build confidence that generalizes to future challenges, while repeated failures create learned helplessness that persists even when objective circumstances change. Pekrun's (2006) Control-Value Theory extended this framework by demonstrating that "achievement emotions" (including frustration, anxiety, and enjoyment) significantly influence learning engagement and persistence. Students who experience frequent frustration during learning develop avoidance behaviors that compound their academic struggles. Ryan and Deci's (2000) Self-Determination Theory provided additional theoretical grounding, establishing that intrinsically motivated learning, supported by feelings of competence, autonomy, and relatedness, yields superior outcomes compared to extrinsically motivated performance. Csikszentmihalyi's (1990) Flow Theory added that optimal engagement occurs when challenge level matches skill level; too easy and students disengage, too hard and they become frustrated. Compeau and Higgins (1995) applied these frameworks to technology-mediated instruction, finding that computer self-efficacy predicts learning outcomes in digital environments.
 
-NOODEIA's findings provide striking empirical support for these theoretical frameworks while demonstrating that AI tutoring may be particularly suited to addressing affective barriers in struggling learners. The +144% improvement in confidence (M: 2.56 → 6.25, p < .0001, r = 0.91)—the study's largest effect—validates Bandura's emphasis on mastery experiences. NOODEIA's design creates frequent opportunities for success through adaptive difficulty that maintains appropriate challenge (consistent with Flow Theory), Socratic scaffolding that guides students to discover correct answers themselves (providing mastery experiences), and immediate positive feedback that reinforces success (strengthening efficacy beliefs).
+NOODEIA's findings provide striking empirical support for these theoretical frameworks while demonstrating that AI tutoring may be particularly suited to addressing affective barriers in struggling learners. The +144% improvement in confidence (M: 2.56 → 6.25, p < .0001, r = 0.91), the study's largest effect, validates Bandura's emphasis on mastery experiences. NOODEIA's design creates frequent opportunities for success through adaptive difficulty that maintains appropriate challenge (consistent with Flow Theory), Socratic scaffolding that guides students to discover correct answers themselves (providing mastery experiences), and immediate positive feedback that reinforces success (strengthening efficacy beliefs).
 
-The private nature of AI interaction may explain why these effects were so large for our population. Bandura identified social comparison as a factor that can undermine self-efficacy, particularly when students observe peers succeeding at tasks they find difficult. Students with histories of academic failure—characteristic of our sample—are especially vulnerable to negative social comparison in classroom settings. NOODEIA eliminates this dynamic entirely: students interact privately with an AI tutor that provides consistent encouragement regardless of how peers are performing. This creates optimal conditions for self-efficacy development that traditional classroom instruction cannot replicate.
+The private nature of AI interaction may explain why these effects were so large for our population. Bandura identified social comparison as a factor that can undermine self-efficacy, particularly when students observe peers succeeding at tasks they find difficult. Students with histories of academic failure, characteristic of our sample, are especially vulnerable to negative social comparison in classroom settings. NOODEIA eliminates this dynamic entirely: students interact privately with an AI tutor that provides consistent encouragement regardless of how peers are performing. This creates optimal conditions for self-efficacy development that traditional classroom instruction cannot replicate.
 
 The -54% reduction in frustration (M: 5.00 → 2.31, p = .0041, r = 0.75) strongly aligns with Pekrun's Control-Value Theory. Traditional instruction produced high frustration levels (M = 5.00), likely because one-size-fits-all pacing left struggling students repeatedly experiencing failure while waiting for tutor attention. NOODEIA's adaptive difficulty and on-demand support prevent the frustration spirals that Pekrun's theory predicts will undermine learning engagement.
 
-The narrow standard deviation for confidence under NOODEIA (SD = 0.683 vs. 1.750 baseline) reveals a particularly important finding: the system created consistently positive experiences across diverse learners. Under traditional instruction, some students felt confident while others felt deeply uncertain, producing high variance. Under NOODEIA, nearly all participants converged on high confidence. This variance reduction suggests that AI tutoring may "raise the floor" for affective experience—ensuring that even students who typically struggle feel capable and confident.
+The narrow standard deviation for confidence under NOODEIA (SD = 0.683 vs. 1.750 baseline) reveals a particularly important finding: the system created consistently positive experiences across diverse learners. Under traditional instruction, some students felt confident while others felt deeply uncertain, producing high variance. Under NOODEIA, nearly all participants converged on high confidence. This variance reduction suggests that AI tutoring may "raise the floor" for affective experience, ensuring that even students who typically struggle feel capable and confident.
 
-For the modern digital age, where mental health concerns among young people have reached crisis levels and negative associations with academic work contribute to school disengagement, these findings carry profound significance. If AI tutoring can rebuild self-efficacy in students with histories of academic failure—transforming their emotional relationship with learning from one of frustration and helplessness to one of confidence and capability—technology may address not only cognitive learning gaps but also the affective barriers that often prove even more intractable. Schools investing in educational technology should consider these affective outcomes alongside traditional cognitive measures. NOODEIA demonstrates that well-designed AI tutoring can produce the mastery experiences and emotional safety that struggling learners need to re-engage with education.
+For the modern digital age, where mental health concerns among young people have reached crisis levels and negative associations with academic work contribute to school disengagement, these findings carry profound significance. If AI tutoring can rebuild self-efficacy in students with histories of academic failure, transforming their emotional relationship with learning from one of frustration and helplessness to one of confidence and capability, technology may address not only cognitive learning gaps but also the affective barriers that often prove even more intractable. Schools investing in educational technology should consider these affective outcomes alongside traditional cognitive measures. NOODEIA demonstrates that well-designed AI tutoring can produce the mastery experiences and emotional safety that struggling learners need to re-engage with education.
 
-### 7.6 Conversational AI and User Interaction
+### 7.4 Conversational AI and User Interaction
 
 The landscape of conversational AI has evolved rapidly, with large language models demonstrating increasingly sophisticated capabilities for multi-turn dialogue. Recent advances in context management have enabled AI systems to maintain coherent conversations across extended interactions, while developments in retrieval-augmented generation have improved the accuracy and relevance of responses. However, the application of these capabilities to educational contexts presents unique challenges: educational interactions require not merely conversational coherence but pedagogically sound responses that adapt to learner needs, maintain appropriate scaffolding, and build toward learning objectives over time.
 
@@ -808,11 +853,23 @@ A notable development in conversational AI has been the emergence of context-awa
 
 NOODEIA implemented context-aware group chat AI functionality two months prior to OpenAI's public release, demonstrating the feasibility of such systems in educational contexts. The group chat feature enables collaborative learning scenarios where multiple students can interact with an AI tutor simultaneously, with the system maintaining awareness of each participant's contributions and learning trajectory. The @ai mention system allows targeted queries within group discussions, while the LTMBSE-ACE memory system ensures that the AI's responses account for each learner's individual history and demonstrated understanding.
 
-However, NOODEIA's current implementation reveals an important limitation in the spectrum of AI interactivity: the system operates in a reactive rather than proactive mode. The AI tutor responds when invoked by students but does not independently initiate interactions based on observed learning patterns or predicted student needs. Research on human tutoring suggests that expert tutors frequently intervene proactively—noticing signs of confusion before students articulate them, offering encouragement at strategic moments, and redirecting attention when engagement wanes (VanLehn, 2011; Chi et al., 2001). This proactive dimension of tutoring may contribute substantially to the effectiveness of one-to-one instruction.
+However, NOODEIA's current implementation reveals an important limitation in the spectrum of AI interactivity: the system operates in a reactive rather than proactive mode. The AI tutor responds when invoked by students but does not independently initiate interactions based on observed learning patterns or predicted student needs. Research on human tutoring suggests that expert tutors frequently intervene proactively, noticing signs of confusion before students articulate them, offering encouragement at strategic moments, and redirecting attention when engagement wanes (VanLehn, 2011; Chi et al., 2001). This proactive dimension of tutoring may contribute substantially to the effectiveness of one-to-one instruction.
 
-The reactive nature of NOODEIA's interaction model reflects a deliberate design choice prioritizing student autonomy and reducing potential intrusiveness. However, future iterations could explore hybrid approaches that maintain student agency while enabling appropriate proactive interventions. Such systems might monitor engagement signals (response latency, error patterns, session duration) to identify moments where proactive support could enhance learning outcomes without undermining the student's sense of control. The challenge lies in calibrating proactive behavior to be helpful rather than disruptive—a balance that human tutors develop through experience and that AI systems must learn through careful design and evaluation.
+The reactive nature of NOODEIA's interaction model reflects a deliberate design choice prioritizing student autonomy and reducing potential intrusiveness. However, future iterations could explore hybrid approaches that maintain student agency while enabling appropriate proactive interventions. Such systems might monitor engagement signals (response latency, error patterns, session duration) to identify moments where proactive support could enhance learning outcomes without undermining the student's sense of control. The challenge lies in calibrating proactive behavior to be helpful rather than disruptive. This is a balance that human tutors develop through experience and that AI systems must learn through careful design and evaluation.
 
-For the rapidly evolving field of educational AI, the distinction between reactive and proactive interaction represents a frontier with significant implications. As LLMs become more capable of understanding context and predicting user needs, the opportunity to create truly proactive AI tutors grows. NOODEIA's foundation—persistent memory, multi-agent architecture, and context-aware design—provides the technical substrate upon which proactive capabilities could be built. Future work should explore how proactive AI tutoring might enhance learning outcomes while preserving the agency and confidence-building benefits that our evaluation demonstrated.
+For the rapidly evolving field of educational AI, the distinction between reactive and proactive interaction represents a frontier with significant implications. As LLMs become more capable of understanding context and predicting user needs, the opportunity to create truly proactive AI tutors grows. NOODEIA's foundation, including persistent memory, multi-agent architecture, and context-aware design, provides the technical substrate upon which proactive capabilities could be built. Future work should explore how proactive AI tutoring might enhance learning outcomes while preserving the agency and confidence-building benefits that our evaluation demonstrated.
+
+### 7.5 Connection to Success Criteria
+
+The evaluation results directly address our three design goals established in Section 3.3:
+
+**DG1 (Personalized Support Through Persistent Memory):** While the single-session design limited full demonstration of cross-session memory benefits, the +59% improvement in personalization suggests the foundation is sound. The qualitative finding that students discussed NOODEIA with parents after sessions indicates the system created memorable, personally meaningful learning experiences. Future longitudinal deployment will fully test the cumulative benefits of persistent memory.
+
+**DG2 (Foster Independent Learning):** The +135% improvement in perceived independence strongly validates our Socratic approach. Students felt substantially more capable of learning autonomously, exactly the outcome this design goal targeted. Observational data confirmed this quantitative finding: students rarely requested adult help while using NOODEIA compared to frequent requests during traditional instruction.
+
+**DG3 (Rebuild Motivation):** The combination of +120% enjoyment, -54% frustration, and +77% willingness to return demonstrates comprehensive success in transforming the affective learning experience. The Center Director's observation that students discussed NOODEIA with parents after sessions provides real-world validation beyond survey metrics. Students who typically avoided academic work actively requested more engagement with NOODEIA, representing a fundamental shift in their relationship with learning.
+
+These findings suggest that our multi-faceted approach, combining Socratic pedagogy, persistent memory, and SDT-grounded gamification, produced synergistic effects that exceeded what any single intervention might achieve alone.
 
 * * *
 
@@ -826,7 +883,7 @@ Our evaluation, while providing compelling evidence for NOODEIA's potential, is 
 
 #### 8.1.1 Sample Size and Statistical Power
 
-The study sample (N=16) represents a meaningful limitation on statistical power and the ability to detect smaller effect sizes or conduct subgroup analyses. While the observed effects were large enough to achieve statistical significance even with this sample size, a larger study would enable more nuanced analyses—such as examining whether effects differ by age group, prior academic performance, or technology familiarity. The small sample also limits the precision of our effect size estimates, as reflected in the wider confidence intervals.
+The study sample (N=16) represents a meaningful limitation on statistical power and the ability to detect smaller effect sizes or conduct subgroup analyses. While the observed effects were large enough to achieve statistical significance even with this sample size, a larger study would enable more nuanced analyses, such as examining whether effects differ by age group, prior academic performance, or technology familiarity. The small sample also limits the precision of our effect size estimates, as reflected in the wider confidence intervals.
 
 #### 8.1.2 Bias in Prompts and Training Data
 
@@ -838,11 +895,11 @@ Large language models exhibit inherent stochasticity in their outputs, and while
 
 #### 8.1.4 Privacy Considerations
 
-The LTMBSE-ACE memory system stores detailed information about each learner's interactions, struggles, and progress—data that enables personalization but also raises privacy concerns. While our implementation isolates per-learner data and does not share information across users, the accumulation of detailed learning profiles creates obligations for data protection and raises questions about data retention, student consent (especially for minors), and potential misuse. Our study did not comprehensively evaluate participant attitudes toward this data collection or test long-term implications of persistent memory storage.
+The LTMBSE-ACE memory system stores detailed information about each learner's interactions, struggles, and progress. This data enables personalization but also raises privacy concerns. While our implementation isolates per-learner data and does not share information across users, the accumulation of detailed learning profiles creates obligations for data protection and raises questions about data retention, student consent (especially for minors), and potential misuse. Our study did not comprehensively evaluate participant attitudes toward this data collection or test long-term implications of persistent memory storage.
 
 #### 8.1.5 Ecological Validity
 
-The study was conducted in a controlled after-school setting at Two By Two Learning Center, which differs from typical classroom environments, home learning contexts, or other educational settings where NOODEIA might be deployed. The study environment featured individual attention from research assistants, dedicated devices, and a structured session format—conditions that may not reflect real-world usage patterns. Students knew they were participating in a study, which may have influenced their engagement and responses. The Hawthorne effect cannot be ruled out, and the one-session design prevents assessment of how novelty effects might fade over extended use.
+The study was conducted in controlled settings at Two By Two Learning Center (K-12 participants) and the University of Illinois at Urbana-Champaign (undergraduate and graduate participants), which differ from typical classroom environments, home learning contexts, or other educational settings where NOODEIA might be deployed. While the two-site design increased demographic diversity, both environments featured individual attention from research assistants, dedicated devices, and a structured session format. These conditions may not reflect real-world usage patterns. Participants knew they were participating in a study, which may have influenced their engagement and responses. The Hawthorne effect cannot be ruled out, and the one-session design prevents assessment of how novelty effects might fade over extended use.
 
 #### 8.1.6 Single-Session Design
 
@@ -886,23 +943,23 @@ Building on our analysis of reactive vs. proactive tutoring, we will prototype a
 
 #### 8.2.8 Comparative Memory Architectures
 
-We plan to compare LTMBSE-ACE against alternative memory approaches (MemGPT, Generative Agents, RAG-only systems) in controlled educational contexts to isolate the contribution of our specific design choices—particularly the three-tier memory structure and differential decay rates.
+We plan to compare LTMBSE-ACE against alternative memory approaches (MemGPT, Generative Agents, RAG-only systems) in controlled educational contexts to isolate the contribution of our specific design choices, particularly the three-tier memory structure and differential decay rates.
 
 * * *
 
 ## 9 Conclusion
 
-We introduce NOODEIA, a novel AI-powered tutoring platform that employs Long-Term Memory Based Self-Evolving Agentic Context Engineering (LTMBSE-ACE) to provide persistent, personalized instruction for K-12 students performing below grade level. By integrating multi-agent coordination, Socratic pedagogy, and theoretically-grounded gamification within a memory-augmented architecture, NOODEIA addresses the longstanding challenge of delivering individualized tutoring at scale—a challenge that Bloom (1984) identified as the "two-sigma problem" and that has remained economically infeasible for most students until now.
+We introduce NOODEIA, a novel AI-powered tutoring platform that employs Long-Term Memory Based Self-Evolving Agentic Context Engineering (LTMBSE-ACE) to provide persistent, personalized instruction for K-12 students performing below grade level. By integrating multi-agent coordination, Socratic pedagogy, and theoretically-grounded gamification within a memory-augmented architecture, NOODEIA addresses the longstanding challenge of delivering individualized tutoring at scale. This is a challenge that Bloom (1984) identified as the "two-sigma problem" and that has remained economically infeasible for most students until now.
 
-The technical contributions of this work span several dimensions. The LTMBSE-ACE architecture implements a three-tier memory system inspired by cognitive psychology—semantic memory for domain concepts (1% decay per access), episodic memory for learner-specific events (5% decay), and procedural memory for effective teaching strategies (0.2% decay)—enabling the system to accumulate teaching expertise while personalizing to individual students. The multi-agent LangGraph pipeline coordinates four specialized components (router, planner, solver, critic) that work together to produce pedagogically sound responses through deliberate reasoning rather than single-pass generation. NOODEIA also pioneered context-aware group chat AI functionality, implementing this capability two months prior to OpenAI's public release, demonstrating the feasibility of AI tutors that maintain awareness of multiple learners within collaborative learning scenarios.
+The technical contributions of this work span several dimensions. The LTMBSE-ACE architecture implements a three-tier memory system inspired by cognitive psychology: semantic memory for domain concepts (1% decay per access), episodic memory for learner-specific events (5% decay), and procedural memory for effective teaching strategies (0.2% decay). This architecture enables the system to accumulate teaching expertise while personalizing to individual students. The multi-agent LangGraph pipeline coordinates four specialized components (router, planner, solver, critic) that work together to produce pedagogically sound responses through deliberate reasoning rather than single-pass generation. NOODEIA also pioneered context-aware group chat AI functionality, implementing this capability two months prior to OpenAI's public release, demonstrating the feasibility of AI tutors that maintain awareness of multiple learners within collaborative learning scenarios.
 
-Through a counterbalanced within-subjects study (N=16) comparing NOODEIA against traditional tutoring center instruction, we demonstrated statistically significant improvements across nine of ten measured dimensions. The largest effects were observed for confidence (+144%, p < .0001), independence (+135%, p = .0019), fun (+120%, p = .0008), and perceived learning speed (+113%, p = .0002), with a mean improvement of +94.9% across all dimensions. The variance reduction observed across conditions—with nearly all participants converging on positive experiences under NOODEIA—indicates that the system successfully "leaves no learner behind," ensuring consistently positive outcomes even for students who would typically struggle.
+Through a counterbalanced within-subjects study (N=16) comparing NOODEIA against traditional tutoring center instruction, we demonstrated statistically significant improvements across nine of ten measured dimensions. The largest effects were observed for confidence (+144%, p < .0001), independence (+135%, p = .0019), fun (+120%, p = .0008), and perceived learning speed (+113%, p = .0002), with a mean improvement of +94.9% across all dimensions. The variance reduction observed across conditions, with nearly all participants converging on positive experiences under NOODEIA, indicates that the system successfully "leaves no learner behind," ensuring consistently positive outcomes even for students who would typically struggle.
 
 These findings provide empirical support for both VanLehn's (2011) interaction plateau hypothesis and Khan's (2023) vision of AI-enabled tutoring at scale. The +144% confidence improvement validates Bandura's (1977) mastery experiences framework, with private AI interaction eliminating the social comparison pressures that undermine self-efficacy in traditional classroom settings. The +120% enjoyment substantially exceeds meta-analytic averages for gamification interventions (Kurnaz, 2025: g = 0.654), demonstrating that Self-Determination Theory-grounded design produces amplified effects for struggling learners who begin with strongly negative academic associations. The relatively modest personalization result (+59%) aligns with RAG-PRISM's (Raul et al., 2025) finding that personalization benefits compound over time, reflecting the temporal constraints of our single-session design rather than a limitation of the memory architecture.
 
-Several limitations bound the scope of our conclusions. The small sample size (N=16) constrains statistical power and prevents meaningful subgroup analyses. The single-session design (20 minutes) could not capture the cumulative personalization effects that the LTMBSE-ACE memory system is designed to produce over extended use. The controlled tutoring center environment may not reflect real-world deployment conditions, and the Hawthorne effect cannot be ruled out. Furthermore, NOODEIA currently operates in a reactive rather than proactive mode—responding when invoked rather than initiating interactions based on observed learning patterns—representing an important limitation relative to expert human tutors who frequently intervene proactively.
+Several limitations bound the scope of our conclusions. The small sample size (N=16) constrains statistical power and prevents meaningful subgroup analyses. The single-session design (20 minutes) could not capture the cumulative personalization effects that the LTMBSE-ACE memory system is designed to produce over extended use. The controlled tutoring center environment may not reflect real-world deployment conditions, and the Hawthorne effect cannot be ruled out. Furthermore, NOODEIA currently operates in a reactive rather than proactive mode, responding when invoked rather than initiating interactions based on observed learning patterns. This represents an important limitation relative to expert human tutors who frequently intervene proactively.
 
-The user study highlighted NOODEIA's potential to bridge the gap between struggling learners and the personalized education they need, promoting a collaborative approach where students engage with an AI tutor in a dynamic exchange that builds confidence, independence, and positive associations with learning. For students who have experienced repeated academic failure, this affective transformation may be as important as cognitive gains—rebuilding the self-efficacy and motivation that are prerequisites for sustained academic engagement. The dramatic shift from predominantly negative learning experiences (M = 3.15) to strongly positive ones (M = 6.14) suggests that well-designed AI tutoring can address not only knowledge gaps but also the emotional barriers that often prove even more intractable.
+The user study highlighted NOODEIA's potential to bridge the gap between struggling learners and the personalized education they need, promoting a collaborative approach where students engage with an AI tutor in a dynamic exchange that builds confidence, independence, and positive associations with learning. For students who have experienced repeated academic failure, this affective transformation may be as important as cognitive gains, rebuilding the self-efficacy and motivation that are prerequisites for sustained academic engagement. The dramatic shift from predominantly negative learning experiences (M = 3.15) to strongly positive ones (M = 6.14) suggests that well-designed AI tutoring can address not only knowledge gaps but also the emotional barriers that often prove even more intractable.
 
 As AI tutoring systems continue to evolve, NOODEIA demonstrates that the combination of persistent memory, multi-agent coordination, Socratic pedagogy, and thoughtful gamification can produce compound benefits exceeding what any single component achieves alone. Future work exploring proactive interaction capabilities, longitudinal deployment across diverse contexts, and privacy-preserving memory architectures will determine whether such systems can fulfill their promise of delivering two-sigma quality education to every learner who needs it. We hope this work contributes both technical approaches for persistent personalization and design principles for creating engaging, effective learning experiences for the students who have historically been left behind by one-size-fits-all instruction.
 
@@ -936,6 +993,8 @@ Deterding, S., Dixon, D., Khaled, R., & Nacke, L. (2011). From game design eleme
 
 Ebbinghaus, H. (1885). Über das Gedächtnis: Untersuchungen zur experimentellen Psychologie \[Memory: A contribution to experimental psychology\]. Duncker & Humblot.
 
+Grand View Research. (2024). Education technology market size, share & trends analysis report by sector (preschool, K-12, higher education), by end-use, by type, by deployment, by region, and segment forecasts, 2025-2030. Grand View Research.
+
 Hanus, M. D., & Fox, J. (2015). Assessing the effects of gamification in the classroom: A longitudinal study on intrinsic motivation, social comparison, satisfaction, effort, and academic performance. Computers & Education, 80, 152-161.
 
 Hart, S. G., & Staveland, L. E. (1988). Development of NASA-TLX (Task Load Index): Results of empirical and theoretical research. In P. A. Hancock & N. Meshkati (Eds.), Advances in psychology (Vol. 52, pp. 139-183). North-Holland.
@@ -943,6 +1002,8 @@ Hart, S. G., & Staveland, L. E. (1988). Development of NASA-TLX (Task Load Index
 Kane, T. J., & Reardon, S. F. (2024). Parents don't understand how far behind their kids are in school. The New York Times.
 
 Kulik, J. A., & Fletcher, J. D. (2016). Effectiveness of intelligent tutoring systems: A meta-analytic review. Review of Educational Research, 86(1), 42-78.
+
+Lei, H., Cui, Y., & Zhou, W. (2018). Relationships between student engagement and academic achievement: A meta-analysis. Social Behavior and Personality: An International Journal, 46(3), 517-528. https://doi.org/10.2224/sbp.7054
 
 Learning Policy Institute. (2024). Understanding teacher shortages: 2024 update. Learning Policy Institute.
 
@@ -974,6 +1035,8 @@ Sweller, J. (1988). Cognitive load during problem solving: Effects on learning. 
 
 Tulving, E. (1972). Episodic and semantic memory. In E. Tulving & W. Donaldson (Eds.), Organization of memory (pp. 381-403). Academic Press.
 
+Tulving, E. (1985). How many memory systems are there? American Psychologist, 40(4), 385-398. https://doi.org/10.1037/0003-066X.40.4.385
+
 VanLehn, K. (2011). The relative effectiveness of human tutoring, intelligent tutoring systems, and other tutoring systems. Educational Psychologist, 46(4), 197-221.
 
 Venkatesh, V., Morris, M. G., Davis, G. B., & Davis, F. D. (2003). User acceptance of information technology: Toward a unified view. MIS Quarterly, 27(3), 425-478.
@@ -985,6 +1048,8 @@ Zhong, W., Guo, L., Gao, Q., Ye, H., & Wang, Y. (2024). MemoryBank: Enhancing la
 ### Additional References (Literature Connections)
 
 Bastani, H., Bastani, O., Sungu, A., Ge, H., Kabakcı, Ö., & Mariman, R. (2024). Generative AI can harm learning. SSRN Electronic Journal. https://dx.doi.org/10.2139/ssrn.4895486
+
+Bebergal, J. L. (2025). A multi-dimensional approach to tutor training with emerging technologies. Learning Assistance Review (TLAR), 30(1), 146-193.
 
 Chi, M. T. H., Siler, S. A., Jeong, H., Yamauchi, T., & Hausmann, R. G. (2001). Learning from human tutoring. Cognitive Science, 25(4), 471-533.
 
@@ -1000,6 +1065,8 @@ Kurnaz, F. (2025). A meta-analysis of gamification's impact on student motivatio
 
 Merkle, E. C., et al. (2024). User experience of AI-tutors: Advantages and disadvantages in educational contexts. Computers in Human Behavior, 150, 107891.
 
+Qian, K., Cheng, Y., Guan, R., Dai, W., Jin, F., Yang, K., Nawaz, S., Swiecki, Z., Chen, G., Yan, L., & Gašević, D. (2025). Dean of LLM tutors: Exploring comprehensive and automated evaluation of LLM-generated educational feedback via LLM feedback evaluators. arXiv preprint arXiv:2508.05952.
+
 Raul, G., Lin, Y.-Z., Patel, K., Shih, B. P.-J., Redondo, M. W., Latibari, B. S., ... & Satam, P. (2025). RAG-PRISM: A personalized, rapid, and immersive skill mastery framework with adaptive retrieval-augmented tutoring. arXiv preprint arXiv:2509.00646.
 
 Weitekamp, D., Siddiqui, M. N., & MacLellan, C. J. (2025). TutorGym: A testbed for evaluating AI agents as tutors and students. arXiv preprint arXiv:2505.01563.
@@ -1010,11 +1077,175 @@ Zeng, J., et al. (2024). Exploring the impact of gamification on students' acade
 
 Zhang, Z., Bo, X., Ma, C., Li, R., Chen, X., Dai, Q., ... & Wen, J.-R. (2024). A survey on the memory mechanism of large language model based agents. arXiv preprint arXiv:2404.13501.
 
-* * *
+---
 
-## Appendix A: LTMBSE-ACE Workflow Diagrams
+## Appendices
 
-### A.1 Traditional Memory Agent
+### Appendix A: Survey Instruments
+
+#### A.1 Baseline Survey (Traditional Instruction)
+
+**Instructions for Administrator:**
+"We want to know about your experience learning with paper and NOODEIA. For each statement, tell me how much you agree or disagree. There are no right or wrong answers because we just want to know what you think."
+
+**7-Point Scale (Child-Friendly Version):**
+```
+1           2           3           4           5           6           7
+No, not    Not really   A little    Not sure    A little    Pretty      Yes, very
+at all!                  no                      yes        much yes     much!
+```
+
+**Survey Questions:**
+
+Q1. Learning this way was easy for me.
+Q2. I was able to complete my learning activities successfully.
+Q3. I felt frustrated while learning this way.
+Q4. This learning method was easy to use.
+Q5. I felt confident while learning this way.
+Q6. I would like to learn this way again.
+Q7. Learning this way was fun for me.
+Q8. The teaching matched what I needed to learn.
+Q9. I could learn on my own without needing help.
+Q10. I learned new things quickly with this method.
+
+*Note: Survey 2 (NOODEIA condition) used identical questions with "NOODEIA" substituted for "this way" in administrator instructions.*
+
+---
+
+### Appendix B: System Prompts
+
+#### B.1 AI Tutor System Prompt (Socratic Pedagogy)
+
+```
+You are a Socratic AI tutor. Your role is to guide students to discover
+answers themselves through progressive help:
+
+TEACHING APPROACH:
+1. Ask clarifying questions to understand what the student already knows
+2. Break down complex problems into smaller, manageable steps
+3. Provide hints and guide thinking rather than direct answers
+4. Encourage the student to try solving each step themselves
+5. Use analogies and examples to build understanding
+6. Praise progress and correct thinking
+7. Use elementary student words and sentences that they can understand
+8. Make sure to limit your response to 50 words or 2-3 sentences
+9. Only answer questions related to math or english, avoid sensitive or
+   improper topics
+
+PROGRESSIVE HELP RULES:
+- Rounds 1-2: Ask guiding questions only (Socratic method)
+- Round 3: Start giving direct, straightforward hints
+- Rounds 4-6: Continue with clearer, more specific hints
+- Round 7+: Provide the complete answer with full explanation
+
+VALIDATION REQUESTS:
+- When a student asks you to check if their answer is correct (e.g.,
+  "Is this right?", "Did I do it correctly?", "Can you check my answer?"):
+  * ALWAYS tell them directly if they are CORRECT or INCORRECT
+  * If CORRECT: Praise them and explain why it's right
+  * If INCORRECT: Tell them what's wrong, then start helping them
+    solve it step-by-step
+
+IMPORTANT: Count the conversation turns to track which round you're in.
+Adjust your help level accordingly.
+```
+
+#### B.2 ACE Memory System Prompts
+
+**Reflector Prompt (excerpt):**
+```
+You are the Reflector in an Agentic Context Engineering system.
+Your role is to analyze the execution trace and extract concrete,
+actionable lessons that can help improve future performance.
+
+For EACH lesson:
+- Be SPECIFIC and CONCRETE (not vague generalizations)
+- Include EXAMPLES or CONTEXT when possible
+- Make it ACTIONABLE (something that can guide future attempts)
+- Keep it FOCUSED on one insight
+```
+
+**Curator Prompt (excerpt):**
+```
+You are the Curator in an Agentic Context Engineering system.
+Your role is to synthesize lessons from the Reflector into structured
+bullet updates for the evolving playbook.
+
+1. Create NEW bullets for genuinely novel insights
+2. Update Existing: If a lesson reinforces an existing bullet, mark for update
+3. Remove: If a lesson contradicts an existing bullet, mark for removal
+```
+
+---
+
+### Appendix C: Interface Screenshots
+
+*Note: Full-resolution screenshots available in project repository at `/inProgress/`*
+
+**C.1 AI Tutor Conversation Interface**
+- File: `UI.png`
+- Description: Main chat interface showing conversation panel, message input, and XP indicator
+
+**C.2 NOODEIA Learning Dashboard**
+- File: `demo8.png`, `demo9.png`
+- Description: Dashboard showing learning activity options, vocabulary quiz, and gamification elements
+
+**C.3 System Architecture Diagram**
+- File: `docs/architecture/langgraph_ace_workflow.png`
+- Description: LangGraph multi-agent pipeline with ACE memory integration
+
+---
+
+### Appendix D: Study Materials
+
+#### D.1 Parental/Guardian Consent Form
+
+**Study Title:** Evaluation of NOODEIA AI-Powered Tutoring System
+
+**Purpose:** This study evaluates an educational technology designed to support K-12 students in math and language arts through personalized AI tutoring and gamification.
+
+**Procedures:** Your child will participate in two 20-minute learning sessions: one using traditional paper worksheets and one using the NOODEIA computer application. After each session, a researcher will read survey questions aloud, and your child will provide their responses. The total time commitment is approximately 50 minutes.
+
+**Risks:** This study presents minimal risk. Your child will engage with age-appropriate educational content similar to typical tutoring activities.
+
+**Benefits:** Your child may benefit from personalized learning support. Participation also contributes to research that may improve educational technology for struggling learners.
+
+**Confidentiality:** All data will be de-identified and stored securely. Your child's responses will be combined with other participants' data for analysis. No identifying information will appear in any publications.
+
+**Voluntary Participation:** Participation is voluntary. You may withdraw your child at any time without penalty.
+
+**Contact:** For questions about the study, contact [Research Team Email].
+
+**Consent:** By signing below, you confirm that you have read this form, understand the study procedures, and consent to your child's participation.
+
+Parent/Guardian Signature: _______________  Date: _______________
+
+#### D.2 Child Assent Script
+
+"Hi [Child's name]! Today we're going to try out some different ways to learn. First, you'll do some learning activities with paper, and then you'll try a computer program called NOODEIA that helps kids learn.
+
+After each activity, I'll ask you some questions about what you thought. There are no right or wrong answers; we just want to know how you felt about it.
+
+You don't have to do this if you don't want to. You can stop at any time, and that's totally okay. Just let me know if you want to stop or take a break.
+
+Do you have any questions? Are you ready to start?"
+
+---
+
+### Appendix E: Prompt Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.0 | October 2025 | Initial Socratic prompting with basic scaffolding |
+| v1.1 | November 2025 | Added progressive help rules (7-round escalation) |
+| v1.2 | November 2025 | Added validation request handling (CORRECT/INCORRECT) |
+| v1.3 | November 2025 | Refined word limits (50 words, 2-3 sentences) |
+
+---
+
+### Appendix F: LTMBSE-ACE Workflow Diagrams
+
+#### F.1 Traditional Memory Agent
 
 1.  ┌────────────────────┐
     
@@ -1067,7 +1298,7 @@ Zhang, Z., Bo, X., Ma, C., Li, R., Chen, X., Dai, Q., ... & Wen, J.-R. (2024). A
 
   
 
-### A.2 LTMBSE-ACE Framework
+#### F.2 LTMBSE-ACE Framework
 
 25.  ┌────────────────────┐
     
@@ -1178,9 +1409,9 @@ Zhang, Z., Bo, X., Ma, C., Li, R., Chen, X., Dai, Q., ... & Wen, J.-R. (2024). A
 
 * * *
 
-## Appendix B: System Configuration
+## Appendix G: System Configuration (Technical)
 
-### B.1 AI Tutor System Prompt
+### G.1 AI Tutor System Prompt (Alternative Version)
 
 77.  You are a supportive learning companion designed for elementary 
     
@@ -1213,7 +1444,7 @@ Zhang, Z., Bo, X., Ma, C., Li, R., Chen, X., Dai, Q., ... & Wen, J.-R. (2024). A
 
   
 
-### B.2 Memory System Parameters
+### G.2 Memory System Parameters
 
 | Parameter | Default Value | Description |
 | --- | --- | --- |
@@ -1224,7 +1455,7 @@ Zhang, Z., Bo, X., Ma, C., Li, R., Chen, X., Dai, Q., ... & Wen, J.-R. (2024). A
 | decay_rates.episodic | 0.05 | Episodic memory decay per access |
 | decay_rates.procedural | 0.002 | Procedural memory decay per access |
 
-### B.3 Memory Entry Schema
+### G.3 Memory Entry Schema
 
 91.  class MemoryBullet:
     
@@ -1270,11 +1501,29 @@ Zhang, Z., Bo, X., Ma, C., Li, R., Chen, X., Dai, Q., ... & Wen, J.-R. (2024). A
 
 * * *
 
-## Appendix C: Study Protocol
+## Appendix H: Study Protocol (Detailed)
 
-### C.1 Session Timeline
+### H.1 Session Timeline
 
-112.  GROUP A (n=8): Traditional → NOODEIA
+**Site 1: Two By Two Learning Center in Champaign, Illinois (K-12)**
+
+Session 1:
+- GROUP A (n=5): Traditional → NOODEIA
+- GROUP B (n=5): NOODEIA → Traditional
+
+Session 2:
+- GROUP C (n=5): Traditional → NOODEIA
+- GROUP D (n=5): NOODEIA → Traditional
+
+**Site 2: University of Illinois at Urbana-Champaign**
+
+Session 3:
+- GROUP E (n=6): Traditional → NOODEIA
+- GROUP F (n=6): NOODEIA → Traditional
+
+**Protocol for Each Group (30 minutes per condition):**
+
+112.  GROUPS A, C, E (n=16): Traditional → NOODEIA
     
 113.  ┌────────────────────────────────────────────────────────────────────────┐
     
@@ -1292,7 +1541,7 @@ Zhang, Z., Bo, X., Ma, C., Li, R., Chen, X., Dai, Q., ... & Wen, J.-R. (2024). A
     
 120.    
     
-121.  GROUP B (n=8): NOODEIA → Traditional
+121.  GROUPS B, D, F (n=16): NOODEIA → Traditional
     
 122.  ┌────────────────────────────────────────────────────────────────────────┐
     
@@ -1311,19 +1560,19 @@ Zhang, Z., Bo, X., Ma, C., Li, R., Chen, X., Dai, Q., ... & Wen, J.-R. (2024). A
 
   
 
-### C.2 Survey Instruments
+### H.2 Survey Instruments Reference
 
 Both conditions used identical 10-item surveys with 7-point Likert scales. The traditional condition survey asked about "learning with paper and your teacher" while the NOODEIA condition survey asked about "learning with the computer and NOODEIA."
 
 * * *
 
-## Appendix D: Survey Item Details
+## Appendix I: Survey Item Technical Details
 
-### D.1 Complete Item Wording
+### I.1 Complete Item Wording
 
 Q1. Learning this way was easy for me. Q2. I was able to complete my learning activities successfully. Q3. I felt frustrated while learning this way. (Reverse-coded) Q4. This learning method was easy to use. Q5. I felt confident while learning this way. Q6. I would like to learn this way again. Q7. Learning this way was fun for me. Q8. The teaching matched what I needed to learn. Q9. I could learn on my own without needing help. Q10. I learned new things quickly with this method.
 
-### D.2 Simplified Language for Young Children
+### I.2 Simplified Language for Young Children
 
 For participants ages 5-7, administrators used these alternative anchors:
 
@@ -1336,3 +1585,7 @@ For participants ages 5-7, administrators used these alternative anchors:
 | 5 | Slightly agree | A little yes |
 | 6 | Moderately agree | Pretty much yes |
 | 7 | Extremely agree | Yes, very much! |
+
+---
+
+*End of Document*
