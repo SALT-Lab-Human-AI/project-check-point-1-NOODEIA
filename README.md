@@ -44,6 +44,9 @@
 
 [Checkout Our Presentation Slides!](https://www.canva.com/design/DAG2pPVfV_k/rZ-lD4wcwhlEbDuJ1Q8xBg/edit?utm_content=DAG2pPVfV_k&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
 
+[Checkout Our Presentation Slides!](https://www.canva.com/design/DAG6ga7zm8E/YY2cQ0vR5XexxpAPWm3Vcw/edit)
+
+
 ---
 
 ## 🆘 Problem Statement and Why It Matters
