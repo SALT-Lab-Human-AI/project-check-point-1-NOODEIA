@@ -152,9 +152,11 @@ DG3: Rebuild Motivation Through Engaging, Low-Stakes Interactions. The system mu
 
 ## 4 NOODEIA System
 
-Based on these design goals, we present NOODEIA (Figures 2 and 3), an AI-powered personalized tutoring system designed for struggling K-12 learners. While traditional tutoring centers require human tutors to manage multiple students simultaneously, NOODEIA enhances this process by providing individualized support through persistent memory and adaptive interaction. Powered by Large Language Models (LLMs) and a novel memory architecture called Long-Term Memory Based Self-Evolving Agentic Context Engineering (LTMBSE-ACE), the system provides personalized support that adapts to each learner's specific struggles and preferences (DG 1). Through Socratic pedagogy, it guides students to discover solutions independently rather than providing direct answers (DG 2), while gamification elements transform the affective learning experience for students who have developed negative associations with academic work (DG 3). NOODEIA was implemented as a web application using Next.js 15 with React 19 and integrates Gemini 2.5 Pro for AI tutoring functionality.
+Based on these design goals, we present NOODEIA (Figure 1), an AI-powered personalized tutoring system designed for struggling K-12 learners. While traditional tutoring centers require human tutors to manage multiple students simultaneously, NOODEIA enhances this process by providing individualized support through persistent memory and adaptive interaction. Powered by Large Language Models (LLMs) and a novel memory architecture called Long-Term Memory Based Self-Evolving Agentic Context Engineering (LTMBSE-ACE), the system provides personalized support that adapts to each learner's specific struggles and preferences (DG 1). Through Socratic pedagogy, it guides students to discover solutions independently rather than providing direct answers (DG 2), while gamification elements transform the affective learning experience for students who have developed negative associations with academic work (DG 3). NOODEIA was implemented as a web application using Next.js 15 with React 19 and integrates Gemini 2.5 Pro for AI tutoring functionality.
 
 To demonstrate how NOODEIA works, we present a user scenario featuring Emma, a 9-year-old student who has fallen behind her peers in math and developed frustration with traditional worksheets. Despite her teacher's efforts, Emma often refuses to attempt problems, saying "I can't do this" before trying. Her experience at The Two By Two Learning Center, where NOODEIA was deployed, illustrates how the system addresses each design goal through its integrated features.
+
+![Figure 1: NOODEIA System Overview. The main interface showing the AI tutor conversation panel, gamification elements, and navigation to learning activities.](Figures/Figure1.png)
 
 ### 4.1 The AI Tutor: Guided Discovery Through Socratic Dialogue
 
@@ -164,7 +166,7 @@ The distinction between traditional AI tutors and Socratic AI tutors is fundamen
 
 Large Language Models enable natural Socratic dialogue in ways that previous rule-based tutoring systems could not achieve. Earlier intelligent tutoring systems relied on predefined decision trees and keyword matching, which limited their ability to adapt to the unpredictable ways students express confusion or partial understanding. Modern LLMs can interpret natural language with sufficient nuance to identify the specific conceptual gap a student is experiencing and generate contextually appropriate guiding questions. NOODEIA leverages this capability while constraining the LLM's natural tendency toward helpfulness through explicit system prompts that enforce Socratic behavior.
 
-[Figure 2: AI Tutor Conversation Interface. (A) Conversation panel showing chat history between student and AI tutor. (B) Message input area where students type questions or responses. (C) XP progress indicator showing current level and experience points. (D) Sidebar navigation with access to quizzes, vocabulary games, and settings. (E) AI tutor avatar providing visual engagement.]
+![Figure 2: AI Tutor Conversation Interface. (A) Conversation panel showing chat history between student and AI tutor. (B) Message input area where students type questions or responses. (C) XP progress indicator showing current level and experience points. (D) Sidebar navigation with access to quizzes, vocabulary games, and settings. (E) AI tutor avatar providing visual engagement.](Figures/Figure2.png)
 
 **4.1.1 Engaging with the AI Tutor.** The AI Tutor interface (Figure 2) provides the primary learning environment where students engage in Socratic dialogue. The conversation panel (A) displays the ongoing exchange between student and tutor, with clear visual distinction between student messages and AI responses. The message input area (B) allows students to type questions, describe problems they are working on, or respond to the tutor's guiding questions. A persistent XP progress indicator (C) shows the student's current level and progress toward the next level, providing visible evidence of their learning journey and addressing the competence need central to Self-Determination Theory (Ryan & Deci, 2000). The sidebar navigation (D) provides access to other learning activities including quizzes and vocabulary games, while an AI tutor avatar (E) provides visual engagement and a sense of interacting with a consistent learning companion.
 
@@ -172,7 +174,7 @@ Large Language Models enable natural Socratic dialogue in ways that previous rul
 
 **4.1.2 Progressive Help System.** While pure Socratic questioning is pedagogically ideal, research on struggling learners indicates that excessive struggle can lead to frustration and disengagement, particularly for students who have already developed negative associations with academic work (Pekrun, 2006). To balance the benefits of discovery learning with the need to prevent learned helplessness, NOODEIA implements a progressive help system that calibrates assistance level based on conversation rounds.
 
-[Figure 3: Socratic Dialogue Progression. (A) Student's initial question about a math problem. (B) AI's Socratic response (rounds 1-2) asking guiding questions. (C) AI's hint response (rounds 3-6) providing direct guidance. (D) AI's full explanation (round 7+) with complete solution. (E) Encouragement messages celebrating effort throughout the conversation.]
+![Figure 3: Socratic Dialogue Progression. (A) Student's initial question about a math problem. (B) AI's Socratic response (rounds 1-2) asking guiding questions. (C) AI's hint response (rounds 3-6) providing direct guidance. (D) AI's full explanation (round 7+) with complete solution. (E) Encouragement messages celebrating effort throughout the conversation.](Figures/Figure3.png)
 
 During rounds one and two, the AI tutor employs pure Socratic questioning, responding only with guiding questions designed to activate the student's prior knowledge and direct attention toward the relevant concepts. Beginning in round three, the tutor transitions to providing direct hints when students continue to struggle, acknowledging that the student has made genuine effort and deserves more explicit guidance. By round seven, if the student remains stuck, the tutor provides the complete answer with a full explanation, ensuring that no student leaves an interaction feeling defeated while still having engaged in meaningful cognitive effort for the majority of the exchange.
 
@@ -190,7 +192,7 @@ The challenge of personalized instruction at scale represents one of education's
 
 NOODEIA addresses this limitation through the Long-Term Memory Based Self-Evolving Agentic Context Engineering (LTMBSE-ACE) framework, which provides persistent, personalized memory for each learner (DG 1). This architecture draws on recent advances in memory systems for LLM-based agents while adding educational specificity. MemGPT introduced hierarchical memory tiers enabling "unbounded context" through intelligent pagination between working memory and archival storage (Packer et al., 2023). Generative Agents implemented "memory streams" with recency, relevance, and importance scoring that persist across interactions, enabling simulated characters to maintain consistent personalities and relationships over extended periods (Park et al., 2023). MemoryBank advanced the field by implementing Ebbinghaus forgetting curves to model natural memory decay, creating more realistic long-term memory dynamics (Zhong et al., 2024). LTMBSE-ACE synthesizes these approaches while adding the pedagogical dimension: memories are not merely stored but evaluated for their educational utility and refined based on learning outcomes.
 
-[Figure 4: LTMBSE-ACE Architecture. (A) Three-tier memory system showing Semantic, Episodic, and Procedural memory types with differentiated decay rates. (B) Memory scoring visualization showing relevance rankings for retrieval. (C) Reflector component analyzing interaction outcomes. (D) Generator component planning pedagogical strategies. (E) Curator component managing memory updates including add, reinforce, and remove operations.]
+![Figure 4: LTMBSE-ACE Architecture. (A) Three-tier memory system showing Semantic, Episodic, and Procedural memory types with differentiated decay rates. (B) Memory scoring visualization showing relevance rankings for retrieval. (C) Reflector component analyzing interaction outcomes. (D) Generator component planning pedagogical strategies. (E) Curator component managing memory updates including add, reinforce, and remove operations.](Figures/Figure4.png)
 
 **4.2.1 Three Memory Types.** LTMBSE-ACE implements three memory types inspired by the multiple memory systems framework from cognitive psychology (Tulving, 1972, 1985). This differentiation enables the system to store and retrieve educational information with the appropriate characteristics for each type of knowledge.
 
@@ -233,7 +235,7 @@ Meta-analyses of educational gamification demonstrate substantial effect sizes t
 
 This design ensures that game elements support rather than replace intrinsic motivation. XP and levels make invisible progress visible, addressing the competence need by showing students concrete evidence of their learning. Achievement badges recognize specific accomplishments, validating the effort students invest. Leaderboards are optional, available for students who are motivated by social comparison while not forcing competitive dynamics on those who find them discouraging.
 
-[Figure 5: Gamification Dashboard. (A) Current level and XP progress bar showing advancement toward next level. (B) Achievement badges earned through various learning accomplishments. (C) Recent activity feed showing XP gains from different activities. (D) Optional leaderboard for social comparison. (E) Avatar customization preview.]
+![Figure 5: Gamification Dashboard. (A) Current level and XP progress bar showing advancement toward next level. (B) Achievement badges earned through various learning accomplishments. (C) Recent activity feed showing XP gains from different activities. (D) Optional leaderboard for social comparison. (E) Avatar customization preview.](Figures/Figure5.png)
 
 **4.3.2 Experience Points and Leveling System.** Students earn XP through various learning activities, with reward amounts calibrated to encourage desired behaviors while maintaining the primacy of learning goals:
 
@@ -248,7 +250,7 @@ Level progression follows a quadratic formula: XP required for Level X = ((X-1)�
 
 **4.3.3 Reward Animations.** Quiz completion triggers multi-stage reward animations inspired by game mechanics that create anticipation and celebration. Drawing on Flow Theory's emphasis on immediate feedback and clear goals (Csikszentmihalyi, 1990), these animations transform the moment of quiz completion into a celebratory event rather than an anxious evaluation.
 
-[Figure 6: Quiz System and Reward Animation. (A) Quiz question with multiple choice options. (B) Immediate feedback panel showing correct/incorrect with brief explanation. (C) Progress indicator showing question number out of 10. (D) Legendary tier reward animation with gold orb, crown, and confetti particles. (E) XP gained notification with level progress update.]
+![Figure 6: Quiz System and Reward Animation. (A) Quiz question with multiple choice options. (B) Immediate feedback panel showing correct/incorrect with brief explanation. (C) Progress indicator showing question number out of 10. (D) Legendary tier reward animation with gold orb, crown, and confetti particles. (E) XP gained notification with level progress update.](Figures/Figure6.png)
 
 | Score | Reward Tier | Animation | XP Range |
 | --- | --- | --- | --- |
@@ -270,7 +272,7 @@ Critically, quiz results feed back into the memory system. Incorrect answers inf
 
 **4.4.2 Vocabulary Games.** Four game modes target different learning objectives with varying challenge levels, providing students with choice over their learning activities (autonomy) while ensuring skill development across multiple dimensions.
 
-[Figure 7: Vocabulary Games. (A) Word Match game interface with emoji-word pairs arranged in grid. (B) Memory Cards flip interface showing matched and unmatched pairs. (C) Spelling Bee with audio pronunciation button and letter input. (D) Word Builder with scrambled letters and hint system. (E) Game selection menu with difficulty indicators and XP previews.]
+![Figure 7: Vocabulary Games. (A) Word Match game interface with emoji-word pairs arranged in grid. (B) Memory Cards flip interface showing matched and unmatched pairs. (C) Spelling Bee with audio pronunciation button and letter input. (D) Word Builder with scrambled letters and hint system. (E) Game selection menu with difficulty indicators and XP previews.](Figures/Figure7.png)
 
 | Game | Difficulty | Mechanic | XP per Round |
 | --- | --- | --- | --- |
@@ -287,7 +289,7 @@ The difficulty gradient across games addresses Flow Theory's challenge-skill bal
 
 **4.5.1 Group Chat with AI Assistance.** While individual tutoring addresses competence and autonomy needs, the relatedness component of Self-Determination Theory emphasizes the importance of social connection in sustaining motivation (Ryan & Deci, 2000). NOODEIA includes a group chat feature that enables students to learn collaboratively while maintaining access to AI support.
 
-[Figure 8: Group Chat Interface. (A) Message thread showing conversation between multiple student participants. (B) @ai mention functionality demonstrating targeted AI query syntax. (C) Context-aware AI response showing personalization based on the asking student's learning history. (D) Participant list showing active learners in the group. (E) Thread reply feature enabling focused discussions on specific topics.]
+![Figure 8: Group Chat Interface. (A) Message thread showing conversation between multiple student participants. (B) @ai mention functionality demonstrating targeted AI query syntax. (C) Context-aware AI response showing personalization based on the asking student's learning history. (D) Participant list showing active learners in the group. (E) Thread reply feature enabling focused discussions on specific topics.](Figures/Figure8.png)
 
 Students can communicate with peers, ask questions, and work through problems together. The @ai mention functionality allows any student to invoke the AI tutor within the group context, receiving Socratic guidance while their peers observe and potentially learn from the exchange. Importantly, the AI maintains individual learner awareness even in group contexts—when Emma asks a question via @ai mention, the system retrieves her personal learning history to provide appropriately personalized guidance rather than generic responses.
 
@@ -297,7 +299,7 @@ This feature addresses a common limitation of educational technology that isolat
 
 NOODEIA's technical implementation integrates multiple technologies to deliver the described functionality. The frontend is built with Next.js 15 and React 19, providing a responsive web application accessible across devices. The AI tutor leverages Gemini 2.5 Pro for natural language understanding and generation, with custom system prompting that enforces Socratic behavior and age-appropriate communication.
 
-[Figure 9: System Architecture. (A) LangGraph multi-agent pipeline showing Router, Planner, Solver, and Critic nodes. (B) Neo4j graph database storing LTMBSE-ACE memory with per-learner isolation. (C) Gemini 2.5 Pro AI model integration. (D) Pusher real-time communication layer enabling group chat functionality. (E) Next.js frontend with React component architecture.]
+![Figure 9: System Architecture. (A) LangGraph multi-agent pipeline showing Router, Planner, Solver, and Critic nodes. (B) Neo4j graph database storing LTMBSE-ACE memory with per-learner isolation. (C) Gemini 2.5 Pro AI model integration. (D) Pusher real-time communication layer enabling group chat functionality. (E) Next.js frontend with React component architecture.](Figures/Figure9.png)
 
 The multi-agent architecture follows the LangGraph framework, implementing a pipeline with distinct nodes for routing (determining what type of response is needed), planning (deciding on pedagogical approach), solving (generating the actual response), and critiquing (evaluating response quality before delivery). This architecture reflects the ReAct paradigm's interleaving of reasoning and action, which has been shown to improve accuracy and interpretability in LLM agents (Yao et al., 2023). Recent advances in agentic AI demonstrate the potential for such systems to develop sophisticated problem-solving capabilities through structured reasoning pipelines (Jiang et al., 2025).
 
@@ -544,12 +546,12 @@ Because we conducted ten separate hypothesis tests (one for each survey item), w
 
 ### 6.2.1 Response Distribution Patterns
 
-Figure 1 presents the complete distribution of participant responses across all ten survey items, comparing traditional instruction (baseline) to NOODEIA (proposed method). The diverging stacked bar chart reveals the distribution of ratings on the 7-point Likert scale, ranging from "Extremely disagree" (1) to "Extremely agree" (7), with mean scores and standard deviations displayed alongside each condition.
+Figure 10 presents the complete distribution of participant responses across all ten survey items, comparing traditional instruction (baseline) to NOODEIA (proposed method). The diverging stacked bar chart reveals the distribution of ratings on the 7-point Likert scale, ranging from "Extremely disagree" (1) to "Extremely agree" (7), with mean scores and standard deviations displayed alongside each condition.
 
-![Figure 1: Survey Result Visualization](../../metricsAndEvaluations/results/visualizations/surveyResultVisualization.png)
-*Figure 1. Survey Result Visualization*
+![Figure 10: Survey Result Visualization](../../metricsAndEvaluations/results/visualizations/surveyResultVisualization.png)
+*Figure 10. Survey Result Visualization*
 
-**Figure 1.** Response distribution comparison between baseline (traditional instruction) and proposed method (NOODEIA) across all ten survey items. Bars display the count of participants selecting each response option on the 7-point Likert scale, with warmer colors (orange/red) indicating disagreement and cooler colors (green) indicating agreement. Mean scores and standard deviations are shown to the right of each bar. Asterisks indicate statistically significant differences between conditions (Wilcoxon signed-rank test). Q3 (frustration) is reverse-coded, where lower scores indicate better outcomes for NOODEIA.
+**Figure 10.** Response distribution comparison between baseline (traditional instruction) and proposed method (NOODEIA) across all ten survey items. Bars display the count of participants selecting each response option on the 7-point Likert scale, with warmer colors (orange/red) indicating disagreement and cooler colors (green) indicating agreement. Mean scores and standard deviations are shown to the right of each bar. Asterisks indicate statistically significant differences between conditions (Wilcoxon signed-rank test). Q3 (frustration) is reverse-coded, where lower scores indicate better outcomes for NOODEIA.
 
 The visualization reveals several striking patterns in the response distributions. For the baseline condition, responses cluster predominantly in the disagreement range (scores 1–3), with orange and tan segments dominating most items. In contrast, NOODEIA responses cluster heavily in the agreement range (scores 5–7), with dark green segments representing "Extremely agree" appearing consistently across items. This visual pattern illustrates the systematic shift in learner experience from negative to positive across all measured dimensions.
 
@@ -557,43 +559,19 @@ Particularly notable is the distribution for Q5 (confidence): under traditional 
 
 ### 6.2.2 Statistical Comparison
 
-Table 1 presents the complete statistical comparison across all ten survey items, including means, standard deviations, p-values, and significance levels.
+Figure 11 presents the complete statistical comparison across all ten survey items, including means, standard deviations, p-values, and significance levels.
 
-**Table 1.** Statistical comparison of baseline (traditional instruction) versus proposed method (NOODEIA) across all survey items (N=16). Significance levels: \*\* p < 0.01, \* p < 0.05. Q3 is reverse-coded (lower is better for NOODEIA). SD = Standard Deviation.
-
-| Question | Baseline Avg. (SD) | Proposed Avg. (SD) | p-value | Significance |
-| --- | --- | --- | --- | --- |
-| Q1. Learning this way was easy for me (higher better ↑) | 2.81 (2.007) | 5.69 (1.580) | 0.0031 | ** |
-| Q2. I was able to complete my learning activities successfully (higher better ↑) | 2.94 (2.435) | 5.94 (1.843) | 0.0052 | ** |
-| Q3. I felt frustrated while learning this way (lower better ↓) | 5.00 (2.251) | 2.31 (1.740) | 0.0041 | ** |
-| Q4. This learning method was easy to use (higher better ↑) | 3.00 (2.280) | 6.19 (1.515) | 0.0011 | ** |
-| Q5. I felt confident while learning this way (higher better ↑) | 2.56 (1.750) | 6.25 (0.683) | 0.0000 | ** |
-| Q6. I would like to learn this way again (higher better ↑) | 3.25 (2.082) | 5.75 (1.653) | 0.0062 | ** |
-| Q7. Learning this way was fun for me (higher better ↑) | 2.88 (2.363) | 6.31 (1.537) | 0.0008 | ** |
-| Q8. The teaching matched what I needed to learn (higher better ↑) | 3.50 (2.309) | 5.56 (1.750) | 0.0313 | * |
-| Q9. I could learn on my own without needing help (higher better ↑) | 2.31 (1.991) | 5.44 (2.032) | 0.0019 | ** |
-| Q10. I learned new things quickly with this method (higher better ↑) | 3.00 (2.530) | 6.38 (0.885) | 0.0002 | ** |
+![Figure 11: Statistical Comparison of Survey Results. Comparison of baseline (traditional instruction) versus proposed method (NOODEIA) across all survey items (N=16), showing means, standard deviations, p-values, and significance levels. Significance levels: ** p < 0.01, * p < 0.05. Q3 is reverse-coded (lower is better for NOODEIA).](../../metricsAndEvaluations/results/visualizations/surveyResultPValueVisualization.png)
+*Figure 11. Statistical Comparison of Survey Results*
 
 NOODEIA significantly outperformed traditional instruction on nine of ten measures at the stringent significance threshold (p < .01), with Q8 (personalization) reaching significance at the conventional threshold (p < .05). The consistency of these results across cognitively distinct constructs, spanning workload perception, usability, affective experience, and learning efficiency, indicates that NOODEIA's benefits reflect a comprehensive enhancement of the learning experience rather than isolated improvements in specific areas.
 
 ### 6.2.3 Effect Magnitude Analysis
 
-Table 2 presents the percentage change between conditions, quantifying the magnitude of improvement for each survey item.
+Figure 12 presents the percentage change between conditions, quantifying the magnitude of improvement for each survey item.
 
-**Table 2.** Percentage change in mean scores from baseline (traditional instruction) to proposed method (NOODEIA). Positive values indicate improvement; for Q3 (frustration), negative values indicate improvement as lower frustration is desirable.
-
-| Question | Baseline Avg. (SD) | Proposed Avg. (SD) | Percentage Change |
-| --- | --- | --- | --- |
-| Q1. Learning this way was easy for me | 2.81 (2.007) | 5.69 (1.580) | +102.22% |
-| Q2. I was able to complete learning activities successfully | 2.94 (2.435) | 5.94 (1.843) | +102.13% |
-| Q3. I felt frustrated while learning this way | 5.00 (2.251) | 2.31 (1.740) | -53.75% |
-| Q4. This learning method was easy to use | 3.00 (2.280) | 6.19 (1.515) | +106.25% |
-| Q5. I felt confident while learning this way | 2.56 (1.750) | 6.25 (0.683) | +143.90% |
-| Q6. I would like to learn this way again | 3.25 (2.082) | 5.75 (1.653) | +76.92% |
-| Q7. Learning this way was fun for me | 2.88 (2.363) | 6.31 (1.537) | +119.57% |
-| Q8. The teaching matched what I needed to learn | 3.50 (2.309) | 5.56 (1.750) | +58.93% |
-| Q9. I could learn on my own without needing help | 2.31 (1.991) | 5.44 (2.032) | +135.14% |
-| Q10. I learned new things quickly with this method | 3.00 (2.530) | 6.38 (0.885) | +112.50% |
+![Figure 12: Percentage Improvement Analysis. Percentage change in mean scores from baseline (traditional instruction) to proposed method (NOODEIA). Positive values indicate improvement; for Q3 (frustration), negative values indicate improvement as lower frustration is desirable.](../../metricsAndEvaluations/results/visualizations/surveyResultsPercentageIncrease.png)
+*Figure 12. Percentage Improvement Analysis*
 
 The percentage changes reveal the practical significance of our findings beyond statistical thresholds. The mean improvement across all items was 101.5%, indicating that NOODEIA approximately doubled positive perceptions of the learning experience across virtually every measured dimension.
 
@@ -607,13 +585,13 @@ Several findings warrant detailed examination:
 
 **Independence (Q9)** showed the second-largest improvement (+135.14%, p = .0019). The shift from M = 2.31 to M = 5.44 represents a fundamental change in how students perceived their capacity for autonomous learning. Under traditional instruction, students felt highly dependent on external help; with NOODEIA's Socratic scaffolding, they perceived themselves as capable of learning on their own. This finding has important implications for educational scalability. In contexts where teacher shortages limit access to personalized instruction, AI tutoring that builds learner independence, rather than creating new dependencies, offers a path toward sustainable educational support.
 
-**Fun (Q7)** improved by +119.57% (p = .0008), representing a transformation of the affective learning experience. Traditional instruction produced a mean rating of 2.88, indicating that most participants found learning somewhere between "Moderately disagree" and "Slightly disagree" on the enjoyment dimension. With NOODEIA, the mean reached 6.31, and the response distribution (Figure 1) shows 11 participants selecting "Extremely agree." This finding validates our gamification design grounded in Self-Determination Theory: the XP system, leveling mechanics, and quiz rewards successfully created intrinsic motivation without undermining educational value.
+**Fun (Q7)** improved by +119.57% (p = .0008), representing a transformation of the affective learning experience. Traditional instruction produced a mean rating of 2.88, indicating that most participants found learning somewhere between "Moderately disagree" and "Slightly disagree" on the enjoyment dimension. With NOODEIA, the mean reached 6.31, and the response distribution (Figure 10) shows 11 participants selecting "Extremely agree." This finding validates our gamification design grounded in Self-Determination Theory: the XP system, leveling mechanics, and quiz rewards successfully created intrinsic motivation without undermining educational value.
 
-**Frustration (Q3)** decreased by 53.75% (p = .0041). Traditional instruction produced high frustration levels (M = 5.00), while NOODEIA substantially reduced negative affect (M = 2.31). Examining the distribution in Figure 1, we observe that under baseline conditions, 6 participants selected "Moderately agree" or higher for frustration. Under NOODEIA, 8 participants selected "Extremely disagree" for frustration, with most remaining responses clustering in the disagreement range. This reduction in frustration is particularly meaningful for our target population of struggling learners, who often develop learned helplessness through repeated frustrating experiences with academic content.
+**Frustration (Q3)** decreased by 53.75% (p = .0041). Traditional instruction produced high frustration levels (M = 5.00), while NOODEIA substantially reduced negative affect (M = 2.31). Examining the distribution in Figure 10, we observe that under baseline conditions, 6 participants selected "Moderately agree" or higher for frustration. Under NOODEIA, 8 participants selected "Extremely disagree" for frustration, with most remaining responses clustering in the disagreement range. This reduction in frustration is particularly meaningful for our target population of struggling learners, who often develop learned helplessness through repeated frustrating experiences with academic content.
 
 ### 6.2.5 Variance Reduction
 
-An additional observation from Table 2 concerns the standard deviations across conditions. For most items, NOODEIA produced substantially lower variance than traditional instruction. For example, Q5 (confidence) showed SD = 1.750 under baseline versus SD = 0.683 under NOODEIA; Q10 (learning speed) showed SD = 2.530 versus SD = 0.885. This variance reduction indicates that NOODEIA created a more consistently positive experience across participants, whereas traditional instruction produced highly variable outcomes. In practical terms, this means NOODEIA "leaves no learner behind," as the system's adaptive capabilities ensure that even students who might struggle under traditional instruction receive appropriate support.
+An additional observation from Figure 11 concerns the standard deviations across conditions. For most items, NOODEIA produced substantially lower variance than traditional instruction. For example, Q5 (confidence) showed SD = 1.750 under baseline versus SD = 0.683 under NOODEIA; Q10 (learning speed) showed SD = 2.530 versus SD = 0.885. This variance reduction indicates that NOODEIA created a more consistently positive experience across participants, whereas traditional instruction produced highly variable outcomes. In practical terms, this means NOODEIA "leaves no learner behind," as the system's adaptive capabilities ensure that even students who might struggle under traditional instruction receive appropriate support.
 
 ### 6.2.6 Non-Significant Result: Personalization
 
@@ -679,9 +657,9 @@ The **Learning Experience** composite (Δ = 3.00, +102.7%) captures NOODEIA-spec
 
 All three cognitive workload hypotheses were supported:
 
-**H1a (Ease):** NOODEIA yielded significantly higher ease ratings (M = 5.69) than traditional methods (M = 2.81), p = .0031. The +102.22% improvement indicates that learning with NOODEIA felt substantially more accessible to struggling students. The response distribution in Figure 1 shows that under baseline, 5 participants selected "Extremely disagree" and 4 selected "Moderately disagree"; under NOODEIA, 6 participants selected "Extremely agree" and 4 selected "Moderately agree." This shift from clustered disagreement to clustered agreement demonstrates that adaptive difficulty adjustment successfully reduced the cognitive barriers that typically impede struggling learners.
+**H1a (Ease):** NOODEIA yielded significantly higher ease ratings (M = 5.69) than traditional methods (M = 2.81), p = .0031. The +102.22% improvement indicates that learning with NOODEIA felt substantially more accessible to struggling students. The response distribution in Figure 10 shows that under baseline, 5 participants selected "Extremely disagree" and 4 selected "Moderately disagree"; under NOODEIA, 6 participants selected "Extremely agree" and 4 selected "Moderately agree." This shift from clustered disagreement to clustered agreement demonstrates that adaptive difficulty adjustment successfully reduced the cognitive barriers that typically impede struggling learners.
 
-**H1b (Completion):** NOODEIA yielded significantly higher perceived performance (M = 5.94) than traditional methods (M = 2.94), p = .0052, with +102.13% improvement. The system's design, which provides scaffolded support that guides students toward correct answers through questioning rather than highlighting failures, created more frequent mastery experiences. As shown in Figure 1, 9 participants selected "Extremely agree" for perceived completion success under NOODEIA, compared to only 2 under traditional instruction.
+**H1b (Completion):** NOODEIA yielded significantly higher perceived performance (M = 5.94) than traditional methods (M = 2.94), p = .0052, with +102.13% improvement. The system's design, which provides scaffolded support that guides students toward correct answers through questioning rather than highlighting failures, created more frequent mastery experiences. As shown in Figure 10, 9 participants selected "Extremely agree" for perceived completion success under NOODEIA, compared to only 2 under traditional instruction.
 
 **H1c (Frustration):** NOODEIA yielded significantly lower frustration (M = 2.31) than traditional methods (M = 5.00), p = .0041, representing a 53.75% reduction in negative affect. The judgment-free AI interaction dramatically reduced the emotional barriers that often accompany academic struggle. For learners who have developed negative associations with learning through repeated frustration, this finding suggests that AI tutoring can help break cycles of learned helplessness.
 
