@@ -3,9 +3,7 @@
 <a name="readme-top"></a>
 
 <!-- Project banner -->
-<img width = "220px" alt = "AI Tutor Logo" src = "./inProgress/logo.png">
-
-# ✨ **NOODEIA**
+<img width = "220px" alt = "AI Tutor Logo" src = "./inProgress/logo.gif">
 
 **N**ode
 **O**ptimized
@@ -28,6 +26,14 @@
 
 ---
 
+[Checkout Our Presentation Slides For CheckPoint 3!](https://www.canva.com/design/DAG2pPVfV_k/rZ-lD4wcwhlEbDuJ1Q8xBg/edit?utm_content=DAG2pPVfV_k&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
+
+[Checkout Our Presentation Slides For CheckPoint 4!](https://www.canva.com/design/DAG6ga7zm8E/YY2cQ0vR5XexxpAPWm3Vcw/edit)
+
+[Checkout Our Final Report](docs/report/FINAL_REPORT.md)
+
+---
+
 ## 📑 Table of Contents
 
 1. [Problem Statement and Why It Matters](#-problem-statement-and-why-it-matters)
@@ -41,11 +47,6 @@
 9. [License](#-license)
 
 > **💡 Tip:** All links in this table of contents are clickable! Click any item to jump to that section.
-
-[Checkout Our Presentation Slides For CheckPoint 3!](https://www.canva.com/design/DAG2pPVfV_k/rZ-lD4wcwhlEbDuJ1Q8xBg/edit?utm_content=DAG2pPVfV_k&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
-
-[Checkout Our Presentation Slides For CheckPoint 4!](https://www.canva.com/design/DAG6ga7zm8E/YY2cQ0vR5XexxpAPWm3Vcw/edit)
-
 
 ---
 
