@@ -1,0 +1,53 @@
+import Pusher from 'pusher'
+import PusherClient from 'pusher-js'
+
+export const pusherServer = process.env.PUSHER_APP_ID ? (() => {
+  return new Pusher({
+    appId: process.env.PUSHER_APP_ID,
+    key: process.env.NEXT_PUBLIC_PUSHER_KEY,
+    secret: process.env.PUSHER_SECRET,
+    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'us2',
+    useTLS: true
+  })
+})() : null
+
+// Store a single instance of the Pusher client
+let pusherClientInstance = null
+
+export const getPusherClient = () => {
+  if (typeof window === 'undefined') return null
+
+  if (!process.env.NEXT_PUBLIC_PUSHER_KEY) {
+    console.error('❌ NEXT_PUBLIC_PUSHER_KEY is not set')
+    return null
+  }
+
+  if (pusherClientInstance) {
+    return pusherClientInstance
+  }
+
+  pusherClientInstance = new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY, {
+    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+    authEndpoint: '/api/pusher/auth'
+  })
+
+  pusherClientInstance.connection.bind('error', (err) => {
+    console.error('❌ Pusher connection error:', err)
+  })
+
+  pusherClientInstance.connection.bind('failed', () => {
+    console.error('❌ Pusher connection failed')
+  })
+
+  return pusherClientInstance
+}
+
+export const PUSHER_EVENTS = {
+  MESSAGE_SENT: 'message:sent',
+  MESSAGE_EDITED: 'message:edited',
+  MESSAGE_DELETED: 'message:deleted',
+  MEMBER_JOINED: 'member:joined',
+  MEMBER_LEFT: 'member:left',
+  TYPING: 'user:typing',
+  STOP_TYPING: 'user:stop-typing'
+}

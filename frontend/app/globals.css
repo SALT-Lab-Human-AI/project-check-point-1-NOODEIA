@@ -1,0 +1,681 @@
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hide Next.js portal elements */
+nextjs-portal {
+  display: none !important;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  /* ===== Base tokens (fallback defaults) ===== */
+  :root {
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+    --background: 54 87% 91%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 62% 28%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 310 25% 52%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 24px; /* Global unified corner radius */
+
+    /* Custom app colors */
+    --app-bg: #FDFBD4;
+    --sidebar-background: 54 87% 91%;
+    --sidebar-foreground: 0 0% 3.9%;
+    --sidebar-primary: 0 62% 28%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 54 87% 85%;
+    --sidebar-accent-foreground: 0 0% 3.9%;
+    --sidebar-border: 54 20% 80%;
+    --sidebar-ring: 0 62% 28%;
+  }
+
+  /* ===== Theme: Cream/Yellow (Matches Yellow/Notes card #FEFCE8) ===== */
+  :root[data-theme="cream"] {
+    --background: 54 96% 96%;  /* #FEFCE8 - matches yellow-50 */
+    --foreground: 0 0% 10%;
+    --primary: 0 62% 28%;  /* Deep burgundy */
+    --primary-foreground: 0 0% 100%;
+    --accent: 42 96% 50%;  /* Yellow accent */
+    --accent-foreground: 0 0% 10%;
+
+    /* App-specific colors */
+    --app-bg: #FEFCE8;  /* Yellow-50 - chat area */
+    --sidebar-background: 54 96% 92%;  /* Slightly darker */
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-accent: 54 96% 88%;
+    --sidebar-border: 54 50% 80%;
+
+    /* Surface hierarchy */
+    --surface-0: #FEFCE8;  /* Background (lightest) */
+    --surface-1: color-mix(in oklab, #FEFCE8 100%, black 6%);  /* Chat bubbles */
+    --surface-2: color-mix(in oklab, #FEFCE8 100%, black 10%);  /* Side panels */
+    --surface-2-border: color-mix(in oklab, #FEFCE8 100%, black 14%);  /* Borders */
+  }
+
+  /* ===== Theme: Lilac/Purple (More vibrant purple) ===== */
+  :root[data-theme="lilac"] {
+    --background: 270 100% 94%;  /* #EAD9FF - more vibrant purple */
+    --foreground: 260 18% 18%;
+    --primary: 265 85% 58%;  /* Purple */
+    --primary-foreground: 0 0% 100%;
+    --accent: 270 60% 72%;  /* Light purple */
+    --accent-foreground: 260 18% 18%;
+
+    /* App-specific colors */
+    --app-bg: #EAD9FF;  /* More vibrant purple - chat area */
+    --sidebar-background: 270 100% 90%;  /* Slightly darker */
+    --sidebar-foreground: 260 18% 18%;
+    --sidebar-accent: 270 100% 86%;
+    --sidebar-border: 270 50% 78%;
+
+    /* Surface hierarchy */
+    --surface-0: #EAD9FF;  /* Background (lightest) */
+    --surface-1: color-mix(in oklab, #EAD9FF 100%, black 6%);  /* Chat bubbles */
+    --surface-2: color-mix(in oklab, #EAD9FF 100%, black 10%);  /* Side panels */
+    --surface-2-border: color-mix(in oklab, #EAD9FF 100%, black 14%);  /* Borders */
+  }
+
+  /* ===== Theme: Rose/Pink (More vibrant pink) ===== */
+  :root[data-theme="rose"] {
+    --background: 322 100% 92%;  /* #FAD1E8 - more vibrant pink */
+    --foreground: 350 16% 18%;
+    --primary: 345 82% 51%;  /* Rose red */
+    --primary-foreground: 0 0% 100%;
+    --accent: 351 95% 71%;  /* Pink */
+    --accent-foreground: 350 16% 18%;
+
+    /* App-specific colors */
+    --app-bg: #FAD1E8;  /* More vibrant pink - chat area */
+    --sidebar-background: 322 100% 88%;  /* Slightly darker */
+    --sidebar-foreground: 350 16% 18%;
+    --sidebar-accent: 322 100% 84%;
+    --sidebar-border: 322 50% 78%;
+
+    /* Surface hierarchy */
+    --surface-0: #FAD1E8;  /* Background (lightest) */
+    --surface-1: color-mix(in oklab, #FAD1E8 100%, black 6%);  /* Chat bubbles */
+    --surface-2: color-mix(in oklab, #FAD1E8 100%, black 10%);  /* Side panels */
+    --surface-2-border: color-mix(in oklab, #FAD1E8 100%, black 14%);  /* Borders */
+  }
+
+  /* ===== Theme: Sky/Blue (More blue theme) ===== */
+  :root[data-theme="sky"] {
+    --background: 214 100% 96%;  /* #E6F0FF - more true blue */
+    --foreground: 210 16% 18%;
+    --primary: 214 89% 48%;  /* Blue */
+    --primary-foreground: 0 0% 100%;
+    --accent: 214 95% 61%;  /* Light blue */
+    --accent-foreground: 210 16% 18%;
+
+    /* App-specific colors */
+    --app-bg: #E6F0FF;  /* More blue - chat area */
+    --sidebar-background: 214 100% 92%;  /* Slightly darker */
+    --sidebar-foreground: 210 16% 18%;
+    --sidebar-accent: 214 100% 88%;
+    --sidebar-border: 214 50% 82%;
+
+    /* Surface hierarchy */
+    --surface-0: #E6F0FF;  /* Background (lightest) */
+    --surface-1: color-mix(in oklab, #E6F0FF 100%, black 6%);  /* Chat bubbles */
+    --surface-2: color-mix(in oklab, #E6F0FF 100%, black 10%);  /* Side panels */
+    --surface-2-border: color-mix(in oklab, #E6F0FF 100%, black 14%);  /* Borders */
+  }
+
+  /* ===== Dark mode overrides (applied on top of any theme) ===== */
+  .dark {
+    --foreground: 0 0% 96%;
+    --card: 240 6% 12%;
+    --card-foreground: 0 0% 96%;
+    --popover: 240 6% 12%;
+    --popover-foreground: 0 0% 96%;
+    --secondary: 240 5% 20%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 240 5% 20%;
+    --muted-foreground: 0 0% 75%;
+    --border: 240 5% 26%;
+    --input: 240 5% 26%;
+  }
+
+  /* Dark mode + Cream theme */
+  .dark[data-theme="cream"] {
+    --background: 36 44% 71%;  /* #DECC9C */
+    --app-bg: #DECC9C;
+    --sidebar-background: 36 44% 65%;
+  }
+
+  /* Dark mode + Lilac theme */
+  .dark[data-theme="lilac"] {
+    --background: 265 30% 25%;  /* Dark purple */
+    --app-bg: #3D2554;
+    --sidebar-background: 265 30% 20%;
+  }
+
+  /* Dark mode + Rose theme */
+  .dark[data-theme="rose"] {
+    --background: 345 30% 25%;  /* Dark rose */
+    --app-bg: #54232E;
+    --sidebar-background: 345 30% 20%;
+  }
+
+  /* Dark mode + Sky theme */
+  .dark[data-theme="sky"] {
+    --background: 200 30% 25%;  /* Dark blue */
+    --app-bg: #1F3A54;
+    --sidebar-background: 200 30% 20%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    width: 100%;
+    background-color: #FDFBD4;
+  }
+
+  body {
+    @apply text-foreground;
+    background-color: #FDFBD4;
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* Apply fixed positioning only to chat interfaces */
+  html.chat-interface {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body.chat-interface {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: fixed;
+    /* Prevent layout shift when mobile keyboard appears */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  /* Dark mode backgrounds */
+  .dark html {
+    background-color: #DECC9C !important;
+  }
+
+  .dark body {
+    background-color: #DECC9C !important;
+  }
+
+  /* Handle mobile keyboard viewport */
+  @supports (padding: max(0px)) {
+    body {
+      padding-left: max(0px, env(safe-area-inset-left));
+      padding-right: max(0px, env(safe-area-inset-right));
+      padding-top: max(0px, env(safe-area-inset-top));
+      padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
+  }
+
+  /* iOS-specific scrolling improvements */
+  @supports (-webkit-touch-callout: none) {
+    /* Target iOS devices specifically */
+    .overflow-y-auto {
+      -webkit-overflow-scrolling: touch;
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      will-change: scroll-position;
+    }
+
+    /* Prevent scroll locking on iOS */
+    .scroll-smooth {
+      -webkit-scroll-behavior: smooth;
+      scroll-behavior: smooth;
+    }
+
+    /* Fix iOS momentum scrolling */
+    [ref="scrollRef"] {
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
+    }
+
+    /* Prevent iOS overscroll bounce in chat container */
+    .overscroll-contain {
+      overscroll-behavior: contain;
+    }
+
+    /* Fix iOS Safari scrollbar */
+    .overflow-y-auto::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 3px;
+    }
+
+    .dark .overflow-y-auto::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  /* Additional mobile touch improvements */
+  @media (hover: none) and (pointer: coarse) {
+    /* Touch devices */
+    .overflow-y-auto {
+      scroll-snap-type: y proximity;
+      overscroll-behavior-y: contain;
+    }
+
+    /* Ensure smooth touch scrolling */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
+
+    /* Optimize touch response */
+    button, a, [role="button"] {
+      touch-action: manipulation;
+    }
+  }
+
+  /* Critical: Prevent keyboard zoom on iOS/mobile devices */
+  /* Force 16px minimum font size to prevent iOS auto-zoom */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px !important;  /* Prevents iOS zoom on focus */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Ensure the viewport stays stable when keyboard appears */
+  @supports (-webkit-touch-callout: none) {
+    /* iOS specific */
+    input, textarea, select {
+      font-size: 16px !important;
+      -webkit-appearance: none;
+      -webkit-border-radius: 0;
+    }
+
+    /* Prevent viewport manipulation on focus */
+    input:focus,
+    textarea:focus,
+    select:focus {
+      font-size: 16px !important;
+      -webkit-text-size-adjust: 100%;
+    }
+  }
+}
+
+/* Handle mobile keyboard properly */
+@media screen and (max-width: 768px) {
+  /* Prevent page from jumping when keyboard appears */
+  .chat-interface {
+    min-height: 100vh;
+    min-height: stretch;
+  }
+
+  /* Ensure inputs maintain proper size */
+  input, textarea, select {
+    font-size: 16px !important;
+    transform: scale(1);
+    zoom: 1;
+  }
+
+  /* Handle visual viewport changes */
+  @supports (height: 100dvh) {
+    .chat-interface {
+      min-height: 100dvh;
+    }
+  }
+}
+
+/* Prevent form zoom on all touch devices */
+@media (pointer: coarse) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Text gradient for landing page */
+.text-gradient {
+  background: linear-gradient(135deg, #440d0f 0%, #84596b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* iOS-style liquid glass morphism effect for buttons */
+.glass-button {
+  /* Glass morphism base */
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.05);
+
+  /* Smooth transitions */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glass button light mode */
+.glass-button-light {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    inset 0 1px 3px rgba(255, 255, 255, 0.8),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.02);
+}
+
+/* Glass button dark mode */
+.dark .glass-button,
+.glass-button-dark {
+  background: rgba(30, 30, 30, 0.4);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* Primary glass button variant */
+.glass-button-primary {
+  background: linear-gradient(
+    135deg,
+    rgba(68, 13, 15, 0.3),
+    rgba(68, 13, 15, 0.1)
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(68, 13, 15, 0.2);
+  color: #440d0f;
+  box-shadow:
+    0 4px 24px rgba(68, 13, 15, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass-button-primary {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15),
+    rgba(255, 255, 255, 0.05)
+  );
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Glass button hover effects */
+.glass-button:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 3px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.glass-button-light:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.dark .glass-button:hover {
+  background: rgba(40, 40, 40, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Glass button active state */
+.glass-button:active {
+  transform: translateY(0);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Glass button focus state */
+.glass-button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(68, 13, 15, 0.2),
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+/* Animated reflection effect */
+.glass-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.glass-button:hover::before {
+  left: 100%;
+}
+
+/* Glass effect for icon buttons */
+.glass-icon-button {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-icon-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.12),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+/* Glass input fields to match */
+.glass-input {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.1),
+    0 4px 16px rgba(0, 0, 0, 0.08);
+  outline: none;
+}
+
+/* Glass card effect for containers */
+.glass-card {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius) !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass-card {
+  background: rgba(30, 30, 30, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius) !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+/* 3D Puffy Effects */
+.shadow-puffy {
+  box-shadow: 0 15px 30px rgba(0,0,0,0.15), 0 8px 16px rgba(0,0,0,0.1);
+}
+
+/* Animations for 3D Puffy Components */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+.animate-wiggle {
+  animation: wiggle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-scale {
+  animation: pulse-scale 2s ease-in-out infinite;
+}
+
+/* Blob animations for settings page background */
+@keyframes blob {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(20px, -50px) scale(1.1);
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  75% {
+    transform: translate(50px, 30px) scale(1.05);
+  }
+}
+
+.animate-blob {
+  animation: blob 20s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* Gradient animation for settings page background */
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 15s ease infinite;
+}
+
+/* Gallery fade-in animation */
+@keyframes fadeInGallery {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.gallery-fade-in {
+  animation: fadeInGallery 0.6s ease-out forwards;
+  opacity: 0;
+}

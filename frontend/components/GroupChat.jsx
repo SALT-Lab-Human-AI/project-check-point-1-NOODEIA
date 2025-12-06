@@ -1,0 +1,554 @@
+"use client"
+
+import { useState, useEffect, useRef } from 'react'
+import { Send, Users, LogOut, TrendingUp, Sparkles } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import ThreadedMessage from './ThreadedMessage'
+import ThreadPanel from './ThreadPanel'
+import { getPusherClient, PUSHER_EVENTS } from '../lib/pusher'
+
+export default function GroupChat({ groupId, groupData, currentUser, authToken, onLeaveGroup }) {
+  const [messages, setMessages] = useState([])
+  const [newMessage, setNewMessage] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [sending, setSending] = useState(false)
+  const [typingUsers, setTypingUsers] = useState([])
+  const [selectedThread, setSelectedThread] = useState(null)
+  const [totalMessagesLoaded, setTotalMessagesLoaded] = useState(0) // Track total messages from DB
+  const [xpGain, setXpGain] = useState(0)
+  const [xpTrigger, setXpTrigger] = useState(0) // Counter to trigger XP animation
+  const [showXpAnimation, setShowXpAnimation] = useState(false)
+  const messagesEndRef = useRef(null)
+  const messagesContainerRef = useRef(null)
+  const pusherRef = useRef(null)
+  const typingTimeoutRef = useRef(null)
+  const currentUserRef = useRef(currentUser)
+
+  useEffect(() => {
+    currentUserRef.current = currentUser
+  }, [currentUser])
+
+  // Handle XP gain animation - triggered by xpTrigger counter to ensure it fires every time
+  useEffect(() => {
+    if (xpGain && xpGain > 0 && xpTrigger > 0) {
+      setShowXpAnimation(true)
+      const timer = setTimeout(() => {
+        setShowXpAnimation(false)
+      }, 2000) // Show for 2 seconds
+      return () => clearTimeout(timer)
+    }
+  }, [xpTrigger, xpGain])
+
+  useEffect(() => {
+    loadMessages()
+    setupPusher()
+
+    return () => {
+      if (pusherRef.current) {
+        pusherRef.current.unsubscribe(`group-${groupId}`)
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+    }
+  }, [groupId])
+
+  const setupPusher = () => {
+    const pusher = getPusherClient()
+    if (!pusher) return
+
+    pusherRef.current = pusher
+
+    const existingChannel = pusher.channel(`group-${groupId}`)
+    if (existingChannel) {
+      pusher.unsubscribe(`group-${groupId}`)
+    }
+
+    const channel = pusher.subscribe(`group-${groupId}`)
+
+    channel.bind(PUSHER_EVENTS.MESSAGE_SENT, (data) => {
+      if (!data.parentId) {
+        setMessages(prev => {
+          // Check if this is the real version of an optimistic message (same content and creator)
+          const optimisticIndex = prev.findIndex(msg => 
+            msg.id.startsWith('temp_') && 
+            msg.content === data.content && 
+            msg.createdBy === data.createdBy
+          )
+          
+          if (optimisticIndex !== -1) {
+            // Replace optimistic message with real one
+            const updated = [...prev]
+            updated[optimisticIndex] = data
+            return updated
+          }
+          
+          // Check if real message already exists
+          const messageExists = prev.some(msg => msg.id === data.id)
+          if (messageExists) {
+            console.warn(`Duplicate message prevented via Pusher: ${data.id}`)
+            return prev
+          }
+          
+          // Add new message
+          return [...prev, data] // Append to end (newest at bottom)
+        })
+        scrollToBottom()
+      } else {
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === data.parentId
+              ? { ...msg, replyCount: (msg.replyCount || 0) + 1 }
+              : msg
+          )
+        )
+      }
+    })
+
+    channel.bind(PUSHER_EVENTS.MESSAGE_EDITED, (data) => {
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === data.messageId ? { ...msg, content: data.newContent, edited: true } : msg
+        )
+      )
+    })
+
+    channel.bind(PUSHER_EVENTS.MESSAGE_DELETED, (data) => {
+      setMessages(prev => prev.filter(msg => msg.id !== data.messageId))
+    })
+
+    channel.bind(PUSHER_EVENTS.TYPING, (data) => {
+      if (data.userId !== currentUserRef.current.id) {
+        setTypingUsers(prev => {
+          const filtered = prev.filter(u => u.userId !== data.userId)
+          return [...filtered, data]
+        })
+      }
+    })
+
+    channel.bind(PUSHER_EVENTS.STOP_TYPING, (data) => {
+      setTypingUsers(prev => prev.filter(u => u.userId !== data.userId))
+    })
+  }
+
+  const loadMessages = async (skip = 0) => {
+    try {
+      const response = await fetch(`/api/groupchat/${groupId}/messages?limit=50&skip=${skip}`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Messages API error:', errorData)
+        if (skip === 0) {
+          setMessages([])
+          setTotalMessagesLoaded(0)
+        }
+        return
+      }
+
+      const data = await response.json()
+      const messagesArray = Array.isArray(data) ? data : []
+      const topLevelMessages = messagesArray.filter(msg => !msg.parentId)
+
+      if (skip === 0) {
+        // Initial load - deduplicate messages
+        const uniqueMessages = topLevelMessages.reverse().filter(
+          (msg, index, self) => self.findIndex(m => m.id === msg.id) === index
+        )
+        setMessages(uniqueMessages)
+        setTotalMessagesLoaded(messagesArray.length) // Track total messages from DB
+        scrollToBottom()
+      } else {
+        // Load more (prepend older messages)
+        // Save scroll position before adding messages
+        const container = messagesContainerRef.current
+        const scrollHeightBefore = container?.scrollHeight || 0
+        const scrollTopBefore = container?.scrollTop || 0
+
+        setMessages(prev => {
+          // Deduplicate when merging
+          const newMessages = topLevelMessages.reverse()
+          const merged = [...newMessages, ...prev]
+          return merged.filter(
+            (msg, index, self) => self.findIndex(m => m.id === msg.id) === index
+          )
+        })
+        setTotalMessagesLoaded(prev => prev + messagesArray.length)
+
+        // Restore scroll position after messages are added
+        setTimeout(() => {
+          if (container) {
+            const scrollHeightAfter = container.scrollHeight
+            const addedHeight = scrollHeightAfter - scrollHeightBefore
+            container.scrollTop = scrollTopBefore + addedHeight
+          }
+        }, 0)
+      }
+
+      // Check if there are more messages to load
+      // If we got less than 50 messages, we've reached the end
+      setHasMore(messagesArray.length === 50)
+    } catch (error) {
+      console.error('Failed to load messages:', error)
+      if (skip === 0) {
+        setMessages([])
+        setTotalMessagesLoaded(0)
+      }
+    } finally {
+      if (skip === 0) {
+        setLoading(false)
+      } else {
+        setLoadingMore(false)
+      }
+    }
+  }
+
+  const loadMoreMessages = async () => {
+    if (loadingMore || !hasMore) return
+
+    setLoadingMore(true)
+    // Use totalMessagesLoaded instead of messages.length for correct skip value
+    await loadMessages(totalMessagesLoaded)
+  }
+
+  // Detect scroll to top
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      if (container.scrollTop < 100 && hasMore && !loadingMore) {
+        loadMoreMessages()
+      }
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [hasMore, loadingMore, totalMessagesLoaded])
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || sending) return
+
+    const messageContent = newMessage.trim()
+
+    // Trigger XP animation for EVERY message sent
+    // Generate random XP between 1.01 and 1.75
+    const xpEarned = Math.random() * 0.74 + 1.01
+    setXpGain(xpEarned)
+    setXpTrigger(prev => prev + 1) // Increment counter to trigger animation
+
+    // Award XP to user (non-blocking)
+    if (currentUser?.id) {
+      fetch('/api/user/xp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          xpGained: xpEarned,
+          source: 'group_chat'
+        })
+      }).catch(err => console.error('Failed to update XP:', err))
+    }
+
+    setNewMessage('')
+    setSending(true)
+    stopTyping()
+
+    // Optimistic update - add message immediately for instant feedback
+    const tempMessageId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+    const optimisticMessage = {
+      id: tempMessageId,
+      content: messageContent,
+      createdBy: currentUser?.id,
+      userName: currentUser?.name || currentUser?.user_metadata?.name || 'User',
+      userEmail: currentUser?.email || '',
+      createdAt: new Date().toISOString(),
+      edited: false,
+      parentId: null,
+      replyCount: 0
+    }
+
+    // Add optimistically
+    setMessages(prev => {
+      const messageExists = prev.some(msg => msg.id === tempMessageId)
+      if (messageExists) return prev
+      return [...prev, optimisticMessage]
+    })
+    scrollToBottom()
+
+    try {
+      const response = await fetch(`/api/groupchat/${groupId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ content: messageContent })
+      })
+
+      if (!response.ok) throw new Error('Failed to send message')
+
+      const realMessage = await response.json()
+      
+      // Replace optimistic message with real message when Pusher event arrives
+      // If Pusher doesn't arrive, replace it with the real message from API response
+      setMessages(prev => {
+        // Remove optimistic message
+        const withoutOptimistic = prev.filter(msg => msg.id !== tempMessageId)
+        // Check if real message already exists (from Pusher)
+        const realMessageExists = withoutOptimistic.some(msg => msg.id === realMessage.id)
+        if (realMessageExists) {
+          return withoutOptimistic
+        }
+        // Add real message
+        return [...withoutOptimistic, realMessage]
+      })
+      scrollToBottom()
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(msg => msg.id !== tempMessageId))
+      setNewMessage(messageContent)
+    } finally {
+      setSending(false)
+    }
+  }
+
+
+  const handleEdit = async (messageId, newContent) => {
+    try {
+      const response = await fetch(`/api/groupchat/${groupId}/messages/${messageId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ content: newContent })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Edit API error:', errorData)
+        throw new Error(`Failed to edit message: ${errorData.error || response.status}`)
+      }
+
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === messageId ? { ...msg, content: newContent, edited: true } : msg
+        )
+      )
+    } catch (error) {
+      console.error('Failed to edit message:', error)
+      alert('Failed to edit message. Please try again.')
+    }
+  }
+
+  const handleDelete = async (messageId) => {
+    if (!confirm('Are you sure you want to delete this message?')) return
+
+    try {
+      const response = await fetch(`/api/groupchat/${groupId}/messages/${messageId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${authToken}`
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(`Failed to delete message: ${errorData.error || response.status}`)
+      }
+
+      setMessages(prev => prev.filter(msg => msg.id !== messageId))
+
+      // Close thread panel if the deleted message is currently open
+      if (selectedThread && selectedThread.id === messageId) {
+        setSelectedThread(null)
+      }
+    } catch (error) {
+      console.error('Failed to delete message:', error)
+      alert('Failed to delete message. Please try again.')
+    }
+  }
+
+  const handleTyping = () => {
+    if (!pusherRef.current) return
+
+    // Notify typing
+    fetch('/api/pusher/typing', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify({ groupId })
+    })
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+
+    // Set new timeout to stop typing
+    typingTimeoutRef.current = setTimeout(stopTyping, 3000)
+  }
+
+  const stopTyping = () => {
+    if (!pusherRef.current) return
+
+    fetch('/api/pusher/typing/stop', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify({ groupId })
+    })
+  }
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  return (
+    <div className="flex h-full flex-col bg-[var(--surface-0)]">
+      {/* Header */}
+      <div className="flex h-14 items-center justify-between border-b px-4 sm:px-6 border-[var(--surface-2-border)]">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <h2 className="text-base sm:text-lg font-semibold truncate max-w-[150px] sm:max-w-none">{groupData.name}</h2>
+          <span className="hidden sm:flex text-sm text-zinc-500 dark:text-zinc-400 items-center">
+            <Users className="mr-1 h-4 w-4" />
+            {groupData.members?.length || 0}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (confirm('Are you sure you want to leave this group chat?')) {
+                onLeaveGroup(groupId)
+              }
+            }}
+            className="rounded-lg p-2 hover:bg-red-100 dark:hover:bg-red-900/20"
+            title="Leave Group"
+          >
+            <LogOut className="h-5 w-5 text-red-500" />
+          </button>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-3 sm:p-6">
+        {loading ? (
+          <div className="flex items-center justify-center text-zinc-500 dark:text-zinc-400">
+            Loading messages...
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex items-center justify-center text-zinc-500 dark:text-zinc-400">
+            No messages yet. Start the conversation!
+          </div>
+        ) : (
+          <>
+            {loadingMore && (
+              <div className="flex items-center justify-center py-2 text-sm text-zinc-500 dark:text-zinc-400">
+                Loading more messages...
+              </div>
+            )}
+            {messages.map(message => (
+              <ThreadedMessage
+                key={message.id}
+                message={message}
+                currentUserId={currentUser.id}
+                currentUser={currentUser}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onOpenThread={setSelectedThread}
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </>
+        )}
+
+        {typingUsers.length > 0 && (
+          <div className="mt-4 text-sm italic text-zinc-500 dark:text-zinc-400">
+            {typingUsers.map(u => u.userName).join(', ')}{' '}
+            {typingUsers.length === 1 ? 'is' : 'are'} typing...
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <div className="border-t p-3 sm:p-4 border-[var(--surface-2-border)]">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => {
+              setNewMessage(e.target.value)
+              handleTyping()
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                sendMessage()
+              }
+            }}
+            placeholder="Type a message..."
+            disabled={sending}
+            className="flex-1 rounded-lg border border-[var(--surface-2-border)] px-3 sm:px-4 py-2 text-base bg-[var(--surface-1)]"
+          />
+          <div className="relative">
+            <button
+              onClick={sendMessage}
+              disabled={!newMessage.trim() || sending}
+              className="rounded-lg bg-indigo-500 px-3 sm:px-4 py-2 text-white hover:bg-indigo-600 disabled:opacity-50 dark:bg-indigo-600 dark:hover:bg-indigo-700"
+            >
+              <Send className="h-4 sm:h-5 w-4 sm:w-5" />
+            </button>
+
+            {/* XP Gain Animation - Above send button */}
+            <AnimatePresence>
+              {showXpAnimation && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5, y: 0 }}
+                  animate={{ opacity: 1, scale: 1, y: -60 }}
+                  exit={{ opacity: 0, scale: 0.3, y: -100 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                  className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none"
+                >
+                  <div
+                    className="flex items-center gap-2 px-5 py-3 text-white rounded-full shadow-2xl"
+                    style={{
+                      background: 'linear-gradient(to right, #F6B3DC, #F8C8E2)',
+                    }}
+                  >
+                    <TrendingUp className="w-5 h-5" />
+                    <span className="font-black text-lg">+{xpGain.toFixed(2)} XP</span>
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      {/* Thread Panel */}
+      {selectedThread && (
+        <ThreadPanel
+          parentMessage={selectedThread}
+          groupId={groupId}
+          authToken={authToken}
+          currentUser={currentUser}
+          onClose={() => setSelectedThread(null)}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
+    </div>
+  )
+}
