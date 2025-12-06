@@ -17,10 +17,16 @@
 
 [![License](https://img.shields.io/badge/license-Apache_2.0-red?style=for-the-badge)](#)
 [![Made with Love](https://img.shields.io/badge/Made%20with-💙_for%20students-ff69b4?style=for-the-badge)](#)
-[![Neo4j](https://img.shields.io/badge/Neo4j-4479A1?logo=neo4j&logoColor=white&style=for-the-badge)](#)
-[![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white&style=for-the-badge)](#)
-[![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white&style=for-the-badge)](#)
-[![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=black&style=for-the-badge)](#)
+
+**Frontend**
+
+[![Next.js](https://img.shields.io/badge/Next.js_16-000000?logo=next.js&logoColor=white&style=for-the-badge)](#)
+[![React](https://img.shields.io/badge/React_19-61DAFB?logo=react&logoColor=black&style=for-the-badge)](#)
+[![TypeScript](https://img.shields.io/badge/TypeScript_5-3178C6?logo=typescript&logoColor=white&style=for-the-badge)](#)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white&style=for-the-badge)](#)
+[![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?logo=framer&logoColor=white&style=for-the-badge)](#)
+
+[![Neo4j](https://img.shields.io/badge/Neo4j_AuraDB-4479A1?logo=neo4j&logoColor=white&style=for-the-badge)](#)
 
 
 </div>
