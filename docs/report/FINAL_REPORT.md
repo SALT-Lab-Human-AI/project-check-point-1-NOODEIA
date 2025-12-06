@@ -82,7 +82,7 @@ The emergence of Large Language Models (LLMs) has catalyzed a new generation of 
 
 **Evaluation Frameworks and Quality Assurance.** The "Dean of LLM Tutors" framework employs LLM feedback evaluators to automatically assess feedback quality across 16 dimensions covering content effectiveness, pedagogical value, and hallucination detection (Qian et al., 2025). Fine-tuned GPT-4.1 achieved human expert-level performance (79.8% accuracy), while reasoning-focused models like o3 Pro excelled specifically at hallucination detection (86.0% accuracy on few-shot). TutorGym provides a testbed for evaluating AI tutors by assessing performance at every step of a problem rather than just final answers (Weitekamp et al., 2025). The findings are concerning: current LLMs are no better than random at identifying student mistakes, and their hints for next steps are only correct about half the time. This highlights that step-level evaluation reveals instructional shortcomings masked by final-answer metrics.
 
-**Pedagogical Risks and Design Considerations.** A randomized controlled study in Turkish classrooms demonstrated that AI tutors can actually harm learning when they provide direct answers (Bastani et al., 2024). Students using a base ChatGPT-4 wrapper performed significantly worse on subsequent closed-book tests than control groups, while students using a specialized tutor with Socratic prompting that never revealed answers directly performed comparably to the control. This finding underscores the importance of pedagogically-informed AI design that guides rather than tells. Research on tutor training with emerging technologies suggests that AI can help human tutors improve their skills through role-play and feedback, but requires careful prompt design to avoid reinforcing suboptimal tutoring patterns (Bebergal et al., 2025). The ReAct framework demonstrates that interleaving reasoning with actions reduces hallucinations and improves decision-making, suggesting that explicit reasoning traces can enhance both accuracy and interpretability in educational contexts (Yao et al., 2023).
+**Pedagogical Risks and Design Considerations.** A randomized controlled study in Turkish classrooms demonstrated that AI tutors can actually harm learning when they provide direct answers (Bastani et al., 2024). Students using a base ChatGPT-4 wrapper performed significantly worse on subsequent closed-book tests than control groups, while students using a specialized tutor with Socratic prompting that never revealed answers directly performed comparably to the control. This finding underscores the importance of pedagogically-informed AI design that guides rather than tells. The ReAct framework demonstrates that interleaving reasoning with actions reduces hallucinations and improves decision-making, suggesting that explicit reasoning traces can enhance both accuracy and interpretability in educational contexts (Yao et al., 2023).
 
 These advances collectively point toward an architecture combining persistent memory across sessions, multi-agent coordination for complex pedagogical tasks, Socratic methodology to prevent answer-giving, and rigorous evaluation at the step level rather than outcome level. NOODEIA builds on these foundations while addressing remaining gaps, particularly the integration of gamification elements grounded in Self-Determination Theory and the specific needs of struggling K-12 learners.
 
@@ -1058,15 +1058,13 @@ As AI tutoring systems continue to evolve, NOODEIA demonstrates that the combina
 
 Bandura, A. (1977). Self-efficacy: Toward a unifying theory of behavioral change. Psychological Review, 84(2), 191-215.
 
-Betthäuser, B. A., Bach-Mortensen, A. M., & Engzell, P. (2023). A systematic review and meta-analysis of the evidence on learning during the COVID-19 pandemic. Nature Human Behaviour, 7(3), 375-385.
-
 Bloom, B. S. (1984). The 2 sigma problem: The search for methods of group instruction as effective as one-to-one tutoring. Educational Researcher, 13(6), 4-16.
 
 Brooke, J. (1996). SUS: A "quick and dirty" usability scale. In P. W. Jordan et al. (Eds.), Usability evaluation in industry (pp. 189-194). Taylor & Francis.
 
-California Assessment of Student Performance and Progress. (2024). 2023-24 CAASPP test results. California Department of Education.
-
 Carroll, J. B. (1963). A model of school learning. Teachers College Record, 64(8), 723-733.
+
+Cohen, J. (1988). Statistical power analysis for the behavioral sciences (2nd ed.). Lawrence Erlbaum Associates.
 
 Compeau, D. R., & Higgins, C. A. (1995). Computer self-efficacy: Development of a measure and initial test. MIS Quarterly, 19(2), 189-211.
 
@@ -1076,13 +1074,11 @@ Csikszentmihalyi, M. (1990). Flow: The psychology of optimal experience. Harper 
 
 Davis, F. D. (1989). Perceived usefulness, perceived ease of use, and user acceptance of information technology. MIS Quarterly, 13(3), 319-340.
 
-Deci, E. L., & Ryan, R. M. (2000). The "what" and "why" of goal pursuits: Human needs and the self-determination of behavior. Psychological Inquiry, 11(4), 227-268.
-
 Deterding, S., Dixon, D., Khaled, R., & Nacke, L. (2011). From game design elements to gamefulness: Defining "gamification." In Proceedings of the 15th International Academic MindTrek Conference (pp. 9-15). ACM.
 
-Ebbinghaus, H. (1885). Über das Gedächtnis: Untersuchungen zur experimentellen Psychologie \[Memory: A contribution to experimental psychology\]. Duncker & Humblot.
+Ebbinghaus, H. (1885). Über das Gedächtnis: Untersuchungen zur experimentellen Psychologie [Memory: A contribution to experimental psychology]. Duncker & Humblot.
 
-Favero, L., Marouf, A., Rapp, A., & Spadaro, G. (2024). Enhancing critical thinking in education by means of a Socratic chatbot. arXiv preprint arXiv:2409.05511. https://arxiv.org/abs/2409.05511
+Favero, L., Pérez-Ortiz, J. A., Käser, T., & Oliver, N. (2024). Enhancing critical thinking in education by means of a Socratic chatbot. arXiv preprint arXiv:2409.05511. https://arxiv.org/abs/2409.05511
 
 Grand View Research. (2024). Education technology market size, share & trends analysis report by sector (preschool, K-12, higher education), by end-use, by type, by deployment, by region, and segment forecasts, 2025-2030. Grand View Research.
 
@@ -1090,17 +1086,9 @@ Hanus, M. D., & Fox, J. (2015). Assessing the effects of gamification in the cla
 
 Hart, S. G., & Staveland, L. E. (1988). Development of NASA-TLX (Task Load Index): Results of empirical and theoretical research. In P. A. Hancock & N. Meshkati (Eds.), Advances in psychology (Vol. 52, pp. 139-183). North-Holland.
 
-Kane, T. J., & Reardon, S. F. (2024). Parents don't understand how far behind their kids are in school. The New York Times.
-
-Kulik, J. A., & Fletcher, J. D. (2016). Effectiveness of intelligent tutoring systems: A meta-analytic review. Review of Educational Research, 86(1), 42-78.
-
 Lei, H., Cui, Y., & Zhou, W. (2018). Relationships between student engagement and academic achievement: A meta-analysis. Social Behavior and Personality: An International Journal, 46(3), 517-528. https://doi.org/10.2224/sbp.7054
 
-Learning Policy Institute. (2024). Understanding teacher shortages: 2024 update. Learning Policy Institute.
-
 Ma, W., Adesope, O. O., Nesbit, J. C., & Liu, Q. (2014). Intelligent tutoring systems and learning outcomes: A meta-analysis. Journal of Educational Psychology, 106(4), 901-918.
-
-National Center for Education Statistics. (2023). Afterschool programs in public schools. U.S. Department of Education.
 
 Nickow, A., Oreopoulos, P., & Quan, V. (2020). The impressive effects of tutoring on PreK-12 learning: A systematic review and meta-analysis of the experimental evidence (NBER Working Paper No. 27476). National Bureau of Economic Research.
 
@@ -1138,8 +1126,6 @@ Zhong, W., Guo, L., Gao, Q., Ye, H., & Wang, Y. (2024). MemoryBank: Enhancing la
 
 Bastani, H., Bastani, O., Sungu, A., Ge, H., Kabakcı, Ö., & Mariman, R. (2024). Generative AI can harm learning. SSRN Electronic Journal. https://dx.doi.org/10.2139/ssrn.4895486
 
-Bebergal, J. L., Klein, S., Carrico, C. L., Wedding, C., & Adelmann, B. J. (2025). A multi-dimensional approach to tutor training with emerging technologies. The Learning Assistance Review, 29(Summer), 161-209.
-
 Chi, M. T. H., Siler, S. A., Jeong, H., Yamauchi, T., & Hausmann, R. G. (2001). Learning from human tutoring. Cognitive Science, 25(4), 471-533.
 
 Chudziak, J. A., & Kostka, A. (2025). AI-powered math tutoring: Platform for personalized and adaptive education. arXiv preprint arXiv:2507.12484.
@@ -1159,8 +1145,6 @@ Raul, G., Lin, Y.-Z., Patel, K., Shih, B. P.-J., Redondo, M. W., Latibari, B. S.
 Weitekamp, D., Siddiqui, M. N., & MacLellan, C. J. (2025). TutorGym: A testbed for evaluating AI agents as tutors and students. arXiv preprint arXiv:2505.01563.
 
 Yao, S., Zhao, J., Yu, D., Du, N., Shafran, I., Narasimhan, K., & Cao, Y. (2023). ReAct: Synergizing reasoning and acting in language models. arXiv preprint arXiv:2210.03629.
-
-Zeng, J., Sun, D., Looi, C.-K., & Fan, A. C. W. (2024). Exploring the impact of gamification on students' academic performance: A comprehensive meta-analysis of studies from 2008 to 2023. British Journal of Educational Technology, 55(6), 2478-2502. https://doi.org/10.1111/bjet.13471
 
 Zhang, Z., Bo, X., Ma, C., Li, R., Chen, X., Dai, Q., ... & Wen, J.-R. (2024). A survey on the memory mechanism of large language model based agents. arXiv preprint arXiv:2404.13501.
 
